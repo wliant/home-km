@@ -1,0 +1,23 @@
+# Build output — Gradle rebuilds inside Docker
+.gradle/
+build/
+out/
+
+# Test sources and reports
+src/test/
+build/reports/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+
+# Secrets / env files
+.env
+*.env
+
+# Docs
+*.md
