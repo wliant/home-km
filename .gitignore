@@ -1,0 +1,38 @@
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Backend build artifacts
+backend/.gradle/
+backend/build/
+backend/out/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/playwright-report/
+
+# E2E
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,57 @@
+version: '3.9'
+
+networks:
+  infra-net:
+    name: homekm-infra-net
+    external: true
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_NAME:-homekm}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-homekm}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      BCRYPT_COST: ${BCRYPT_COST:-12}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT}
+      PRESIGNED_URL_EXPIRY_MINUTES: ${PRESIGNED_URL_EXPIRY_MINUTES:-15}
+      MAX_FILE_UPLOAD_MB: ${MAX_FILE_UPLOAD_MB:-100}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      APP_NAME: ${APP_NAME:-Home KM}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - infra-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_NAME: ${APP_NAME:-Home KM}
+        VITE_APP_THEME_COLOR: ${APP_THEME_COLOR:-#6366f1}
+        MAX_FILE_UPLOAD_MB: ${MAX_FILE_UPLOAD_MB:-100}
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks:
+      - infra-net
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
