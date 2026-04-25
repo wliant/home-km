@@ -1,0 +1,16 @@
+export const QK = {
+  folders: () => ['folders'] as const,
+  folder: (id: number) => ['folders', id] as const,
+  notes: (params?: object) => ['notes', params] as const,
+  note: (id: number) => ['notes', id] as const,
+  checklist: (noteId: number) => ['checklist', noteId] as const,
+  reminders: (noteId: number) => ['reminders', noteId] as const,
+  files: (params?: object) => ['files', params] as const,
+  file: (id: number) => ['files', id] as const,
+  tags: (q?: string) => ['tags', q] as const,
+  noteTags: (noteId: number) => ['tags', 'note', noteId] as const,
+  fileTags: (fileId: number) => ['tags', 'file', fileId] as const,
+  search: (params: object) => ['search', params] as const,
+  adminUsers: () => ['admin', 'users'] as const,
+  me: () => ['me'] as const,
+}
