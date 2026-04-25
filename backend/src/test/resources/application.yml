@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    expiry-hours: 1
+  bcrypt:
+    cost: 4
+  minio:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket-name: homekm-test
+  presigned-url-expiry-minutes: 15
+  cors:
+    allowed-origins: http://localhost:5173
+  name: Home KM Test
+
+logging:
+  level:
+    com.homekm: WARN
+    org.flywaydb: WARN
