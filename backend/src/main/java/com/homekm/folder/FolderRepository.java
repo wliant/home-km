@@ -1,0 +1,65 @@
+package com.homekm.folder;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface FolderRepository extends JpaRepository<Folder, Long> {
+
+    boolean existsByParentIdAndNameIgnoreCase(Long parentId, String name);
+
+    boolean existsByParentIsNullAndNameIgnoreCase(String name);
+
+    boolean existsByParentId(Long parentId);
+
+    List<Folder> findByParentIsNull();
+
+    List<Folder> findByParentId(Long parentId);
+
+    @Query(value = """
+        WITH RECURSIVE ancestors AS (
+            SELECT id, parent_id FROM folders WHERE id = :potentialParentId
+            UNION ALL
+            SELECT f.id, f.parent_id FROM folders f
+            JOIN ancestors a ON f.id = a.parent_id
+        )
+        SELECT COUNT(*) > 0 FROM ancestors WHERE id = :folderId
+        """, nativeQuery = true)
+    boolean wouldCreateCycle(@Param("folderId") Long folderId,
+                             @Param("potentialParentId") Long potentialParentId);
+
+    @Query(value = """
+        WITH RECURSIVE depth_count AS (
+            SELECT id, parent_id, 1 AS depth FROM folders WHERE id = :parentId
+            UNION ALL
+            SELECT f.id, f.parent_id, dc.depth + 1 FROM folders f
+            JOIN depth_count dc ON f.id = dc.parent_id
+        )
+        SELECT COALESCE(MAX(depth), 0) FROM depth_count
+        """, nativeQuery = true)
+    int countAncestorDepth(@Param("parentId") Long parentId);
+
+    @Query(value = """
+        WITH RECURSIVE subtree AS (
+            SELECT id FROM folders WHERE id = :folderId
+            UNION ALL
+            SELECT f.id FROM folders f JOIN subtree s ON f.parent_id = s.id
+        )
+        SELECT id FROM subtree WHERE id != :folderId
+        """, nativeQuery = true)
+    List<Long> findDescendantIds(@Param("folderId") Long folderId);
+
+    @Modifying
+    @Query("UPDATE Folder f SET f.childSafe = true WHERE f.id IN :ids")
+    void markChildSafeByIds(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Query("UPDATE Folder f SET f.childSafe = :safe WHERE f.id = :id")
+    void updateChildSafe(@Param("id") Long id, @Param("safe") boolean safe);
+
+    Optional<Folder> findByIdAndChildSafe(Long id, boolean childSafe);
+}
