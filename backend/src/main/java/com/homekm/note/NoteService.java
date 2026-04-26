@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -48,12 +49,12 @@ public class NoteService {
         Page<Note> notes;
         if (principal.isChild()) {
             notes = folderId != null
-                    ? noteRepository.findByFolderIdAndChildSafeTrueOrderByUpdatedAtDesc(folderId, pageable)
-                    : noteRepository.findByFolderIsNullAndChildSafeTrueOrderByUpdatedAtDesc(pageable);
+                    ? noteRepository.listByFolderChildSafe(folderId, pageable)
+                    : noteRepository.listRootChildSafe(pageable);
         } else {
             notes = folderId != null
-                    ? noteRepository.findByFolderIdOrderByUpdatedAtDesc(folderId, pageable)
-                    : noteRepository.findByFolderIsNullOrderByUpdatedAtDesc(pageable);
+                    ? noteRepository.listByFolder(folderId, pageable)
+                    : noteRepository.listRoot(pageable);
         }
         return PageResponse.of(notes.map(n -> NoteSummary.from(n,
                 checklistItemRepository.countByNoteId(n.getId()),
@@ -149,6 +150,31 @@ public class NoteService {
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Note", id));
         noteRepository.delete(note);
+    }
+
+    @Transactional
+    public NoteDetail pin(Long id, UserPrincipal principal) {
+        return updatePinState(id, Instant.now(), principal);
+    }
+
+    @Transactional
+    public NoteDetail unpin(Long id, UserPrincipal principal) {
+        return updatePinState(id, null, principal);
+    }
+
+    private NoteDetail updatePinState(Long id, Instant timestamp, UserPrincipal principal) {
+        // findVisibleNote first (404 for child + adult-only) so children can't probe
+        // hidden notes via 403 vs 404. Then ownership check (403 for not-yours).
+        Note note = findVisibleNote(id, principal);
+        if (principal.isChild() && note.getOwner().getId() != principal.getId()) {
+            throw new ChildAccountWriteException();
+        }
+        boolean isPinned = note.getPinnedAt() != null;
+        boolean shouldBePinned = timestamp != null;
+        if (isPinned != shouldBePinned) {
+            noteRepository.setPinnedAt(id, timestamp);
+        }
+        return getById(id, principal);
     }
 
     // --- Checklist items ---

@@ -57,6 +57,8 @@ Paginated list of notes visible to the calling user.
 
 **Child account filter:** Only notes where `is_child_safe = true` are returned.
 
+**Ordering:** `pinned_at DESC NULLS LAST, updated_at DESC` — pinned notes always appear first, ordered by pin time (most recent pin on top), followed by everything else by recent update.
+
 **Response (200):** Page envelope (see `11-api-conventions.md` Section 4) with note summary objects (no `body` field in list response — `body` is only in single-note response to reduce payload).
 
 ---
@@ -145,6 +147,40 @@ Delete a note.
 - Cascades to `checklist_items`, `reminders`, `reminder_recipients`, and `taggings` via DB CASCADE
 
 **Response (204):** No content.
+
+---
+
+### `POST /api/notes/{id}/pin`
+
+Pin a note so it appears first in list responses.
+
+**Auth required:** Yes — adults can pin any visible note; children can pin only their own notes.
+
+**Behaviour:**
+- Sets `pinned_at` to the current timestamp.
+- Idempotent: pinning an already-pinned note is a no-op (the original `pinned_at` is preserved).
+- Does **not** update `updated_at`.
+
+**Errors:**
+- `404 NOT_FOUND` if the note does not exist or the caller is a child and the note is not child-safe.
+- `403 CHILD_ACCOUNT_READ_ONLY` if the caller is a child and does not own the note.
+
+**Response (200):** Full note object with `pinnedAt` populated.
+
+---
+
+### `DELETE /api/notes/{id}/pin`
+
+Unpin a note.
+
+**Auth required:** Same rules as `POST /api/notes/{id}/pin`.
+
+**Behaviour:**
+- Sets `pinned_at` to `NULL`.
+- Idempotent: unpinning an already-unpinned note is a no-op.
+- Does **not** update `updated_at`.
+
+**Response (200):** Full note object with `pinnedAt = null`.
 
 ---
 
@@ -258,6 +294,7 @@ Full note object (returned by `GET /api/notes/{id}`, `POST /api/notes`, `PUT /ap
   "isChildSafe": true,
   "createdAt": "2025-04-25T10:30:00Z",
   "updatedAt": "2025-04-25T10:30:00Z",
+  "pinnedAt": "2025-04-26T08:15:00Z",
   "checklistItems": [
     { "id": 1, "noteId": 1, "text": "Pasta", "isChecked": false, "sortOrder": 0 }
   ],
@@ -295,6 +332,7 @@ List summary object (returned by `GET /api/notes` — no `body` or `checklistIte
   "hasReminders": true,
   "createdAt": "2025-04-25T10:30:00Z",
   "updatedAt": "2025-04-25T10:30:00Z",
+  "pinnedAt": "2025-04-26T08:15:00Z",
   "tags": []
 }
 ```

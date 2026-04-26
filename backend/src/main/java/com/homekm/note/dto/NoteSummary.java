@@ -14,7 +14,8 @@ public record NoteSummary(
         long checklistItemCount,
         long checkedItemCount,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        Instant pinnedAt
 ) {
     public static NoteSummary from(Note note, long itemCount, long checkedCount) {
         return new NoteSummary(
@@ -27,7 +28,8 @@ public record NoteSummary(
                 itemCount,
                 checkedCount,
                 note.getCreatedAt(),
-                note.getUpdatedAt()
+                note.getUpdatedAt(),
+                note.getPinnedAt()
         );
     }
 }

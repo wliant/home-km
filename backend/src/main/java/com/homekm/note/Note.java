@@ -39,6 +39,9 @@ public class Note {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Column(name = "pinned_at")
+    private Instant pinnedAt;
+
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
 
@@ -57,4 +60,6 @@ public class Note {
     public void setChildSafe(boolean childSafe) { this.childSafe = childSafe; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public Instant getPinnedAt() { return pinnedAt; }
+    public void setPinnedAt(Instant pinnedAt) { this.pinnedAt = pinnedAt; }
 }

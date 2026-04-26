@@ -64,6 +64,18 @@ public class NoteController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/api/notes/{id}/pin")
+    public ResponseEntity<NoteDetail> pin(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(noteService.pin(id, principal));
+    }
+
+    @DeleteMapping("/api/notes/{id}/pin")
+    public ResponseEntity<NoteDetail> unpin(@PathVariable Long id,
+                                             @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(noteService.unpin(id, principal));
+    }
+
     // Checklist items
 
     @GetMapping("/api/notes/{noteId}/checklist-items")

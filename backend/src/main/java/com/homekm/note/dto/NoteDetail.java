@@ -17,6 +17,7 @@ public record NoteDetail(
         boolean isChildSafe,
         Instant createdAt,
         Instant updatedAt,
+        Instant pinnedAt,
         List<ChecklistItemResponse> checklistItems,
         List<ReminderResponse> reminders
 ) {
@@ -50,6 +51,7 @@ public record NoteDetail(
                 note.isChildSafe(),
                 note.getCreatedAt(),
                 note.getUpdatedAt(),
+                note.getPinnedAt(),
                 items.stream().map(ChecklistItemResponse::from).toList(),
                 reminders.stream().map(ReminderResponse::from).toList()
         );

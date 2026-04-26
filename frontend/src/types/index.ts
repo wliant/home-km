@@ -23,6 +23,7 @@ export interface NoteSummary {
   checkedItemCount: number
   createdAt: string
   updatedAt: string
+  pinnedAt: string | null
 }
 
 export interface ChecklistItemResponse {
@@ -54,6 +55,7 @@ export interface NoteDetail {
   isChildSafe: boolean
   createdAt: string
   updatedAt: string
+  pinnedAt: string | null
   checklistItems: ChecklistItemResponse[]
   reminders: ReminderResponse[]
 }
