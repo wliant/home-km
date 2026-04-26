@@ -143,6 +143,7 @@ Update file metadata (not the binary).
 **Request body:**
 ```json
 {
+  "filename": "string",
   "description": "string or null",
   "folderId": "number or null",
   "isChildSafe": false,
@@ -151,6 +152,7 @@ Update file metadata (not the binary).
 ```
 
 **Rules:**
+- `filename` (optional): updates the display name only; the MinIO object key is unchanged. Validation: ≤500 chars, must not be blank, sanitised to the basename (path separators stripped, e.g. `../etc/passwd` → `passwd`).
 - `folderId` change (move): apply child-safe inheritance for target folder (see `09-child-safe.md` Section 9)
 - `tagIds` diff applied in same transaction
 

@@ -1,5 +1,7 @@
 # File rename
 
+> **Status:** Closed on branch `claude/implement-gao-feature-j8AWt` — the backend `PUT /api/files/{id}` already accepted `filename`; this branch added blank-filename rejection at the DTO level, an inline rename affordance on `FileDetailPage`, and an integration test covering happy path, path-traversal sanitisation, blank/empty rejection, and child-account authorisation. Spec `specs/06-files.md` updated to document `filename` in the PUT body.
+
 | Field | Value |
 |---|---|
 | Category | Functional · Files |

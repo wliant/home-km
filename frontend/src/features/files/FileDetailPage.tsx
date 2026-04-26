@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fileApi, tagApi } from '../../api'
@@ -13,6 +14,9 @@ export default function FileDetailPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const user = useAuthStore(s => s.user)
+
+  const [editingName, setEditingName] = useState(false)
+  const [draftName, setDraftName] = useState('')
 
   const { data: file, isLoading } = useQuery({
     queryKey: QK.file(fileId),
@@ -30,21 +34,91 @@ export default function FileDetailPage() {
     onError: () => toast.error('Failed to delete file'),
   })
 
+  const renameFile = useMutation({
+    mutationFn: (filename: string) => fileApi.update(fileId, { filename }),
+    onSuccess: (updated) => {
+      qc.setQueryData(QK.file(fileId), updated)
+      qc.invalidateQueries({ queryKey: QK.files() })
+      setEditingName(false)
+    },
+    onError: (err: { response?: { data?: { message?: string; errors?: { message: string }[] } } }) => {
+      const data = err.response?.data
+      const reason = data?.errors?.[0]?.message ?? data?.message
+      toast.error(reason ? `Failed to rename file: ${reason}` : 'Failed to rename file')
+    },
+  })
+
   if (isLoading) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>
   if (!file) return <AppLayout><div className="text-red-500">File not found</div></AppLayout>
+
+  const startRename = () => {
+    setDraftName(file.filename)
+    setEditingName(true)
+  }
+
+  const submitRename = () => {
+    const next = draftName.trim()
+    if (!next || next === file.filename) {
+      setEditingName(false)
+      return
+    }
+    renameFile.mutate(next)
+  }
 
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-xl font-bold text-gray-900 break-all">{file.filename}</h1>
-          {!user?.isChild && (
-            <button
-              onClick={() => { if (confirm('Delete this file?')) deleteFile.mutate() }}
-              className="shrink-0 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-            >
-              Delete
-            </button>
+          {editingName ? (
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+              <input
+                autoFocus
+                aria-label="Filename"
+                value={draftName}
+                onChange={e => setDraftName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { e.preventDefault(); submitRename() }
+                  if (e.key === 'Escape') { e.preventDefault(); setEditingName(false) }
+                }}
+                disabled={renameFile.isPending}
+                maxLength={500}
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={submitRename}
+                  disabled={renameFile.isPending || !draftName.trim() || draftName.trim() === file.filename}
+                  className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingName(false)}
+                  disabled={renameFile.isPending}
+                  className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <h1 className="text-xl font-bold text-gray-900 break-all flex-1">{file.filename}</h1>
+          )}
+          {!user?.isChild && !editingName && (
+            <div className="shrink-0 flex gap-2">
+              <button
+                onClick={startRename}
+                className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Rename
+              </button>
+              <button
+                onClick={() => { if (confirm('Delete this file?')) deleteFile.mutate() }}
+                className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+              >
+                Delete
+              </button>
+            </div>
           )}
         </div>
 
