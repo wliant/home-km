@@ -18,6 +18,9 @@ frontend/.vite/
 frontend/playwright-report/
 *.tsbuildinfo
 
+# Stray root-level deps (no package.json lives at repo root)
+/node_modules/
+
 # E2E
 e2e/node_modules/
 e2e/playwright-report/
