@@ -29,7 +29,7 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listRootChildSafe(Pageable pageable);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Note n SET n.pinnedAt = :ts WHERE n.id = :id")
     void setPinnedAt(@Param("id") Long id, @Param("ts") Instant ts);
 

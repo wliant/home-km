@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { noteApi } from '../../api'
@@ -16,16 +17,21 @@ export default function NotesListPage() {
     mutationFn: ({ id, pinned }: { id: number; pinned: boolean }) =>
       pinned ? noteApi.unpin(id) : noteApi.pin(id),
     onSuccess: (updated) => {
+      qc.setQueryData(QK.note(updated.id), updated)
       qc.invalidateQueries({ queryKey: QK.notes() })
-      qc.invalidateQueries({ queryKey: QK.note(updated.id) })
     },
   })
 
-  const pinned = data?.content.filter(n => n.pinnedAt) ?? []
-  const rest = data?.content.filter(n => !n.pinnedAt) ?? []
+  const [pinned, rest] = useMemo(() => {
+    const p: NoteSummary[] = []
+    const r: NoteSummary[] = []
+    for (const n of data?.content ?? []) (n.pinnedAt ? p : r).push(n)
+    return [p, r]
+  }, [data?.content])
 
   const renderRow = (note: NoteSummary) => {
     const isPinned = !!note.pinnedAt
+    const isToggling = togglePin.isPending && togglePin.variables?.id === note.id
     return (
       <li
         key={note.id}
@@ -35,7 +41,7 @@ export default function NotesListPage() {
           type="button"
           aria-label={isPinned ? 'Unpin note' : 'Pin note'}
           aria-pressed={isPinned}
-          disabled={togglePin.isPending}
+          disabled={isToggling}
           onClick={() => togglePin.mutate({ id: note.id, pinned: isPinned })}
           className="px-3 py-3 text-lg leading-none text-amber-500 hover:text-amber-600 disabled:opacity-50"
         >
@@ -60,6 +66,10 @@ export default function NotesListPage() {
     )
   }
 
+  const sectionHeading = (text: string) => (
+    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{text}</h2>
+  )
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto">
@@ -81,20 +91,14 @@ export default function NotesListPage() {
 
         {pinned.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-              Pinned
-            </h2>
+            {sectionHeading('Pinned')}
             <ul className="space-y-2">{pinned.map(renderRow)}</ul>
           </section>
         )}
 
         {rest.length > 0 && (
           <section>
-            {pinned.length > 0 && (
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                Others
-              </h2>
-            )}
+            {pinned.length > 0 && sectionHeading('Others')}
             <ul className="space-y-2">{rest.map(renderRow)}</ul>
           </section>
         )}

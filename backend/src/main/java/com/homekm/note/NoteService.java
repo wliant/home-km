@@ -154,26 +154,25 @@ public class NoteService {
 
     @Transactional
     public NoteDetail pin(Long id, UserPrincipal principal) {
-        Note note = findVisibleNote(id, principal);
-        if (principal.isChild() && note.getOwner().getId() != principal.getId()) {
-            throw new ChildAccountWriteException();
-        }
-        if (note.getPinnedAt() == null) {
-            noteRepository.setPinnedAt(id, Instant.now());
-            noteRepository.flush();
-        }
-        return getById(id, principal);
+        return updatePinState(id, Instant.now(), principal);
     }
 
     @Transactional
     public NoteDetail unpin(Long id, UserPrincipal principal) {
+        return updatePinState(id, null, principal);
+    }
+
+    private NoteDetail updatePinState(Long id, Instant timestamp, UserPrincipal principal) {
+        // findVisibleNote first (404 for child + adult-only) so children can't probe
+        // hidden notes via 403 vs 404. Then ownership check (403 for not-yours).
         Note note = findVisibleNote(id, principal);
         if (principal.isChild() && note.getOwner().getId() != principal.getId()) {
             throw new ChildAccountWriteException();
         }
-        if (note.getPinnedAt() != null) {
-            noteRepository.setPinnedAt(id, null);
-            noteRepository.flush();
+        boolean isPinned = note.getPinnedAt() != null;
+        boolean shouldBePinned = timestamp != null;
+        if (isPinned != shouldBePinned) {
+            noteRepository.setPinnedAt(id, timestamp);
         }
         return getById(id, principal);
     }
