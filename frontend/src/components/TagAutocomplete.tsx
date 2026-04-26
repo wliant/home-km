@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tagApi } from '../api'
 import { QK } from '../lib/queryKeys'
+import { toast } from '../lib/toastStore'
 import TagChip from './TagChip'
 import type { TagResponse } from '../types'
 
@@ -41,6 +42,7 @@ export default function TagAutocomplete({
       setInput('')
       setOpen(false)
     },
+    onError: () => toast.error('Failed to attach tag'),
   })
 
   const detachMutation = useMutation({
@@ -52,6 +54,7 @@ export default function TagAutocomplete({
       qc.invalidateQueries({ queryKey: entityType === 'note' ? QK.noteTags(entityId) : QK.fileTags(entityId) })
       onTagsChange()
     },
+    onError: () => toast.error('Failed to remove tag'),
   })
 
   const createAndAttach = useMutation({
@@ -68,6 +71,7 @@ export default function TagAutocomplete({
       setInput('')
       setOpen(false)
     },
+    onError: () => toast.error('Failed to create tag'),
   })
 
   useEffect(() => {

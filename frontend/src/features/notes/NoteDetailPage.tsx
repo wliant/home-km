@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { noteApi, checklistApi, tagApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
+import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import RemindersSection from '../../components/RemindersSection'
 import TagAutocomplete from '../../components/TagAutocomplete'
@@ -31,22 +32,26 @@ export default function NoteDetailPage() {
   const deleteNote = useMutation({
     mutationFn: () => noteApi.delete(noteId),
     onSuccess: () => navigate(note?.folderId ? `/folders/${note.folderId}` : '/'),
+    onError: () => toast.error('Failed to delete note'),
   })
 
   const addItem = useMutation({
     mutationFn: (text: string) => checklistApi.add(noteId, { text }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QK.note(noteId) }); setNewItemText('') },
+    onError: () => toast.error('Failed to add checklist item'),
   })
 
   const toggleItem = useMutation({
     mutationFn: ({ itemId, checked }: { itemId: number; checked: boolean }) =>
       checklistApi.update(noteId, itemId, { isChecked: checked }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK.note(noteId) }),
+    onError: () => toast.error('Failed to update checklist item'),
   })
 
   const deleteItem = useMutation({
     mutationFn: (itemId: number) => checklistApi.delete(noteId, itemId),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK.note(noteId) }),
+    onError: () => toast.error('Failed to delete checklist item'),
   })
 
   if (isLoading) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>

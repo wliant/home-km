@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fileApi, tagApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
+import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import TagAutocomplete from '../../components/TagAutocomplete'
 import { useAuthStore } from '../../lib/authStore'
@@ -26,6 +27,7 @@ export default function FileDetailPage() {
   const deleteFile = useMutation({
     mutationFn: () => fileApi.delete(fileId),
     onSuccess: () => navigate(file?.folderId ? `/folders/${file.folderId}` : '/files'),
+    onError: () => toast.error('Failed to delete file'),
   })
 
   if (isLoading) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>

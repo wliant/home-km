@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { reminderApi } from '../api'
 import { QK } from '../lib/queryKeys'
+import { toast } from '../lib/toastStore'
 import type { ReminderResponse } from '../types'
 
 const RECURRENCES = ['none', 'daily', 'weekly', 'monthly', 'yearly'] as const
@@ -29,6 +30,7 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
       recurrence: recurrence === 'none' ? undefined : recurrence,
     }),
     onSuccess: () => { invalidate(); setShowForm(false); setRemindAt(''); setRecurrence('none') },
+    onError: () => toast.error('Failed to create reminder'),
   })
 
   const updateReminder = useMutation({
@@ -37,11 +39,13 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
       recurrence: recurrence === 'none' ? undefined : recurrence,
     }),
     onSuccess: () => { invalidate(); setEditingId(null); setRemindAt(''); setRecurrence('none') },
+    onError: () => toast.error('Failed to update reminder'),
   })
 
   const deleteReminder = useMutation({
     mutationFn: (id: number) => reminderApi.delete(noteId, id),
     onSuccess: invalidate,
+    onError: () => toast.error('Failed to delete reminder'),
   })
 
   function startEdit(r: ReminderResponse) {
