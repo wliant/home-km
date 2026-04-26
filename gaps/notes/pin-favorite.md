@@ -1,5 +1,7 @@
 # Pin / favorite notes
 
+> **Status:** Closed in commit `2835ccf` on `claude/implement-gap-feature-UZJxg`.
+
 | Field | Value |
 |---|---|
 | Category | Functional · Notes |
