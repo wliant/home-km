@@ -7,18 +7,31 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
-    Page<Note> findByFolderIdOrderByUpdatedAtDesc(Long folderId, Pageable pageable);
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId " +
+            "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
+    Page<Note> listByFolder(@Param("folderId") Long folderId, Pageable pageable);
 
-    Page<Note> findByFolderIsNullOrderByUpdatedAtDesc(Pageable pageable);
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL " +
+            "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
+    Page<Note> listRoot(Pageable pageable);
 
-    Page<Note> findByFolderIdAndChildSafeTrueOrderByUpdatedAtDesc(Long folderId, Pageable pageable);
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.childSafe = true " +
+            "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
+    Page<Note> listByFolderChildSafe(@Param("folderId") Long folderId, Pageable pageable);
 
-    Page<Note> findByFolderIsNullAndChildSafeTrueOrderByUpdatedAtDesc(Pageable pageable);
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.childSafe = true " +
+            "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
+    Page<Note> listRootChildSafe(Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE Note n SET n.pinnedAt = :ts WHERE n.id = :id")
+    void setPinnedAt(@Param("id") Long id, @Param("ts") Instant ts);
 
     @Modifying
     @Query("UPDATE Note n SET n.childSafe = true WHERE n.folder.id IN :folderIds")

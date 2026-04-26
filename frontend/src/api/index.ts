@@ -31,6 +31,8 @@ export const noteApi = {
   update: (id: number, data: Partial<{ title: string; body: string; label: string; folderId: number | null; isChildSafe: boolean }>) =>
     apiClient.put<NoteDetail>(`/notes/${id}`, data).then(r => r.data),
   delete: (id: number) => apiClient.delete(`/notes/${id}`),
+  pin: (id: number) => apiClient.post<NoteDetail>(`/notes/${id}/pin`).then(r => r.data),
+  unpin: (id: number) => apiClient.delete<NoteDetail>(`/notes/${id}/pin`).then(r => r.data),
 }
 
 // Checklist items
