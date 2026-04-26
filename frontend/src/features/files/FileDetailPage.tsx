@@ -41,7 +41,11 @@ export default function FileDetailPage() {
       qc.invalidateQueries({ queryKey: QK.files() })
       setEditingName(false)
     },
-    onError: () => toast.error('Failed to rename file'),
+    onError: (err: { response?: { data?: { message?: string; errors?: { message: string }[] } } }) => {
+      const data = err.response?.data
+      const reason = data?.errors?.[0]?.message ?? data?.message
+      toast.error(reason ? `Failed to rename file: ${reason}` : 'Failed to rename file')
+    },
   })
 
   if (isLoading) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>

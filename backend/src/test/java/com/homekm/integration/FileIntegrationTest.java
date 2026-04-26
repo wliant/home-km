@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -44,7 +43,6 @@ class FileIntegrationTest extends IntegrationTestBase {
         return new HttpEntity<>(body, headers);
     }
 
-    @Transactional
     long seedFile(String ownerEmail, String filename, boolean childSafe) {
         User owner = userRepository.findByEmail(ownerEmail).orElseThrow();
         StoredFile f = new StoredFile();
