@@ -1,13 +1,5 @@
-spring:
-  datasource:
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-  flyway:
-    enabled: true
-
+# Test configuration — overrides main application.yml for test contexts
+# These values are test-only; never use in production
 app:
   jwt:
     secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
@@ -19,12 +11,13 @@ app:
     access-key: minioadmin
     secret-key: minioadmin
     bucket-name: homekm-test
-  presigned-url-expiry-minutes: 15
-  cors:
-    allowed-origins: http://localhost:5173
-  name: Home KM Test
+  vapid:
+    public-key: ''
+    private-key: ''
+    subject: mailto:test@example.com
 
-logging:
-  level:
-    com.homekm: WARN
-    org.flywaydb: WARN
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/homekm_test}
+    username: ${SPRING_DATASOURCE_USERNAME:homekm}
+    password: ${SPRING_DATASOURCE_PASSWORD:homekm}
