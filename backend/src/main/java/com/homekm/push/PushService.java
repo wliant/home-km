@@ -6,7 +6,6 @@ import com.homekm.auth.UserRepository;
 import com.homekm.common.AppProperties;
 import com.homekm.push.dto.PushSubscribeRequest;
 import nl.martijndwars.webpush.Notification;
-import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,8 +63,8 @@ public class PushService {
         List<PushSubscription> subs = subscriptionRepository.findByUserIdIn(userIds);
         for (PushSubscription sub : subs) {
             try {
-                PushService pushService = new PushService(vapid.getPublicKey(), vapid.getPrivateKey(),
-                        vapid.getSubject());
+                nl.martijndwars.webpush.PushService pushService = new nl.martijndwars.webpush.PushService(
+                        vapid.getPublicKey(), vapid.getPrivateKey(), vapid.getSubject());
                 String payload = buildPayload(title, body, url);
                 Subscription subscription = new Subscription(sub.getEndpoint(),
                         new Subscription.Keys(sub.getP256dhKey(), sub.getAuthKey()));

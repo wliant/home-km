@@ -1,7 +1,7 @@
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 ARG VITE_APP_NAME="Home KM"
 ARG VITE_APP_THEME_COLOR="#6366f1"

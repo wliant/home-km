@@ -29,6 +29,14 @@ jobs:
       - name: Run unit tests
         run: gradle test --tests "com.homekm.auth.*" --tests "com.homekm.common.*" --tests "com.homekm.reminder.*"
 
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-unit-coverage
+          path: backend/build/reports/jacoco/test/html/
+          retention-days: 7
+
   backend-integration:
     name: Backend integration tests
     runs-on: ubuntu-latest
@@ -50,6 +58,14 @@ jobs:
 
       - name: Run integration tests
         run: gradle test --tests "com.homekm.integration.*"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-integration-coverage
+          path: backend/build/reports/jacoco/test/html/
+          retention-days: 7
 
   frontend:
     name: Frontend type-check, test, build
@@ -145,7 +161,9 @@ jobs:
           MAX_FILE_UPLOAD_MB: '10'
           CORS_ALLOWED_ORIGINS: 'http://localhost:5173'
           SPRING_PROFILES_ACTIVE: test
-        run: gradle bootRun &
+        run: |
+          gradle bootRun &
+          echo $! > /tmp/api.pid
 
       - uses: actions/setup-node@v4
         with:
@@ -166,7 +184,9 @@ jobs:
 
       - name: Start frontend preview
         working-directory: frontend
-        run: npm run preview -- --port 5173 &
+        run: |
+          npm run preview -- --port 5173 &
+          echo $! > /tmp/frontend.pid
 
       - name: Wait for backend health
         run: |
@@ -193,6 +213,12 @@ jobs:
           name: playwright-report
           path: e2e/playwright-report/
           retention-days: 7
+
+      - name: Stop background processes
+        if: always()
+        run: |
+          [ -f /tmp/api.pid ] && kill $(cat /tmp/api.pid) || true
+          [ -f /tmp/frontend.pid ] && kill $(cat /tmp/frontend.pid) || true
 
   docker-build:
     name: Build Docker images
