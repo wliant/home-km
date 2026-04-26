@@ -1,6 +1,8 @@
 package com.homekm.auth;
 
 import com.homekm.auth.dto.*;
+import com.homekm.common.RateLimitException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,9 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final LoginRateLimiter loginRateLimiter;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, LoginRateLimiter loginRateLimiter) {
         this.authService = authService;
+        this.loginRateLimiter = loginRateLimiter;
     }
 
     @PostMapping("/register")
@@ -23,7 +27,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req,
+                                                HttpServletRequest servletRequest) {
+        if (!loginRateLimiter.isAllowed(servletRequest.getRemoteAddr())) {
+            throw new RateLimitException();
+        }
         return ResponseEntity.ok(authService.login(req));
     }
 

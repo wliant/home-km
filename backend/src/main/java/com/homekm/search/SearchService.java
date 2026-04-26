@@ -54,14 +54,16 @@ public class SearchService {
             WHERE n.search_vector @@ plainto_tsquery('english', :q)
             """);
         if (childOnly) sql.append(" AND n.is_child_safe = true");
-        if (folderId != null) sql.append(" AND n.folder_id IN (").append(folderSubtreeSQL(folderId)).append(")");
+        if (folderId != null) sql.append(" AND n.folder_id IN (").append(folderSubtreeSQL()).append(")");
         if (tagIds != null && !tagIds.isEmpty()) {
+            // tagIds are typed Long — numeric-only, safe to inline
             sql.append(" AND (SELECT COUNT(DISTINCT t.tag_id) FROM taggings t WHERE t.entity_type='note' AND t.entity_id=n.id AND t.tag_id IN (")
                .append(joinLongs(tagIds)).append(")) = ").append(tagIds.size());
         }
 
         var query = em.createNativeQuery(sql.toString());
         query.setParameter("q", q);
+        if (folderId != null) query.setParameter("folderId", folderId);
         return mapRows((List<Object[]>) query.getResultList(), "note");
     }
 
@@ -76,7 +78,7 @@ public class SearchService {
             WHERE f.search_vector @@ plainto_tsquery('english', :q)
             """);
         if (childOnly) sql.append(" AND f.is_child_safe = true");
-        if (folderId != null) sql.append(" AND f.folder_id IN (").append(folderSubtreeSQL(folderId)).append(")");
+        if (folderId != null) sql.append(" AND f.folder_id IN (").append(folderSubtreeSQL()).append(")");
         if (tagIds != null && !tagIds.isEmpty()) {
             sql.append(" AND (SELECT COUNT(DISTINCT t.tag_id) FROM taggings t WHERE t.entity_type='file' AND t.entity_id=f.id AND t.tag_id IN (")
                .append(joinLongs(tagIds)).append(")) = ").append(tagIds.size());
@@ -84,6 +86,7 @@ public class SearchService {
 
         var query = em.createNativeQuery(sql.toString());
         query.setParameter("q", q);
+        if (folderId != null) query.setParameter("folderId", folderId);
         return mapRows((List<Object[]>) query.getResultList(), "file");
     }
 
@@ -108,13 +111,13 @@ public class SearchService {
         return mapRows((List<Object[]>) query.getResultList(), "folder");
     }
 
-    private String folderSubtreeSQL(Long folderId) {
+    private String folderSubtreeSQL() {
         return """
             WITH RECURSIVE subtree AS (
-                SELECT id FROM folders WHERE id = %d
+                SELECT id FROM folders WHERE id = :folderId
                 UNION ALL SELECT f.id FROM folders f JOIN subtree s ON f.parent_id = s.id
             ) SELECT id FROM subtree
-            """.formatted(folderId);
+            """;
     }
 
     private String joinLongs(List<Long> ids) {

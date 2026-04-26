@@ -1,5 +1,6 @@
 package com.homekm.common;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -66,6 +67,14 @@ public class AppProperties {
 
         public String getAllowedOrigins() { return allowedOrigins; }
         public void setAllowedOrigins(String allowedOrigins) { this.allowedOrigins = allowedOrigins; }
+    }
+
+    @PostConstruct
+    void validate() {
+        if (jwt.secret == null || jwt.secret.length() < 32) {
+            throw new IllegalStateException(
+                "app.jwt.secret must be at least 32 characters for HS256; set JWT_SECRET env var");
+        }
     }
 
     public Jwt getJwt() { return jwt; }

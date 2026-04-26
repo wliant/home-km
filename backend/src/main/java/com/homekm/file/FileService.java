@@ -73,7 +73,7 @@ public class FileService {
         User owner = userRepository.getReferenceById(principal.getId());
         StoredFile stored = new StoredFile();
         stored.setOwner(owner);
-        stored.setFilename(file.getOriginalFilename() != null ? file.getOriginalFilename() : "upload");
+        stored.setFilename(file.getOriginalFilename() != null ? sanitizeFilename(file.getOriginalFilename()) : "upload");
         stored.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
         stored.setSizeBytes(file.getSize());
         stored.setMinioKey("pending");
@@ -132,7 +132,7 @@ public class FileService {
         if (principal.isChild() && f.getOwner().getId() != principal.getId()) {
             throw new ChildAccountWriteException();
         }
-        if (req.filename() != null) f.setFilename(req.filename());
+        if (req.filename() != null) f.setFilename(sanitizeFilename(req.filename()));
         if (req.description() != null) f.setDescription(req.description());
         if (!principal.isChild() && req.isChildSafe() != null) f.setChildSafe(req.isChildSafe());
         if (req.folderId() != null) {
@@ -177,8 +177,9 @@ public class FileService {
         String oldThumbKey = f.getThumbnailKey();
 
         String folderSegment = f.getFolder() != null ? String.valueOf(f.getFolder().getId()) : "root";
-        String newKey = principal.getId() + "/" + folderSegment + "/" + f.getId() + "/" +
-                (file.getOriginalFilename() != null ? file.getOriginalFilename() : f.getFilename());
+        String newFilename = file.getOriginalFilename() != null
+                ? sanitizeFilename(file.getOriginalFilename()) : f.getFilename();
+        String newKey = principal.getId() + "/" + folderSegment + "/" + f.getId() + "/" + newFilename;
 
         ensureBucketExists(bucket);
         try (InputStream is = file.getInputStream()) {
@@ -199,7 +200,7 @@ public class FileService {
             log.warn("Could not remove old MinIO object {}: {}", oldKey, e.getMessage());
         }
 
-        if (file.getOriginalFilename() != null) f.setFilename(file.getOriginalFilename());
+        f.setFilename(newFilename);
         if (file.getContentType() != null) f.setMimeType(file.getContentType());
         f.setSizeBytes(file.getSize());
         f.setMinioKey(newKey);
@@ -281,6 +282,10 @@ public class FileService {
                     .orElseThrow(() -> new EntityNotFoundException("File", id));
         }
         return fileRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("File", id));
+    }
+
+    private static String sanitizeFilename(String name) {
+        return java.nio.file.Paths.get(name).getFileName().toString();
     }
 
     private void ensureBucketExists(String bucket) {
