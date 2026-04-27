@@ -66,7 +66,7 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
   return (
     <section>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-sm font-semibold text-gray-500">Reminders</h2>
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Reminders</h2>
         {!readOnly && !showForm && editingId == null && (
           <button
             type="button"
@@ -79,12 +79,12 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
       </div>
 
       {reminders.length === 0 && !showForm && (
-        <p className="text-xs text-gray-400">No reminders.</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500">No reminders.</p>
       )}
 
       <ul className="space-y-2 mb-3">
         {reminders.map(r => (
-          <li key={r.id} className="rounded-lg border border-gray-200 px-3 py-2">
+          <li key={r.id} className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
             {editingId === r.id ? (
               <ReminderForm
                 remindAt={remindAt}
@@ -98,9 +98,9 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
             ) : (
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm text-gray-800">{formatDateTime(r.remindAt)}</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">{formatDateTime(r.remindAt)}</p>
                   {r.recurrence && (
-                    <p className="text-xs text-gray-500 capitalize">{r.recurrence}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{r.recurrence}</p>
                   )}
                 </div>
                 {!readOnly && (
@@ -147,18 +147,18 @@ function ReminderForm({
   saving: boolean
 }) {
   return (
-    <div className="space-y-2 rounded-lg border border-gray-200 p-3">
+    <div className="space-y-2 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
       <div className="flex gap-2 flex-wrap">
         <input
           type="datetime-local"
           value={remindAt}
           onChange={e => onRemindAtChange(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
         <select
           value={recurrence}
           onChange={e => onRecurrenceChange(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-sm"
         >
           {RECURRENCES.map(r => (
             <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -174,7 +174,7 @@ function ReminderForm({
         >
           Save
         </button>
-        <button type="button" onClick={onCancel} className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg">
+        <button type="button" onClick={onCancel} className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg">
           Cancel
         </button>
       </div>

@@ -35,7 +35,7 @@ export default function NotesListPage() {
     return (
       <li
         key={note.id}
-        className="flex items-stretch rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        className="flex items-stretch rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       >
         <button
           type="button"
@@ -49,15 +49,15 @@ export default function NotesListPage() {
         </button>
         <Link to={`/notes/${note.id}`} className="flex-1 min-w-0 py-3 pr-4">
           <div className="flex items-start justify-between gap-2">
-            <span className="font-medium text-gray-900 line-clamp-1">{note.title}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{note.title}</span>
             {note.label && (
-              <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+              <span className="shrink-0 text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                 {note.label.replace('_', ' ')}
               </span>
             )}
           </div>
           {note.checklistItemCount > 0 && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {note.checkedItemCount}/{note.checklistItemCount} items
             </p>
           )}
@@ -67,14 +67,14 @@ export default function NotesListPage() {
   }
 
   const sectionHeading = (text: string) => (
-    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{text}</h2>
+    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">{text}</h2>
   )
 
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-gray-900">All Notes</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">All Notes</h1>
           <Link
             to="/notes/new"
             className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700"
@@ -83,10 +83,10 @@ export default function NotesListPage() {
           </Link>
         </div>
 
-        {isLoading && <p className="text-gray-500 text-sm">Loading…</p>}
+        {isLoading && <p className="text-gray-500 dark:text-gray-400 text-sm">Loading…</p>}
 
         {data?.content.length === 0 && (
-          <p className="text-gray-500 text-sm">No notes yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No notes yet.</p>
         )}
 
         {pinned.length > 0 && (
@@ -104,7 +104,7 @@ export default function NotesListPage() {
         )}
 
         {data && data.totalPages > 1 && (
-          <p className="mt-4 text-xs text-gray-400 text-center">
+          <p className="mt-4 text-xs text-gray-400 dark:text-gray-500 text-center">
             Page 1 of {data.totalPages} — use search to narrow results
           </p>
         )}

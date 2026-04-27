@@ -7,7 +7,7 @@ import type { TagResponse } from '../../types'
 function ColorDot({ color }: { color: string }) {
   return (
     <span
-      className="inline-block w-4 h-4 rounded-full border border-gray-300 shrink-0"
+      className="inline-block w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 shrink-0"
       style={{ backgroundColor: color }}
     />
   )
@@ -64,17 +64,17 @@ export default function AdminTagsPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Tag Manager</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tag Manager</h1>
 
         {/* Create */}
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700">Create tag</h2>
+        <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Create tag</h2>
           <div className="flex gap-2 items-center">
             <input
               value={newName}
               onChange={e => setNewName(e.target.value)}
               placeholder="Tag name"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <div className="flex items-center gap-1">
               <ColorDot color={newColor} />
@@ -99,21 +99,21 @@ export default function AdminTagsPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {/* List */}
-        {isLoading && <p className="text-sm text-gray-400">Loading…</p>}
+        {isLoading && <p className="text-sm text-gray-400 dark:text-gray-500">Loading…</p>}
         {tags.length === 0 && !isLoading && (
-          <p className="text-sm text-gray-400">No tags yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No tags yet.</p>
         )}
 
         <div className="space-y-2">
           {tags.map(tag => (
-            <div key={tag.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white">
+            <div key={tag.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
               {editId === tag.id ? (
                 <>
                   <input
                     autoFocus
                     value={editName}
                     onChange={e => setEditName(e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <div className="flex items-center gap-1">
                     <ColorDot color={editColor} />
@@ -133,7 +133,7 @@ export default function AdminTagsPage() {
                   </button>
                   <button
                     onClick={() => setEditId(null)}
-                    className="px-2 py-1 text-xs bg-white border border-gray-300 rounded"
+                    className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
                   >
                     Cancel
                   </button>
@@ -141,10 +141,10 @@ export default function AdminTagsPage() {
               ) : (
                 <>
                   <ColorDot color={tag.color} />
-                  <span className="flex-1 text-sm font-medium text-gray-800">{tag.name}</span>
+                  <span className="flex-1 text-sm font-medium text-gray-800 dark:text-gray-200">{tag.name}</span>
                   <button
                     onClick={() => startEdit(tag)}
-                    className="px-2 py-1 text-xs text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Edit
                   </button>
@@ -154,7 +154,7 @@ export default function AdminTagsPage() {
                         deleteTag.mutate(tag.id)
                       }
                     }}
-                    className="px-2 py-1 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50"
+                    className="px-2 py-1 text-xs text-red-600 border border-red-200 dark:border-red-800 rounded hover:bg-red-50 dark:hover:bg-red-900/30"
                   >
                     Delete
                   </button>

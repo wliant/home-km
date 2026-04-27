@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Hardcoded light theme. No `darkMode` config in Tailwind, no `prefers-color-scheme` handling, no per-user theme preference.
 

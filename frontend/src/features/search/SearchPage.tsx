@@ -24,14 +24,14 @@ export default function SearchPage() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-900 mb-4">Search</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Search</h1>
 
         <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Search notes, files, folders…"
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <button
             type="submit"
@@ -42,11 +42,11 @@ export default function SearchPage() {
         </form>
 
         {q.length >= 2 && isLoading && (
-          <p className="text-gray-500 text-sm">Searching…</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Searching…</p>
         )}
 
         {q.length >= 2 && !isLoading && data?.content.length === 0 && (
-          <p className="text-gray-500 text-sm">No results for "{q}".</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No results for "{q}".</p>
         )}
 
         <ul className="space-y-3">
@@ -54,17 +54,17 @@ export default function SearchPage() {
             <li key={`${result.type}-${result.id}`}>
               <Link
                 to={result.type === 'note' ? `/notes/${result.id}` : result.type === 'folder' ? `/folders/${result.id}` : `/files/${result.id}`}
-                className="block rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50 transition-colors"
+                className="block rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 capitalize">
                     {result.type}
                   </span>
-                  <span className="font-medium text-gray-900 line-clamp-1">{result.title}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{result.title}</span>
                 </div>
                 {result.excerpt && (
                   <p
-                    className="text-sm text-gray-600 line-clamp-2"
+                    className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2"
                     dangerouslySetInnerHTML={{ __html: result.excerpt }}
                   />
                 )}

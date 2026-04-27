@@ -92,17 +92,17 @@ export default function FolderPage() {
     ])
   }
 
-  if (!folder) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>
+  if (!folder) return <AppLayout><div className="text-gray-400 dark:text-gray-500">Loading…</div></AppLayout>
 
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{folder.name}</h1>
-            {folder.description && <p className="text-sm text-gray-500 mt-1">{folder.description}</p>}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{folder.name}</h1>
+            {folder.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{folder.description}</p>}
             {folder.isChildSafe && (
-              <span className="inline-block mt-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+              <span className="inline-block mt-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
                 Child-safe
               </span>
             )}
@@ -116,19 +116,19 @@ export default function FolderPage() {
             </button>
             <Link
               to={`/notes/new?folderId=${folderId}`}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               + Note
             </Link>
             <button
               onClick={openRename}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Rename
             </button>
             <button
               onClick={() => setShowMove(true)}
-              className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Move
             </button>
@@ -137,20 +137,20 @@ export default function FolderPage() {
 
         {/* Rename modal */}
         {showRename && (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">Rename folder</h3>
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rename folder</h3>
             <input
               autoFocus
               value={renameValue}
               onChange={e => setRenameValue(e.target.value)}
               placeholder="Folder name"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <input
               value={renameDesc}
               onChange={e => setRenameDesc(e.target.value)}
               placeholder="Description (optional)"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <div className="flex gap-2">
               <button
@@ -162,7 +162,7 @@ export default function FolderPage() {
               </button>
               <button
                 onClick={() => setShowRename(false)}
-                className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg"
+                className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -172,12 +172,12 @@ export default function FolderPage() {
 
         {/* Move modal */}
         {showMove && (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">Move to folder</h3>
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Move to folder</h3>
             <select
               value={moveToId}
               onChange={e => setMoveToId(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">— Root (no parent) —</option>
               {allFolders && flattenFolders(allFolders)
@@ -195,7 +195,7 @@ export default function FolderPage() {
               </button>
               <button
                 onClick={() => setShowMove(false)}
-                className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg"
+                className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
               >
                 Cancel
               </button>
@@ -204,10 +204,10 @@ export default function FolderPage() {
         )}
 
         {/* Child-safe toggle */}
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900">Child-safe mode</p>
-            <p className="text-xs text-blue-700 mt-0.5">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">Child-safe mode</p>
+            <p className="text-xs text-blue-700 dark:text-blue-400 mt-0.5">
               {folder.isChildSafe
                 ? 'Enabled — child accounts can see this folder.'
                 : 'Disabled — hidden from child accounts. Enabling will cascade to contents.'}
@@ -225,7 +225,7 @@ export default function FolderPage() {
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
               folder.isChildSafe
                 ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-white border border-blue-300 text-blue-700 hover:bg-blue-100'
+                : 'bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'
             }`}
           >
             {folder.isChildSafe ? 'Enabled' : 'Enable'}
@@ -239,23 +239,23 @@ export default function FolderPage() {
               value={newFolderName}
               onChange={e => setNewFolderName(e.target.value)}
               placeholder="Folder name"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <button onClick={() => createSubfolder.mutate()}
               className="px-3 py-2 text-sm bg-primary-600 text-white rounded-lg">Create</button>
             <button onClick={() => setShowNewFolder(false)}
-              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg">Cancel</button>
+              className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg">Cancel</button>
           </div>
         )}
 
         {/* Sub-folders */}
         {folder.children.length > 0 && (
           <section>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Subfolders</h2>
+            <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Subfolders</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {folder.children.map(child => (
                 <Link key={child.id} to={`/folders/${child.id}`}
-                  className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-white hover:border-primary-300">
+                  className="flex items-center gap-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-300">
                   <span>📁</span>
                   <span className="text-sm truncate">{child.name}</span>
                 </Link>
@@ -266,22 +266,22 @@ export default function FolderPage() {
 
         {/* Notes */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Notes</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Notes</h2>
           {notesPage?.content.length === 0 ? (
-            <p className="text-sm text-gray-400">No notes yet.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">No notes yet.</p>
           ) : (
             <div className="space-y-2">
               {notesPage?.content.map(note => (
                 <Link key={note.id} to={`/notes/${note.id}`}
-                  className="block p-4 rounded-xl border border-gray-200 bg-white hover:border-primary-300">
+                  className="block p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-300">
                   <div className="flex items-start justify-between">
-                    <span className="font-medium text-gray-900">{note.title}</span>
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full ml-2 shrink-0">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{note.title}</span>
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full ml-2 shrink-0">
                       {note.label.replace('_', ' ')}
                     </span>
                   </div>
                   {note.checklistItemCount > 0 && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                       {note.checkedItemCount}/{note.checklistItemCount} items checked
                     </p>
                   )}
@@ -293,29 +293,29 @@ export default function FolderPage() {
 
         {/* Files */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Files</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Files</h2>
           {filesPage?.content.length === 0 ? (
-            <p className="text-sm text-gray-400">No files yet.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">No files yet.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {filesPage?.content.map(file => (
                 <a key={file.id} href={file.downloadUrl ?? '#'}
                   target="_blank" rel="noopener noreferrer"
-                  className="block p-3 rounded-xl border border-gray-200 bg-white hover:border-primary-300">
+                  className="block p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-300">
                   {file.hasThumbnail && file.thumbnailUrl ? (
                     <img src={file.thumbnailUrl} alt={file.filename}
                       className="w-full h-24 object-cover rounded-lg mb-2" />
                   ) : (
-                    <div className="w-full h-24 bg-gray-100 rounded-lg flex items-center justify-center text-3xl mb-2">📄</div>
+                    <div className="w-full h-24 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-3xl mb-2">📄</div>
                   )}
-                  <p className="text-xs text-gray-700 truncate">{file.filename}</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{file.filename}</p>
                 </a>
               ))}
             </div>
           )}
         </section>
 
-        <div className="pt-4 border-t border-gray-200">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={() => { if (confirm('Delete this folder?')) deleteFolder.mutate(false) }}
             className="text-sm text-red-500 hover:text-red-700"

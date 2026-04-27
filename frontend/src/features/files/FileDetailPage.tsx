@@ -48,7 +48,7 @@ export default function FileDetailPage() {
     },
   })
 
-  if (isLoading) return <AppLayout><div className="text-gray-400">Loading…</div></AppLayout>
+  if (isLoading) return <AppLayout><div className="text-gray-400 dark:text-gray-500">Loading…</div></AppLayout>
   if (!file) return <AppLayout><div className="text-red-500">File not found</div></AppLayout>
 
   const startRename = () => {
@@ -82,7 +82,7 @@ export default function FileDetailPage() {
                 }}
                 disabled={renameFile.isPending}
                 maxLength={500}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <div className="flex gap-2">
                 <button
@@ -95,26 +95,26 @@ export default function FileDetailPage() {
                 <button
                   onClick={() => setEditingName(false)}
                   disabled={renameFile.isPending}
-                  className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
-            <h1 className="text-xl font-bold text-gray-900 break-all flex-1">{file.filename}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 break-all flex-1">{file.filename}</h1>
           )}
           {!user?.isChild && !editingName && (
             <div className="shrink-0 flex gap-2">
               <button
                 onClick={startRename}
-                className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Rename
               </button>
               <button
                 onClick={() => { if (confirm('Delete this file?')) deleteFile.mutate() }}
-                className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                className="px-3 py-1.5 text-sm text-red-600 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30"
               >
                 Delete
               </button>
@@ -127,35 +127,35 @@ export default function FileDetailPage() {
           <img
             src={file.thumbnailUrl}
             alt={file.filename}
-            className="max-w-full rounded-xl border border-gray-200"
+            className="max-w-full rounded-xl border border-gray-200 dark:border-gray-700"
           />
         ) : (
-          <div className="flex items-center justify-center h-40 rounded-xl bg-gray-100 border border-gray-200">
-            <span className="text-gray-400 text-sm">{file.mimeType}</span>
+          <div className="flex items-center justify-center h-40 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-700">
+            <span className="text-gray-400 dark:text-gray-500 text-sm">{file.mimeType}</span>
           </div>
         )}
 
         {/* Metadata */}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <dt className="text-gray-500">Type</dt>
-          <dd className="text-gray-900">{file.mimeType}</dd>
-          <dt className="text-gray-500">Size</dt>
-          <dd className="text-gray-900">{formatSize(file.sizeBytes)}</dd>
-          <dt className="text-gray-500">Uploaded</dt>
-          <dd className="text-gray-900">{new Date(file.uploadedAt).toLocaleDateString()}</dd>
+          <dt className="text-gray-500 dark:text-gray-400">Type</dt>
+          <dd className="text-gray-900 dark:text-gray-100">{file.mimeType}</dd>
+          <dt className="text-gray-500 dark:text-gray-400">Size</dt>
+          <dd className="text-gray-900 dark:text-gray-100">{formatSize(file.sizeBytes)}</dd>
+          <dt className="text-gray-500 dark:text-gray-400">Uploaded</dt>
+          <dd className="text-gray-900 dark:text-gray-100">{new Date(file.uploadedAt).toLocaleDateString()}</dd>
           {file.description && (
             <>
-              <dt className="text-gray-500">Description</dt>
-              <dd className="text-gray-900">{file.description}</dd>
+              <dt className="text-gray-500 dark:text-gray-400">Description</dt>
+              <dd className="text-gray-900 dark:text-gray-100">{file.description}</dd>
             </>
           )}
-          <dt className="text-gray-500">Child safe</dt>
-          <dd className="text-gray-900">{file.isChildSafe ? 'Yes' : 'No'}</dd>
+          <dt className="text-gray-500 dark:text-gray-400">Child safe</dt>
+          <dd className="text-gray-900 dark:text-gray-100">{file.isChildSafe ? 'Yes' : 'No'}</dd>
         </dl>
 
         {/* Tags */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 mb-2">Tags</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Tags</h2>
           <TagAutocomplete
             entityType="file"
             entityId={fileId}

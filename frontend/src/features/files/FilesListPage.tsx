@@ -72,7 +72,7 @@ export default function FilesListPage() {
     <AppLayout>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Files</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Files</h1>
           <div>
             <input
               ref={inputRef}
@@ -94,8 +94,8 @@ export default function FilesListPage() {
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
         {uploadProgress && (
           <div className="mb-4 space-y-1">
-            <p className="text-xs text-gray-600 truncate">Uploading {uploadProgress.name}…</p>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">Uploading {uploadProgress.name}…</p>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
                 className="bg-primary-600 h-1.5 rounded-full transition-all duration-150"
                 style={{ width: `${uploadProgress.pct}%` }}
@@ -104,43 +104,43 @@ export default function FilesListPage() {
           </div>
         )}
         {queued > 0 && (
-          <p className="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="mb-4 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
             You are offline. {queued} file{queued !== 1 ? 's' : ''} queued for upload when connection is restored.
           </p>
         )}
-        {isLoading && <p className="text-gray-500 text-sm">Loading…</p>}
+        {isLoading && <p className="text-gray-500 dark:text-gray-400 text-sm">Loading…</p>}
 
         {data?.content.length === 0 && !isLoading && (
-          <p className="text-gray-500 text-sm">No files yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No files yet.</p>
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {data?.content.map(file => (
             <div
               key={file.id}
-              className="group relative rounded-lg border border-gray-200 overflow-hidden cursor-pointer"
+              className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"
             >
               {file.thumbnailUrl ? (
                 <img
                   src={file.thumbnailUrl}
                   alt={file.filename}
-                  className="w-full h-32 object-cover bg-gray-100"
+                  className="w-full h-32 object-cover bg-gray-100 dark:bg-gray-700"
                 />
               ) : (
-                <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-                  <span className="text-xs text-gray-400 break-all px-2 text-center">
+                <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 break-all px-2 text-center">
                     {file.mimeType.split('/')[1] ?? file.mimeType}
                   </span>
                 </div>
               )}
               <div className="p-2">
-                <p className="text-xs text-gray-700 line-clamp-1 font-medium">{file.filename}</p>
-                <p className="text-xs text-gray-400">{(file.sizeBytes / 1024).toFixed(0)} KB</p>
+                <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-1 font-medium">{file.filename}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{(file.sizeBytes / 1024).toFixed(0)} KB</p>
               </div>
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <Link
                   to={`/files/${file.id}`}
-                  className="px-2 py-1 bg-white text-xs text-gray-800 rounded hover:bg-gray-100"
+                  className="px-2 py-1 bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   View
                 </Link>
@@ -148,7 +148,7 @@ export default function FilesListPage() {
                   href={file.downloadUrl ?? undefined}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-2 py-1 bg-white text-xs text-gray-800 rounded hover:bg-gray-100"
+                  className="px-2 py-1 bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   Download
                 </a>
