@@ -5,6 +5,7 @@
 | Category | Functional · Admin |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** No audit log. Admin actions (user creation, password reset, role change, bulk delete) leave no trace beyond stdout logs in the container.
 
