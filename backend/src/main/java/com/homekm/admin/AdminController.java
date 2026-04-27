@@ -3,6 +3,7 @@ package com.homekm.admin;
 import com.homekm.admin.dto.CreateUserRequest;
 import com.homekm.admin.dto.ResetPasswordRequest;
 import com.homekm.admin.dto.UpdateUserRequest;
+import com.homekm.auth.RefreshTokenRepository;
 import com.homekm.auth.UserPrincipal;
 import com.homekm.auth.dto.UserResponse;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +22,11 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, RefreshTokenRepository refreshTokenRepository) {
         this.adminService = adminService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @GetMapping
@@ -54,6 +58,13 @@ public class AdminController {
                                                @Valid @RequestBody ResetPasswordRequest req,
                                                @AuthenticationPrincipal UserPrincipal principal) {
         adminService.resetPassword(id, req, principal);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/sessions/revoke")
+    @Transactional
+    public ResponseEntity<Void> revokeUserSessions(@PathVariable Long id) {
+        refreshTokenRepository.revokeAllByUserId(id);
         return ResponseEntity.noContent().build();
     }
 }

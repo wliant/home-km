@@ -21,6 +21,7 @@ class JwtAuthFilterTest {
 
     JwtService jwtService = mock(JwtService.class);
     UserRepository userRepository = mock(UserRepository.class);
+    JwtDenylist jwtDenylist = mock(JwtDenylist.class);
     ObjectMapper objectMapper = new ObjectMapper();
     JwtAuthFilter filter;
 
@@ -28,7 +29,7 @@ class JwtAuthFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new JwtAuthFilter(jwtService, userRepository, objectMapper);
+        filter = new JwtAuthFilter(jwtService, userRepository, jwtDenylist, objectMapper);
         SecurityContextHolder.clearContext();
 
         activeUser = new User();

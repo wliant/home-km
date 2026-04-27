@@ -22,11 +22,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final JwtDenylist jwtDenylist;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthFilter(JwtService jwtService, UserRepository userRepository, ObjectMapper objectMapper) {
+    public JwtAuthFilter(JwtService jwtService, UserRepository userRepository,
+                         JwtDenylist jwtDenylist, ObjectMapper objectMapper) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.jwtDenylist = jwtDenylist;
         this.objectMapper = objectMapper;
     }
 
@@ -49,6 +52,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         } catch (JwtException e) {
             writeError(response, 401, "UNAUTHORIZED", "Invalid token");
+            return;
+        }
+
+        String jti = claims.getId();
+        if (jti != null && jwtDenylist.isRevoked(jti)) {
+            writeError(response, 401, "TOKEN_REVOKED", "Token has been revoked");
             return;
         }
 

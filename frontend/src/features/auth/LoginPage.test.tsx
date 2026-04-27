@@ -66,6 +66,7 @@ describe('LoginPage', () => {
   it('calls authApi.login with form values on valid submit', async () => {
     mockAuthApi.login.mockResolvedValue({
       token: 'tok',
+      refreshToken: 'rt',
       user: { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, createdAt: '' },
       expiresAt: new Date(Date.now() + 86400_000).toISOString(),
     })

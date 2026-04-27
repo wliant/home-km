@@ -16,7 +16,7 @@ describe('authStore', () => {
     const user = { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, createdAt: '' }
     const expiresAt = new Date(Date.now() + 3600_000).toISOString()
 
-    useAuthStore.getState().setAuth('my-token', user, expiresAt)
+    useAuthStore.getState().setAuth('my-token', 'refresh-tok', user, expiresAt)
 
     const state = useAuthStore.getState()
     expect(state.isAuthenticated).toBe(true)
@@ -27,7 +27,7 @@ describe('authStore', () => {
 
   it('clearAuth resets all fields', () => {
     const user = { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, createdAt: '' }
-    useAuthStore.getState().setAuth('tok', user, new Date(Date.now() + 3600_000).toISOString())
+    useAuthStore.getState().setAuth('tok', 'rt', user, new Date(Date.now() + 3600_000).toISOString())
     useAuthStore.getState().clearAuth()
 
     const state = useAuthStore.getState()
@@ -39,7 +39,7 @@ describe('authStore', () => {
 
   it('setAuth with admin user preserves isAdmin flag', () => {
     const admin = { id: 2, email: 'admin@b.com', displayName: 'Admin', isAdmin: true, isChild: false, isActive: true, createdAt: '' }
-    useAuthStore.getState().setAuth('tok2', admin, new Date(Date.now() + 3600_000).toISOString())
+    useAuthStore.getState().setAuth('tok2', 'rt2', admin, new Date(Date.now() + 3600_000).toISOString())
 
     expect(useAuthStore.getState().user?.isAdmin).toBe(true)
   })

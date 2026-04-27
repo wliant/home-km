@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Single JWT issued at login with a 24h expiry (`JWT_EXPIRY_HOURS=24`). When the token expires, the user is silently logged out mid-session. `authStore` only checks expiry on rehydrate, not on each request, so 401s appear inconsistently.
 

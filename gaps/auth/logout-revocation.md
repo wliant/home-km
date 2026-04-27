@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Logout clears the token from the frontend `authStore` only. Because JWT is stateless, the issued token remains valid server-side until expiry. There is no way for an admin or user to forcibly revoke a session.
 

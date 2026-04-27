@@ -37,7 +37,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
+                        "/api/auth/password-reset/request", "/api/auth/password-reset/confirm").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/push/vapid-public-key").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
