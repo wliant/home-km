@@ -38,7 +38,7 @@ public class ReminderService {
 
     @Transactional
     public NoteDetail.ReminderResponse create(Long noteId, ReminderRequest req, UserPrincipal principal) {
-        Note note = noteRepository.findById(noteId)
+        Note note = noteRepository.findActiveById(noteId)
                 .orElseThrow(() -> new EntityNotFoundException("Note", noteId));
 
         long count = reminderRepository.countByNoteId(noteId);

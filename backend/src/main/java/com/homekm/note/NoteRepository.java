@@ -13,19 +13,19 @@ import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
-    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId " +
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.deletedAt IS NULL " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listByFolder(@Param("folderId") Long folderId, Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder IS NULL " +
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.deletedAt IS NULL " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listRoot(Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.childSafe = true " +
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.childSafe = true AND n.deletedAt IS NULL " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listByFolderChildSafe(@Param("folderId") Long folderId, Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.childSafe = true " +
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.childSafe = true AND n.deletedAt IS NULL " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listRootChildSafe(Pageable pageable);
 
@@ -46,5 +46,16 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     @Query("SELECT COUNT(n) FROM Note n WHERE n.folder.id IN :folderIds")
     long countByFolderIds(@Param("folderIds") List<Long> folderIds);
 
-    Optional<Note> findByIdAndChildSafe(Long id, boolean childSafe);
+    @Query("SELECT n FROM Note n WHERE n.id = :id AND n.childSafe = :childSafe AND n.deletedAt IS NULL")
+    Optional<Note> findByIdAndChildSafeAndDeletedAtIsNull(@Param("id") Long id, @Param("childSafe") boolean childSafe);
+
+    @Query("SELECT n FROM Note n WHERE n.deletedAt IS NOT NULL ORDER BY n.deletedAt DESC")
+    List<Note> findAllDeleted();
+
+    @Query("SELECT n FROM Note n WHERE n.id = :id AND n.deletedAt IS NULL")
+    Optional<Note> findActiveById(@Param("id") Long id);
+
+    @Modifying
+    @Query("DELETE FROM Note n WHERE n.deletedAt IS NOT NULL AND n.deletedAt < :cutoff")
+    int purgeDeletedBefore(@Param("cutoff") Instant cutoff);
 }

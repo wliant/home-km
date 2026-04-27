@@ -42,6 +42,9 @@ public class Note {
     @Column(name = "pinned_at")
     private Instant pinnedAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
 
@@ -62,4 +65,6 @@ public class Note {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getPinnedAt() { return pinnedAt; }
     public void setPinnedAt(Instant pinnedAt) { this.pinnedAt = pinnedAt; }
+    public Instant getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
 }

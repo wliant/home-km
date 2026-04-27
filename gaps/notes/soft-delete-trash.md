@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `DELETE /api/notes/{id}` removes the row immediately. There is no undo, no trash bin, no retention period. The same applies to files and folders.
 

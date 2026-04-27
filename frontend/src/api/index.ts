@@ -120,6 +120,21 @@ export const searchApi = {
     apiClient.get<PageResponse<SearchResult>>('/search', { params }).then(r => r.data),
 }
 
+// Trash
+export const trashApi = {
+  list: () => apiClient.get<{ notes: TrashItem[]; files: TrashItem[]; folders: TrashItem[] }>('/trash').then(r => r.data),
+  restoreNote: (id: number) => apiClient.post(`/notes/${id}/restore`),
+  restoreFile: (id: number) => apiClient.post(`/files/${id}/restore`),
+  restoreFolder: (id: number) => apiClient.post(`/folders/${id}/restore`),
+}
+
+export interface TrashItem {
+  id: number
+  type: string
+  name: string
+  deletedAt: string
+}
+
 // Admin
 export const adminApi = {
   listUsers: () => apiClient.get('/admin/users').then(r => r.data),
@@ -128,4 +143,8 @@ export const adminApi = {
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),
   resetPassword: (id: number, newPassword: string) =>
     apiClient.post(`/admin/users/${id}/reset-password`, { newPassword }),
+  revokeUserSessions: (id: number) =>
+    apiClient.post(`/admin/users/${id}/sessions/revoke`),
+  getAuditLog: (params: { page?: number; size?: number; actorId?: number; action?: string; from?: string; to?: string }) =>
+    apiClient.get('/admin/audit', { params }).then(r => r.data),
 }

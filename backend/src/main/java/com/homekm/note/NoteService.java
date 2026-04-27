@@ -1,5 +1,6 @@
 package com.homekm.note;
 
+import com.homekm.audit.AuditService;
 import com.homekm.auth.User;
 import com.homekm.auth.UserPrincipal;
 import com.homekm.auth.UserRepository;
@@ -11,6 +12,7 @@ import com.homekm.folder.Folder;
 import com.homekm.folder.FolderRepository;
 import com.homekm.note.dto.*;
 import com.homekm.reminder.ReminderRepository;
+import com.homekm.common.RequestContextHelper;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,16 +34,19 @@ public class NoteService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
     private final ChildSafeService childSafeService;
+    private final AuditService auditService;
 
     public NoteService(NoteRepository noteRepository, ChecklistItemRepository checklistItemRepository,
                        ReminderRepository reminderRepository, FolderRepository folderRepository,
-                       UserRepository userRepository, ChildSafeService childSafeService) {
+                       UserRepository userRepository, ChildSafeService childSafeService,
+                       AuditService auditService) {
         this.noteRepository = noteRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.reminderRepository = reminderRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
         this.childSafeService = childSafeService;
+        this.auditService = auditService;
     }
 
     public PageResponse<NoteSummary> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -78,7 +83,7 @@ public class NoteService {
         note.setOwner(owner);
 
         if (req.folderId() != null) {
-            Folder folder = folderRepository.findById(req.folderId())
+            Folder folder = folderRepository.findActiveById(req.folderId())
                     .orElseThrow(() -> new EntityNotFoundException("Folder", req.folderId()));
             note.setFolder(folder);
         }
@@ -102,7 +107,7 @@ public class NoteService {
 
     @Transactional
     public NoteDetail update(Long id, NoteRequest req, UserPrincipal principal) {
-        Note note = noteRepository.findById(id)
+        Note note = noteRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Note", id));
 
         // Children can only edit their own notes
@@ -126,7 +131,7 @@ public class NoteService {
         if (req.folderId() != null) {
             Long currentFolderId = note.getFolder() != null ? note.getFolder().getId() : null;
             if (!req.folderId().equals(currentFolderId)) {
-                Folder dest = folderRepository.findById(req.folderId())
+                Folder dest = folderRepository.findActiveById(req.folderId())
                         .orElseThrow(() -> new EntityNotFoundException("Folder", req.folderId()));
                 note.setFolder(dest);
                 // Destination folder is safe → note becomes safe
@@ -147,9 +152,26 @@ public class NoteService {
     @Transactional
     public void delete(Long id, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
+        Note note = noteRepository.findActiveById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Note", id));
+        note.setDeletedAt(Instant.now());
+        noteRepository.save(note);
+        auditService.record(principal.getId(), "NOTE_DELETE", "note", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+    }
+
+    @Transactional
+    public void restore(Long id, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Note", id));
-        noteRepository.delete(note);
+        if (note.getDeletedAt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "NOT_DELETED");
+        }
+        note.setDeletedAt(null);
+        noteRepository.save(note);
+        auditService.record(principal.getId(), "NOTE_RESTORE", "note", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
     }
 
     @Transactional
@@ -249,18 +271,19 @@ public class NoteService {
 
     private Note findVisibleNote(Long id, UserPrincipal principal) {
         if (principal.isChild()) {
-            return noteRepository.findByIdAndChildSafe(id, true)
+            return noteRepository.findByIdAndChildSafeAndDeletedAtIsNull(id, true)
                     .orElseThrow(() -> new EntityNotFoundException("Note", id));
         }
-        return noteRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Note", id));
+        return noteRepository.findActiveById(id).orElseThrow(() -> new EntityNotFoundException("Note", id));
     }
 
     private Note findEditableNote(Long noteId, UserPrincipal principal) {
-        Note note = noteRepository.findById(noteId)
+        Note note = noteRepository.findActiveById(noteId)
                 .orElseThrow(() -> new EntityNotFoundException("Note", noteId));
         if (principal.isChild() && note.getOwner().getId() != principal.getId()) {
             throw new ChildAccountWriteException();
         }
         return note;
     }
+
 }

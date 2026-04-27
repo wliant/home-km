@@ -1,5 +1,6 @@
 package com.homekm.file;
 
+import com.homekm.audit.AuditService;
 import com.homekm.auth.User;
 import com.homekm.auth.UserPrincipal;
 import com.homekm.auth.UserRepository;
@@ -14,13 +15,16 @@ import com.homekm.folder.Folder;
 import com.homekm.folder.FolderRepository;
 import io.minio.*;
 import io.minio.http.Method;
+import com.homekm.common.RequestContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -28,6 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -41,23 +46,26 @@ public class FileService {
     private final ChildSafeService childSafeService;
     private final MinioClient minioClient;
     private final AppProperties appProperties;
+    private final AuditService auditService;
 
     public FileService(StoredFileRepository fileRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
-                       MinioClient minioClient, AppProperties appProperties) {
+                       MinioClient minioClient, AppProperties appProperties,
+                       AuditService auditService) {
         this.fileRepository = fileRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
         this.childSafeService = childSafeService;
         this.minioClient = minioClient;
         this.appProperties = appProperties;
+        this.auditService = auditService;
     }
 
     public PageResponse<FileResponse> list(Long folderId, int page, int size, UserPrincipal principal) {
         var pageable = PageRequest.of(page, Math.min(size, 100));
         var files = principal.isChild()
-                ? fileRepository.findByFolderIdAndChildSafeTrueOrderByUploadedAtDesc(folderId, pageable)
-                : fileRepository.findByFolderIdOrderByUploadedAtDesc(folderId, pageable);
+                ? fileRepository.findByFolderIdAndChildSafeTrueAndDeletedAtIsNullOrderByUploadedAtDesc(folderId, pageable)
+                : fileRepository.findByFolderIdAndDeletedAtIsNullOrderByUploadedAtDesc(folderId, pageable);
         return PageResponse.of(files.map(f -> toResponse(f)));
     }
 
@@ -81,7 +89,7 @@ public class FileService {
         stored.setChildSafe(principal.isChild());
 
         if (folderId != null) {
-            Folder folder = folderRepository.findById(folderId)
+            Folder folder = folderRepository.findActiveById(folderId)
                     .orElseThrow(() -> new EntityNotFoundException("Folder", folderId));
             stored.setFolder(folder);
             if (!principal.isChild()) {
@@ -127,7 +135,7 @@ public class FileService {
 
     @Transactional
     public FileResponse update(Long id, FileUpdateRequest req, UserPrincipal principal) {
-        StoredFile f = fileRepository.findById(id)
+        StoredFile f = fileRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("File", id));
         if (principal.isChild() && f.getOwner().getId() != principal.getId()) {
             throw new ChildAccountWriteException();
@@ -136,7 +144,7 @@ public class FileService {
         if (req.description() != null) f.setDescription(req.description());
         if (!principal.isChild() && req.isChildSafe() != null) f.setChildSafe(req.isChildSafe());
         if (req.folderId() != null) {
-            Folder dest = folderRepository.findById(req.folderId())
+            Folder dest = folderRepository.findActiveById(req.folderId())
                     .orElseThrow(() -> new EntityNotFoundException("Folder", req.folderId()));
             f.setFolder(dest);
             boolean safe = childSafeService.resolveChildSafeOnMove(f.isChildSafe(), req.folderId());
@@ -149,27 +157,32 @@ public class FileService {
     @Transactional
     public void delete(Long id, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
+        StoredFile f = fileRepository.findActiveById(id)
+                .orElseThrow(() -> new EntityNotFoundException("File", id));
+        f.setDeletedAt(Instant.now());
+        fileRepository.save(f);
+        auditService.record(principal.getId(), "FILE_DELETE", "file", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+    }
+
+    @Transactional
+    public void restore(Long id, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
         StoredFile f = fileRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("File", id));
-        try {
-            minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(appProperties.getMinio().getBucketName())
-                    .object(f.getMinioKey()).build());
-            if (f.getThumbnailKey() != null) {
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(appProperties.getMinio().getBucketName())
-                        .object(f.getThumbnailKey()).build());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to delete MinIO object {}: {}", f.getMinioKey(), e.getMessage());
+        if (f.getDeletedAt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "NOT_DELETED");
         }
-        fileRepository.delete(f);
+        f.setDeletedAt(null);
+        fileRepository.save(f);
+        auditService.record(principal.getId(), "FILE_RESTORE", "file", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
     }
 
     @Transactional
     public FileResponse replaceContent(Long id, MultipartFile file, UserPrincipal principal) throws Exception {
         if (principal.isChild()) throw new ChildAccountWriteException();
-        StoredFile f = fileRepository.findById(id)
+        StoredFile f = fileRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("File", id));
 
         String bucket = appProperties.getMinio().getBucketName();
@@ -278,10 +291,10 @@ public class FileService {
 
     private StoredFile findVisibleFile(Long id, UserPrincipal principal) {
         if (principal.isChild()) {
-            return fileRepository.findByIdAndChildSafe(id, true)
+            return fileRepository.findByIdAndChildSafeAndDeletedAtIsNull(id, true)
                     .orElseThrow(() -> new EntityNotFoundException("File", id));
         }
-        return fileRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("File", id));
+        return fileRepository.findActiveById(id).orElseThrow(() -> new EntityNotFoundException("File", id));
     }
 
     private static String sanitizeFilename(String name) {
@@ -298,4 +311,5 @@ public class FileService {
             log.warn("Could not verify/create bucket {}: {}", bucket, e.getMessage());
         }
     }
+
 }

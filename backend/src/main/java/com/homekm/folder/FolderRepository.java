@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,9 +17,11 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
 
     boolean existsByParentId(Long parentId);
 
+    @Query("SELECT f FROM Folder f WHERE f.parent IS NULL AND f.deletedAt IS NULL")
     List<Folder> findByParentIsNull();
 
-    List<Folder> findByParentId(Long parentId);
+    @Query("SELECT f FROM Folder f WHERE f.parent.id = :parentId AND f.deletedAt IS NULL")
+    List<Folder> findByParentId(@Param("parentId") Long parentId);
 
     @Query(value = """
         WITH RECURSIVE ancestors AS (
@@ -62,4 +65,20 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     void updateChildSafe(@Param("id") Long id, @Param("safe") boolean safe);
 
     Optional<Folder> findByIdAndChildSafe(Long id, boolean childSafe);
+
+    @Query("SELECT f FROM Folder f WHERE f.id = :id AND f.childSafe = :childSafe AND f.deletedAt IS NULL")
+    Optional<Folder> findByIdAndChildSafeAndDeletedAtIsNull(@Param("id") Long id, @Param("childSafe") boolean childSafe);
+
+    @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NULL")
+    List<Folder> findAllActive();
+
+    @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NOT NULL ORDER BY f.deletedAt DESC")
+    List<Folder> findAllDeleted();
+
+    @Query("SELECT f FROM Folder f WHERE f.id = :id AND f.deletedAt IS NULL")
+    Optional<Folder> findActiveById(@Param("id") Long id);
+
+    @Modifying
+    @Query("DELETE FROM Folder f WHERE f.deletedAt IS NOT NULL AND f.deletedAt < :cutoff")
+    int purgeDeletedBefore(@Param("cutoff") Instant cutoff);
 }

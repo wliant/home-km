@@ -68,4 +68,11 @@ public class FileController {
         fileService.delete(id, principal);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserPrincipal principal) {
+        fileService.restore(id, principal);
+        return ResponseEntity.ok().build();
+    }
 }

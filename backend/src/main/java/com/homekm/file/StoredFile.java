@@ -51,6 +51,9 @@ public class StoredFile {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
 
@@ -77,4 +80,6 @@ public class StoredFile {
     public void setClientUploadId(String clientUploadId) { this.clientUploadId = clientUploadId; }
     public Instant getUploadedAt() { return uploadedAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public Instant getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
 }

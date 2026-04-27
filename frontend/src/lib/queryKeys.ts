@@ -13,4 +13,5 @@ export const QK = {
   search: (params: object) => ['search', params] as const,
   adminUsers: () => ['admin', 'users'] as const,
   me: () => ['me'] as const,
+  trash: () => ['trash'] as const,
 }

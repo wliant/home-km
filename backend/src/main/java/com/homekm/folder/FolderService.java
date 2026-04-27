@@ -1,5 +1,6 @@
 package com.homekm.folder;
 
+import com.homekm.audit.AuditService;
 import com.homekm.auth.User;
 import com.homekm.auth.UserRepository;
 import com.homekm.common.ChildSafeService;
@@ -10,6 +11,7 @@ import com.homekm.folder.dto.FolderRequest;
 import com.homekm.folder.dto.FolderResponse;
 import com.homekm.note.NoteRepository;
 import com.homekm.auth.UserPrincipal;
+import com.homekm.common.RequestContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,19 +35,21 @@ public class FolderService {
     private final StoredFileRepository fileRepository;
     private final UserRepository userRepository;
     private final ChildSafeService childSafeService;
+    private final AuditService auditService;
 
     public FolderService(FolderRepository folderRepository, NoteRepository noteRepository,
                          StoredFileRepository fileRepository, UserRepository userRepository,
-                         ChildSafeService childSafeService) {
+                         ChildSafeService childSafeService, AuditService auditService) {
         this.folderRepository = folderRepository;
         this.noteRepository = noteRepository;
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
         this.childSafeService = childSafeService;
+        this.auditService = auditService;
     }
 
     public List<FolderResponse> getTree(UserPrincipal principal) {
-        List<Folder> all = folderRepository.findAll();
+        List<Folder> all = folderRepository.findAllActive();
         if (principal.isChild()) {
             all = all.stream().filter(Folder::isChildSafe).toList();
         }
@@ -76,7 +81,7 @@ public class FolderService {
         folder.setOwner(owner);
 
         if (req.parentId() != null) {
-            Folder parent = folderRepository.findById(req.parentId())
+            Folder parent = folderRepository.findActiveById(req.parentId())
                     .orElseThrow(() -> new EntityNotFoundException("Folder", req.parentId()));
             validateDepth(req.parentId());
             validateSiblingName(req.parentId(), req.name(), null);
@@ -93,7 +98,7 @@ public class FolderService {
     public FolderResponse update(Long id, FolderRequest req, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
-        Folder folder = folderRepository.findById(id)
+        Folder folder = folderRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Folder", id));
 
         if (req.name() != null && !req.name().equals(folder.getName())) {
@@ -120,7 +125,7 @@ public class FolderService {
                 }
                 validateDepth(newParentId);
                 validateSiblingName(newParentId, folder.getName(), id);
-                Folder newParent = folderRepository.findById(newParentId)
+                Folder newParent = folderRepository.findActiveById(newParentId)
                         .orElseThrow(() -> new EntityNotFoundException("Folder", newParentId));
                 folder.setParent(newParent);
             } else {
@@ -137,7 +142,7 @@ public class FolderService {
     public void delete(Long id, boolean force, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
-        Folder folder = folderRepository.findById(id)
+        Folder folder = folderRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Folder", id));
 
         boolean hasChildren = folderRepository.existsByParentId(id);
@@ -145,35 +150,64 @@ public class FolderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "FOLDER_HAS_CHILDREN");
         }
 
+        Instant now = Instant.now();
+
         if (force) {
             List<Long> descendantIds = folderRepository.findDescendantIds(id);
-            // Delete files in MinIO (best-effort) — log failures
+            // Soft-delete files and notes in descendant folders
             descendantIds.forEach(did -> {
                 fileRepository.findByFolderId(did).forEach(f -> {
-                    log.warn("Force delete: skipping MinIO object deletion for key {}", f.getMinioKey());
+                    f.setDeletedAt(now);
+                    fileRepository.save(f);
                 });
-                fileRepository.deleteAll(fileRepository.findByFolderId(did));
-                noteRepository.deleteAll(noteRepository.findByFolderId(did));
+                noteRepository.findByFolderId(did).forEach(n -> {
+                    n.setDeletedAt(now);
+                    noteRepository.save(n);
+                });
             });
-            // Delete all descendants (bottom-up)
-            for (int i = descendantIds.size() - 1; i >= 0; i--) {
-                folderRepository.deleteById(descendantIds.get(i));
+            // Soft-delete all descendant folders
+            for (Long did : descendantIds) {
+                folderRepository.findById(did).ifPresent(d -> {
+                    d.setDeletedAt(now);
+                    folderRepository.save(d);
+                });
             }
         }
 
-        // Delete items at this folder level
-        fileRepository.findByFolderId(id).forEach(f ->
-                log.warn("Force delete: skipping MinIO object deletion for key {}", f.getMinioKey()));
-        fileRepository.deleteAll(fileRepository.findByFolderId(id));
-        noteRepository.deleteAll(noteRepository.findByFolderId(id));
-        folderRepository.delete(folder);
+        // Soft-delete items at this folder level
+        fileRepository.findByFolderId(id).forEach(f -> {
+            f.setDeletedAt(now);
+            fileRepository.save(f);
+        });
+        noteRepository.findByFolderId(id).forEach(n -> {
+            n.setDeletedAt(now);
+            noteRepository.save(n);
+        });
+        folder.setDeletedAt(now);
+        folderRepository.save(folder);
+        auditService.record(principal.getId(), "FOLDER_DELETE", "folder", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+    }
+
+    @Transactional
+    public void restore(Long id, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        Folder folder = folderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Folder", id));
+        if (folder.getDeletedAt() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "NOT_DELETED");
+        }
+        folder.setDeletedAt(null);
+        folderRepository.save(folder);
+        auditService.record(principal.getId(), "FOLDER_RESTORE", "folder", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
     }
 
     @Transactional
     public FolderResponse setChildSafe(Long id, boolean childSafe, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
-        Folder folder = folderRepository.findById(id)
+        Folder folder = folderRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Folder", id));
         folder.setChildSafe(childSafe);
         folderRepository.save(folder);
@@ -187,10 +221,10 @@ public class FolderService {
 
     private Folder findVisibleFolder(Long id, UserPrincipal principal) {
         if (principal.isChild()) {
-            return folderRepository.findByIdAndChildSafe(id, true)
+            return folderRepository.findByIdAndChildSafeAndDeletedAtIsNull(id, true)
                     .orElseThrow(() -> new EntityNotFoundException("Folder", id));
         }
-        return folderRepository.findById(id)
+        return folderRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Folder", id));
     }
 
@@ -216,4 +250,5 @@ public class FolderService {
                 .anyMatch(f -> f.getName().equalsIgnoreCase(name));
         if (conflict) throw new ResponseStatusException(HttpStatus.CONFLICT, "FOLDER_NAME_EXISTS");
     }
+
 }

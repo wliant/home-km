@@ -52,6 +52,7 @@ public class SearchService {
                    n.folder_id, n.is_child_safe, n.updated_at
             FROM notes n
             WHERE n.search_vector @@ plainto_tsquery('english', :q)
+            AND n.deleted_at IS NULL
             """);
         if (childOnly) sql.append(" AND n.is_child_safe = true");
         if (folderId != null) sql.append(" AND n.folder_id IN (").append(folderSubtreeSQL()).append(")");
@@ -76,6 +77,7 @@ public class SearchService {
                    f.folder_id, f.is_child_safe, f.updated_at
             FROM files f
             WHERE f.search_vector @@ plainto_tsquery('english', :q)
+            AND f.deleted_at IS NULL
             """);
         if (childOnly) sql.append(" AND f.is_child_safe = true");
         if (folderId != null) sql.append(" AND f.folder_id IN (").append(folderSubtreeSQL()).append(")");
@@ -99,6 +101,7 @@ public class SearchService {
                    f.parent_id as folder_id, f.is_child_safe, f.updated_at
             FROM folders f
             WHERE f.search_vector @@ plainto_tsquery('english', :q)
+            AND f.deleted_at IS NULL
             """);
         if (childOnly) sql.append(" AND f.is_child_safe = true");
         if (tagIds != null && !tagIds.isEmpty()) {

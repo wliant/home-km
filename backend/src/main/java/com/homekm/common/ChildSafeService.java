@@ -56,7 +56,7 @@ public class ChildSafeService {
      */
     public boolean resolveChildSafeOnMove(boolean currentlySafe, Long destinationFolderId) {
         if (destinationFolderId == null) return currentlySafe;
-        return folderRepository.findById(destinationFolderId)
+        return folderRepository.findActiveById(destinationFolderId)
                 .map(f -> f.isChildSafe() || currentlySafe)
                 .orElse(currentlySafe);
     }

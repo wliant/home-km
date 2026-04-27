@@ -54,6 +54,13 @@ public class FolderController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserPrincipal principal) {
+        folderService.restore(id, principal);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{id}/child-safe")
     public ResponseEntity<FolderResponse> setChildSafe(@PathVariable Long id,
                                                         @RequestBody Map<String, Boolean> body,

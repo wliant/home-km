@@ -64,6 +64,13 @@ public class NoteController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/api/notes/{id}/restore")
+    public ResponseEntity<Void> restore(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserPrincipal principal) {
+        noteService.restore(id, principal);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/api/notes/{id}/pin")
     public ResponseEntity<NoteDetail> pin(@PathVariable Long id,
                                            @AuthenticationPrincipal UserPrincipal principal) {
