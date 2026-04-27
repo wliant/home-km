@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Users can change their own password via `PATCH /api/auth/me` (when logged in) and admins can reset another user's password via `AdminController`. There is no self-service path for a locked-out user.
 
