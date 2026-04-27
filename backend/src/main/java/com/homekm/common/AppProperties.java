@@ -13,17 +13,26 @@ public class AppProperties {
     private Minio minio = new Minio();
     private Vapid vapid = new Vapid();
     private Cors cors = new Cors();
+    private Mail mail = new Mail();
+    private Trash trash = new Trash();
+    private PasswordReset passwordReset = new PasswordReset();
     private long presignedUrlExpiryMinutes = 15;
     private String name = "Home KM";
 
     public static class Jwt {
         private String secret;
         private long expiryHours = 24;
+        private int accessExpiryMinutes = 15;
+        private int refreshExpiryDays = 30;
 
         public String getSecret() { return secret; }
         public void setSecret(String secret) { this.secret = secret; }
         public long getExpiryHours() { return expiryHours; }
         public void setExpiryHours(long expiryHours) { this.expiryHours = expiryHours; }
+        public int getAccessExpiryMinutes() { return accessExpiryMinutes; }
+        public void setAccessExpiryMinutes(int accessExpiryMinutes) { this.accessExpiryMinutes = accessExpiryMinutes; }
+        public int getRefreshExpiryDays() { return refreshExpiryDays; }
+        public void setRefreshExpiryDays(int refreshExpiryDays) { this.refreshExpiryDays = refreshExpiryDays; }
     }
 
     public static class Bcrypt {
@@ -69,6 +78,30 @@ public class AppProperties {
         public void setAllowedOrigins(String allowedOrigins) { this.allowedOrigins = allowedOrigins; }
     }
 
+    public static class Trash {
+        private int retentionDays = 30;
+
+        public int getRetentionDays() { return retentionDays; }
+        public void setRetentionDays(int retentionDays) { this.retentionDays = retentionDays; }
+    }
+
+    public static class PasswordReset {
+        private int tokenExpiryMinutes = 60;
+
+        public int getTokenExpiryMinutes() { return tokenExpiryMinutes; }
+        public void setTokenExpiryMinutes(int tokenExpiryMinutes) { this.tokenExpiryMinutes = tokenExpiryMinutes; }
+    }
+
+    public static class Mail {
+        private boolean enabled = false;
+        private String from = "noreply@homekm.local";
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getFrom() { return from; }
+        public void setFrom(String from) { this.from = from; }
+    }
+
     @PostConstruct
     void validate() {
         if (jwt.secret == null || jwt.secret.length() < 32) {
@@ -87,6 +120,12 @@ public class AppProperties {
     public void setVapid(Vapid vapid) { this.vapid = vapid; }
     public Cors getCors() { return cors; }
     public void setCors(Cors cors) { this.cors = cors; }
+    public Mail getMail() { return mail; }
+    public void setMail(Mail mail) { this.mail = mail; }
+    public Trash getTrash() { return trash; }
+    public void setTrash(Trash trash) { this.trash = trash; }
+    public PasswordReset getPasswordReset() { return passwordReset; }
+    public void setPasswordReset(PasswordReset passwordReset) { this.passwordReset = passwordReset; }
     public long getPresignedUrlExpiryMinutes() { return presignedUrlExpiryMinutes; }
     public void setPresignedUrlExpiryMinutes(long presignedUrlExpiryMinutes) { this.presignedUrlExpiryMinutes = presignedUrlExpiryMinutes; }
     public String getName() { return name; }
