@@ -1,8 +1,12 @@
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeSanitize from 'rehype-sanitize'
 import { noteApi, folderApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
 import AppLayout from '../../components/AppLayout'
@@ -38,7 +42,9 @@ export default function NoteEditorPage() {
     queryFn: folderApi.getTree,
   })
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [tab, setTab] = useState<'edit' | 'preview'>('edit')
+
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { title: '', folderId: defaultFolderId },
     values: existing ? {
@@ -60,6 +66,8 @@ export default function NoteEditorPage() {
     onSuccess: note => { qc.invalidateQueries({ queryKey: QK.note(noteId) }); navigate(`/notes/${note.id}`) },
   })
 
+  const bodyValue = useWatch({ control, name: 'body', defaultValue: '' })
+
   function onSubmit(data: FormData) {
     isEdit ? updateNote.mutate(data) : createNote.mutate(data)
   }
@@ -67,20 +75,20 @@ export default function NoteEditorPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">{isEdit ? 'Edit note' : 'New note'}</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">{isEdit ? 'Edit note' : 'New note'}</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <input
               {...register('title')}
               placeholder="Title"
-              className="w-full text-xl font-semibold rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-xl font-semibold rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title.message}</p>}
+            {errors.title && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.title.message}</p>}
           </div>
 
           <div>
-            <select {...register('label')} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <select {...register('label')} className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm">
               {NOTE_LABELS.map(l => (
                 <option key={l} value={l}>{l.replace('_', ' ')}</option>
               ))}
@@ -88,18 +96,38 @@ export default function NoteEditorPage() {
           </div>
 
           <div>
-            <textarea
-              {...register('body')}
-              rows={12}
-              placeholder="Body (Markdown supported)"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+            <div className="flex border-b border-gray-300 dark:border-gray-600 mb-2">
+              <button type="button" onClick={() => setTab('edit')}
+                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'edit' ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+                Edit
+              </button>
+              <button type="button" onClick={() => setTab('preview')}
+                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'preview' ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+                Preview
+              </button>
+            </div>
+            {tab === 'edit' ? (
+              <textarea
+                {...register('body')}
+                rows={12}
+                placeholder="Body (Markdown supported)"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none min-h-[12rem] rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
+                {bodyValue ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{bodyValue}</ReactMarkdown>
+                ) : (
+                  <p className="text-gray-400 dark:text-gray-500 italic">Nothing to preview</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
-            <label className="text-sm text-gray-700">Folder:</label>
+            <label className="text-sm text-gray-700 dark:text-gray-300">Folder:</label>
             <select {...register('folderId', { valueAsNumber: true })}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm">
               <option value="">Root (no folder)</option>
               {folders.map(f => (
                 <option key={f.id} value={f.id}>{f.name}</option>
@@ -110,7 +138,7 @@ export default function NoteEditorPage() {
           <div className="flex items-center gap-2">
             <input type="checkbox" {...register('isChildSafe')} id="childSafe"
               className="w-4 h-4 text-primary-600 rounded" />
-            <label htmlFor="childSafe" className="text-sm text-gray-700">Child safe</label>
+            <label htmlFor="childSafe" className="text-sm text-gray-700 dark:text-gray-300">Child safe</label>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -119,7 +147,7 @@ export default function NoteEditorPage() {
               {isEdit ? 'Save' : 'Create'}
             </button>
             <button type="button" onClick={() => navigate(-1)}
-              className="px-5 py-2 bg-white border border-gray-300 text-sm rounded-lg hover:bg-gray-50">
+              className="px-5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
               Cancel
             </button>
           </div>

@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Notes store raw text in `body`. The detail page renders the body as plain text (line breaks preserved). No markdown formatting, links, code blocks, or task lists are recognized.
 
