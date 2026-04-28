@@ -9,6 +9,9 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        generate_statistics: ${HIBERNATE_STATS:false}
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -29,18 +32,65 @@ spring:
       write-dates-as-timestamps: false
       write-dates-with-context-time-zone: true
     time-zone: UTC
+  cache:
+    type: caffeine
+    cache-names: tags, folderTree, userById
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=5m
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 server:
   port: 8080
+  shutdown: graceful
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,prometheus
   endpoint:
     health:
-      show-details: never
+      show-details: when-authorized
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: db, minio, ping
+        liveness:
+          include: livenessState
+
+resilience4j:
+  retry:
+    instances:
+      minio:
+        max-attempts: 3
+        wait-duration: 50ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 4
+        retry-exceptions:
+          - java.io.IOException
+          - io.minio.errors.ServerException
+          - io.minio.errors.InternalException
+  circuitbreaker:
+    instances:
+      minio:
+        sliding-window-size: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+  bulkhead:
+    instances:
+      minio:
+        max-concurrent-calls: 25
+        max-wait-duration: 100ms
+
+springdoc:
+  api-docs:
+    path: /api/openapi
+  swagger-ui:
+    path: /api/docs
+    operations-sorter: alpha
 
 app:
   jwt:
@@ -48,6 +98,7 @@ app:
     expiry-hours: ${JWT_EXPIRY_HOURS:24}
     access-expiry-minutes: ${JWT_ACCESS_EXPIRY_MINUTES:15}
     refresh-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:30}
+    refresh-expiry-hours-default: ${JWT_REFRESH_EXPIRY_HOURS_DEFAULT:8}
   bcrypt:
     cost: ${BCRYPT_COST:12}
   minio:
@@ -66,3 +117,69 @@ app:
     enabled: ${APP_MAIL_ENABLED:false}
     from: ${APP_MAIL_FROM:noreply@homekm.local}
   name: ${APP_NAME:Home KM}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    rules:
+      - id: login
+        path-pattern: /api/auth/login
+        method: POST
+        scope: ip
+        limit: 20
+        window-seconds: 60
+      - id: register
+        path-pattern: /api/auth/register
+        method: POST
+        scope: ip
+        limit: 5
+        window-seconds: 3600
+      - id: password-reset
+        path-pattern: /api/auth/password-reset/request
+        method: POST
+        scope: ip
+        limit: 3
+        window-seconds: 3600
+      - id: writes
+        path-pattern: /api/**
+        method: ANY_WRITE
+        scope: user
+        limit: 60
+        window-seconds: 60
+  idempotency:
+    enabled: ${IDEMPOTENCY_ENABLED:true}
+    ttl-hours: 24
+  files:
+    allowed-mime:
+      - image/png
+      - image/jpeg
+      - image/gif
+      - image/webp
+      - image/avif
+      - image/svg+xml
+      - application/pdf
+      - text/plain
+      - text/markdown
+      - text/csv
+      - application/json
+      - application/zip
+      - application/x-tar
+      - application/gzip
+      - audio/mpeg
+      - audio/ogg
+      - audio/wav
+      - video/mp4
+      - video/webm
+      - application/msword
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      - application/vnd.ms-excel
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    require-scan: ${FILES_REQUIRE_SCAN:false}
+    av-host: ${CLAMD_HOST:}
+    av-port: ${CLAMD_PORT:3310}
+  invitations:
+    allow-open-registration: ${ALLOW_OPEN_REGISTRATION:false}
+    expiry-hours: ${INVITATION_EXPIRY_HOURS:168}
+  embedding:
+    enabled: ${EMBEDDING_ENABLED:false}
+    ollama-url: ${OLLAMA_URL:}
+    model: ${EMBEDDING_MODEL:nomic-embed-text}
+    dim: ${EMBEDDING_DIM:768}

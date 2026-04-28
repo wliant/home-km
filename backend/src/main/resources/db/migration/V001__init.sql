@@ -1,3 +1,8 @@
+-- Required Postgres extensions. Idempotent: safe to re-run, no effect on prod
+-- where infra/postgres/init.sql already created them at container init time.
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- users
 CREATE TABLE users (
     id            BIGSERIAL PRIMARY KEY,

@@ -15,6 +15,12 @@ app:
     public-key: ''
     private-key: ''
     subject: mailto:test@example.com
+  invitations:
+    allow-open-registration: true
+  rate-limit:
+    enabled: false
+  idempotency:
+    enabled: false
 
 spring:
   datasource:

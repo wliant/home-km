@@ -16,6 +16,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/playwright-report/
+frontend/coverage/
 *.tsbuildinfo
 
 # Stray root-level deps (no package.json lives at repo root)

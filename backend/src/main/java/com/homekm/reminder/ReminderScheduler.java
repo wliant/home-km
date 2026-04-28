@@ -1,9 +1,11 @@
 package com.homekm.reminder;
 
 import com.homekm.auth.UserRepository;
+import com.homekm.common.ShutdownState;
 import com.homekm.push.PushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,20 +22,32 @@ public class ReminderScheduler {
     private final ReminderRepository reminderRepository;
     private final UserRepository userRepository;
     private final PushService pushService;
+    private final ShutdownState shutdownState;
 
     public ReminderScheduler(ReminderRepository reminderRepository,
                                UserRepository userRepository,
-                               PushService pushService) {
+                               PushService pushService,
+                               @Autowired(required = false) ShutdownState shutdownState) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
         this.pushService = pushService;
+        this.shutdownState = shutdownState;
+    }
+
+    private boolean shuttingDown() {
+        return shutdownState != null && shutdownState.isShuttingDown();
     }
 
     @Scheduled(fixedRate = 60_000)
     @Transactional
     public void processDueReminders() {
+        if (shuttingDown()) {
+            log.debug("skipping reminder tick; shutdown in progress");
+            return;
+        }
         List<Reminder> due = reminderRepository.findDueReminders(Instant.now());
         for (Reminder reminder : due) {
+            if (shuttingDown()) break;
             try {
                 sendPush(reminder);
                 reminder.setPushSent(true);

@@ -14,6 +14,8 @@ import com.homekm.auth.UserPrincipal;
 import com.homekm.common.RequestContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ public class FolderService {
         this.auditService = auditService;
     }
 
+    @Cacheable(value = "folderTree", key = "#principal.isChild() ? 'child' : 'full'")
     public List<FolderResponse> getTree(UserPrincipal principal) {
         List<Folder> all = folderRepository.findAllActive();
         if (principal.isChild()) {
@@ -71,6 +74,7 @@ public class FolderService {
     }
 
     @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
     public FolderResponse create(FolderRequest req, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
@@ -95,6 +99,7 @@ public class FolderService {
     }
 
     @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
     public FolderResponse update(Long id, FolderRequest req, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
@@ -139,6 +144,7 @@ public class FolderService {
     }
 
     @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
     public void delete(Long id, boolean force, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 
@@ -190,6 +196,7 @@ public class FolderService {
     }
 
     @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
     public void restore(Long id, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
         Folder folder = folderRepository.findById(id)
@@ -204,6 +211,7 @@ public class FolderService {
     }
 
     @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
     public FolderResponse setChildSafe(Long id, boolean childSafe, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
 

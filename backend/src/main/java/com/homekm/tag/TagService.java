@@ -5,6 +5,8 @@ import com.homekm.common.ChildAccountWriteException;
 import com.homekm.common.EntityNotFoundException;
 import com.homekm.tag.dto.TagRequest;
 import com.homekm.tag.dto.TagResponse;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class TagService {
         this.taggingRepository = taggingRepository;
     }
 
+    @Cacheable("tags")
     public List<TagResponse> list() {
         return tagRepository.findAll().stream().map(TagResponse::from).toList();
     }
@@ -33,6 +36,7 @@ public class TagService {
     }
 
     @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
     public TagResponse create(TagRequest req, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
         if (tagRepository.existsByNameIgnoreCase(req.name())) {
@@ -46,6 +50,7 @@ public class TagService {
     }
 
     @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
     public TagResponse update(Long id, TagRequest req, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
         Tag tag = tagRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Tag", id));
@@ -61,6 +66,7 @@ public class TagService {
     }
 
     @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
     public void delete(Long id, UserPrincipal principal) {
         if (principal.isChild()) throw new ChildAccountWriteException();
         Tag tag = tagRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Tag", id));
