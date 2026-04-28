@@ -29,6 +29,15 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "timezone", nullable = false, length = 64)
+    private String timezone = "UTC";
+
+    @Column(name = "locale", nullable = false, length = 16)
+    private String locale = "en";
+
+    @Column(name = "ics_token", length = 64, unique = true)
+    private String icsToken;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -53,6 +62,12 @@ public class User {
     public void setChild(boolean child) { this.child = child; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public String getTimezone() { return timezone; }
+    public void setTimezone(String v) { this.timezone = v; }
+    public String getLocale() { return locale; }
+    public void setLocale(String v) { this.locale = v; }
+    public String getIcsToken() { return icsToken; }
+    public void setIcsToken(String v) { this.icsToken = v; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }
