@@ -1,0 +1,45 @@
+{
+  "app": {
+    "skipToMain": "Saltar al contenido principal",
+    "loading": "Cargando…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "search": "Buscar"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "register": "Registrarse",
+    "rememberMe": "Mantenerme conectado en este dispositivo",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "displayName": "Nombre"
+  },
+  "nav": {
+    "home": "Inicio",
+    "search": "Buscar",
+    "settings": "Ajustes",
+    "trash": "Papelera",
+    "admin": "Administración",
+    "auditLog": "Registro",
+    "invitations": "Invitaciones",
+    "signOut": "Cerrar sesión"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "profile": "Perfil",
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "language": "Idioma",
+    "sessions": "Sesiones activas",
+    "thisDevice": "este dispositivo"
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "openSearch": "Abrir búsqueda",
+    "goToNotes": "Ir a notas",
+    "goToFiles": "Ir a archivos",
+    "openSettings": "Abrir ajustes"
+  }
+}

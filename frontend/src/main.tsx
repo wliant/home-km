@@ -6,6 +6,7 @@ import { queryClient } from './lib/queryClient'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import Toaster from './components/Toaster'
+import './i18n'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(

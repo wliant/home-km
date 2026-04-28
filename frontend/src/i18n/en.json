@@ -1,0 +1,45 @@
+{
+  "app": {
+    "skipToMain": "Skip to main content",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "search": "Search"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "register": "Register",
+    "rememberMe": "Keep me signed in on this device",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "displayName": "Display name"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "settings": "Settings",
+    "trash": "Trash",
+    "admin": "Admin",
+    "auditLog": "Audit log",
+    "invitations": "Invitations",
+    "signOut": "Sign out"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "language": "Language",
+    "sessions": "Active sessions",
+    "thisDevice": "this device"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "openSearch": "Open search",
+    "goToNotes": "Go to notes",
+    "goToFiles": "Go to files",
+    "openSettings": "Open settings"
+  }
+}
