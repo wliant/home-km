@@ -14,4 +14,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 ARG MAX_FILE_UPLOAD_MB=100
 ENV MAX_FILE_UPLOAD_MB=$MAX_FILE_UPLOAD_MB
+# MINIO_PUBLIC_ORIGIN is the browser-visible MinIO origin (e.g. http://minio.lan:9000)
+# substituted into the CSP header. Empty default = same-origin only.
+ENV MINIO_PUBLIC_ORIGIN=""
 EXPOSE 80

@@ -74,3 +74,14 @@ Pull a representative slow query into `psql`, prefix with `EXPLAIN (ANALYZE, BUF
 ## Observability stack
 
 The default deploy ships only `/actuator/prometheus`. To run a full Grafana/Prometheus/Loki/Tempo stack, bring up `docker-compose.observability.yml` (see `docs/observability.md`).
+
+## Security scanning in CI
+
+The CI workflow runs OWASP Dependency-Check (`dependency-scan` job) and Trivy image scans (inside `docker-build`). Without an NVD API key, OWASP DC throttles severely (~30+ minutes per run) because the public NVD endpoint rate-limits unauthenticated requests.
+
+To speed up `dependency-scan`:
+1. Request a key at <https://nvd.nist.gov/developers/request-an-api-key>.
+2. Add it to repo secrets as `NVD_API_KEY` (Settings → Secrets and variables → Actions).
+3. Subsequent runs read the cached vulnerability database from `~/.gradle/dependency-check-data` and complete in 1–2 minutes.
+
+Trivy and SARIF uploads (under Security → Code scanning) require no secret — `GITHUB_TOKEN` is enough. If a scan fails the job, inspect the SARIF in the Code scanning UI to decide whether to fix, suppress in `backend/dependency-check-suppressions.xml`, or accept (Trivy: add to `.trivyignore`).

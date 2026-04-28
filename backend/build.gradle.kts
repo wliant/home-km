@@ -3,6 +3,7 @@ plugins {
     jacoco
     id("org.springframework.boot") version "3.2.4"
     id("io.spring.dependency-management") version "1.1.4"
+    id("org.owasp.dependencycheck") version "9.0.10"
 }
 
 group = "com.homekm"
@@ -32,6 +33,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-mail")
+
+    // Observability — Prometheus exposition + JSON-structured logs
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // Database
     implementation("org.flywaydb:flyway-core")
@@ -86,6 +91,13 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f
+    suppressionFile = "dependency-check-suppressions.xml"
+    formats = listOf("HTML", "SARIF")
+    nvd.apiKey = System.getenv("NVD_API_KEY") ?: ""
 }
 
 tasks.jacocoTestReport {

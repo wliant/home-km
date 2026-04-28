@@ -62,6 +62,10 @@ Navigate to `http://localhost:3000` (or the configured `FRONTEND_PORT`).
 
 The first registered account becomes the admin.
 
+### 5. (Production) Terminate TLS at a reverse proxy
+
+Anything reachable beyond `localhost` should be fronted by a TLS-terminating reverse proxy — service workers, push notifications, and the PWA install prompt all require a secure context. See [`docs/tls.md`](docs/tls.md) for a Caddy + Let's Encrypt example, a private-CA setup for LAN, and a Cloudflare Tunnel option.
+
 ## Environment Variables
 
 See `.env.example` for the full list with documentation comments. Key variables:

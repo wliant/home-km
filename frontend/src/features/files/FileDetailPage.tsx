@@ -123,17 +123,12 @@ export default function FileDetailPage() {
         </div>
 
         {/* Preview */}
-        {file.thumbnailUrl ? (
-          <img
-            src={file.thumbnailUrl}
-            alt={file.filename}
-            className="max-w-full rounded-xl border border-gray-200 dark:border-gray-700"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-40 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-700">
-            <span className="text-gray-400 dark:text-gray-500 text-sm">{file.mimeType}</span>
-          </div>
-        )}
+        <FilePreview
+          mimeType={file.mimeType}
+          filename={file.filename}
+          downloadUrl={file.downloadUrl}
+          thumbnailUrl={file.thumbnailUrl}
+        />
 
         {/* Metadata */}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -185,4 +180,70 @@ function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+interface FilePreviewProps {
+  mimeType: string
+  filename: string
+  downloadUrl?: string | null
+  thumbnailUrl?: string | null
+}
+
+export function FilePreview({ mimeType, filename, downloadUrl, thumbnailUrl }: FilePreviewProps) {
+  const placeholder = (
+    <div className="flex items-center justify-center h-40 rounded-xl bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-700">
+      <span className="text-gray-400 dark:text-gray-500 text-sm">{mimeType}</span>
+    </div>
+  )
+
+  if (mimeType.startsWith('image/')) {
+    const src = thumbnailUrl ?? downloadUrl
+    if (!src) return placeholder
+    return (
+      <img
+        src={src}
+        alt={filename}
+        className="max-w-full rounded-xl border border-gray-200 dark:border-gray-700"
+      />
+    )
+  }
+
+  if (!downloadUrl) return placeholder
+
+  if (mimeType === 'application/pdf') {
+    return (
+      <iframe
+        src={`${downloadUrl}#toolbar=0`}
+        title={filename}
+        className="w-full h-[80vh] rounded-xl border border-gray-200 dark:border-gray-700"
+      />
+    )
+  }
+
+  if (mimeType.startsWith('video/')) {
+    return (
+      <video
+        controls
+        preload="metadata"
+        className="max-w-full rounded-xl border border-gray-200 dark:border-gray-700"
+      >
+        <source src={downloadUrl} type={mimeType} />
+      </video>
+    )
+  }
+
+  if (mimeType.startsWith('audio/')) {
+    return (
+      <audio
+        controls
+        preload="metadata"
+        className="w-full"
+        aria-label={filename}
+      >
+        <source src={downloadUrl} type={mimeType} />
+      </audio>
+    )
+  }
+
+  return placeholder
 }
