@@ -1,0 +1,27 @@
+package com.homekm.common;
+
+import com.homekm.auth.UserPrincipal;
+import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+@RestController
+@RequestMapping("/api/events")
+public class EventsController {
+
+    private final EventBus bus;
+
+    public EventsController(EventBus bus) {
+        this.bus = bus;
+    }
+
+    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) throw new AccessDeniedException("login required");
+        return bus.subscribe(principal.getId());
+    }
+}

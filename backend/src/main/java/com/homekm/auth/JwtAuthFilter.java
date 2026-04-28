@@ -38,12 +38,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if ("/api/events".equals(request.getRequestURI())) {
+            // SSE: browsers can't set custom headers on EventSource, so accept ?access_token=
+            String fromQuery = request.getParameter("access_token");
+            if (fromQuery != null && !fromQuery.isBlank()) token = fromQuery;
+        }
+        if (token == null) {
             chain.doFilter(request, response);
             return;
         }
-
-        String token = authHeader.substring(7);
         Claims claims;
         try {
             claims = jwtService.parseToken(token);

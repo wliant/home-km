@@ -29,6 +29,12 @@ public class Folder {
     @Column(name = "is_child_safe", nullable = false)
     private boolean childSafe = false;
 
+    @Column(name = "visibility", nullable = false, length = 16)
+    private String visibility = "household";
+
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -56,4 +62,8 @@ public class Folder {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String v) { this.visibility = v; }
+    public int getSortOrder() { return sortOrder; }
+    public void setSortOrder(int v) { this.sortOrder = v; }
 }

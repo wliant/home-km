@@ -7,6 +7,7 @@ import com.homekm.auth.UserRepository;
 import com.homekm.common.ChildAccountWriteException;
 import com.homekm.common.ChildSafeService;
 import com.homekm.common.EntityNotFoundException;
+import com.homekm.common.EventBus;
 import com.homekm.common.PageResponse;
 import com.homekm.folder.Folder;
 import com.homekm.folder.FolderRepository;
@@ -35,11 +36,12 @@ public class NoteService {
     private final UserRepository userRepository;
     private final ChildSafeService childSafeService;
     private final AuditService auditService;
+    private final EventBus eventBus;
 
     public NoteService(NoteRepository noteRepository, ChecklistItemRepository checklistItemRepository,
                        ReminderRepository reminderRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
-                       AuditService auditService) {
+                       AuditService auditService, EventBus eventBus) {
         this.noteRepository = noteRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.reminderRepository = reminderRepository;
@@ -47,6 +49,7 @@ public class NoteService {
         this.userRepository = userRepository;
         this.childSafeService = childSafeService;
         this.auditService = auditService;
+        this.eventBus = eventBus;
     }
 
     public PageResponse<NoteSummary> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -146,6 +149,8 @@ public class NoteService {
         noteRepository.save(note);
         List<ChecklistItem> items = checklistItemRepository.findByNoteIdOrderBySortOrder(id);
         List<com.homekm.reminder.Reminder> reminders = reminderRepository.findByNoteId(id);
+        eventBus.publish(EventBus.Event.broadcast("ItemUpdated",
+                Map.of("type", "note", "id", id)));
         return NoteDetail.from(note, items, reminders);
     }
 
@@ -236,6 +241,8 @@ public class NoteService {
         if (req.isChecked() != null) item.setChecked(req.isChecked());
         if (req.sortOrder() != null) item.setSortOrder(req.sortOrder());
         checklistItemRepository.save(item);
+        eventBus.publish(EventBus.Event.broadcast("ChecklistItemToggled",
+                Map.of("noteId", noteId, "itemId", itemId, "checked", item.isChecked())));
         return NoteDetail.ChecklistItemResponse.from(item);
     }
 

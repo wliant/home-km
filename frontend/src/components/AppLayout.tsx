@@ -8,6 +8,9 @@ import QueueStatusBadge from './QueueStatusBadge'
 import IOSInstallPrompt from './IOSInstallPrompt'
 import ThemeToggle from './ThemeToggle'
 import type { FolderResponse } from '../types'
+import { useRealtimeEvents } from '../lib/useRealtimeEvents'
+import SkipLink from './SkipLink'
+import CommandPalette from './CommandPalette'
 
 function FolderTreeItem({ folder, depth = 0 }: { folder: FolderResponse; depth?: number }) {
   return (
@@ -81,6 +84,9 @@ function Sidebar() {
             <Link to="/admin/audit" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
               📋 Audit Log
             </Link>
+            <Link to="/admin/invitations" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              ✉️ Invitations
+            </Link>
           </>
         )}
         <Link to="/trash" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -142,18 +148,21 @@ function OfflineBanner() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore(s => s.user)
+  useRealtimeEvents()
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <SkipLink />
+      <CommandPalette />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <IOSInstallPrompt />
         <OfflineBanner />
         {user?.isChild && (
-          <div className="bg-purple-50 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-700 px-4 py-1.5 text-xs text-purple-800 dark:text-purple-200 text-center font-medium">
+          <div role="status" className="bg-purple-50 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-700 px-4 py-1.5 text-xs text-purple-800 dark:text-purple-200 text-center font-medium">
             Kid Mode — editing and admin controls are hidden
           </div>
         )}
-        <main className="flex-1 p-4 md:p-6 pb-16 md:pb-6">
+        <main id="main" tabIndex={-1} className="flex-1 p-4 md:p-6 pb-16 md:pb-6">
           {children}
         </main>
       </div>

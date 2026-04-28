@@ -33,6 +33,9 @@ public class Note {
     @Column(name = "is_child_safe", nullable = false)
     private boolean childSafe = false;
 
+    @Column(name = "visibility", nullable = false, length = 16)
+    private String visibility = "household";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -67,4 +70,6 @@ public class Note {
     public void setPinnedAt(Instant pinnedAt) { this.pinnedAt = pinnedAt; }
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String v) { this.visibility = v; }
 }
