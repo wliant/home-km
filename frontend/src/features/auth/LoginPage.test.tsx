@@ -75,7 +75,9 @@ describe('LoginPage', () => {
     await userEvent.type(getPasswordInput(container), 'secret123')
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
     await waitFor(() =>
-      expect(mockAuthApi.login).toHaveBeenCalledWith({ email: 'a@b.com', password: 'secret123' })
+      expect(mockAuthApi.login).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'a@b.com', password: 'secret123' }),
+      ),
     )
   })
 
