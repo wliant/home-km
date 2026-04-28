@@ -1,0 +1,76 @@
+# Home KM — Operations Runbook
+
+## Quick reference
+
+| Task | Command |
+|------|---------|
+| Start everything | `docker compose -f docker-compose.infra.yml up -d && docker compose -f docker-compose.app.yml up -d` |
+| Stop everything | `docker compose -f docker-compose.app.yml down && docker compose -f docker-compose.infra.yml down` |
+| Tail API logs | `docker compose -f docker-compose.app.yml logs -f api` |
+| Tail DB logs | `docker compose -f docker-compose.infra.yml logs -f postgres` |
+| Restart API after image rebuild | `docker compose -f docker-compose.app.yml up -d --build api` |
+| API readiness | `curl -fsS localhost:8080/actuator/health/readiness` |
+| API metrics | `curl -fsS localhost:8080/actuator/prometheus` (admin token required for non-anonymous) |
+
+## Backup & restore
+
+### Postgres
+```bash
+docker compose -f docker-compose.infra.yml exec -T postgres \
+  pg_dump -U "$DB_USER" "$DB_NAME" > backups/homekm-$(date +%F).sql
+```
+Restore (drops and reloads):
+```bash
+docker compose -f docker-compose.infra.yml exec -T postgres \
+  psql -U "$DB_USER" "$DB_NAME" < backups/homekm-2026-04-27.sql
+```
+
+### MinIO
+```bash
+mc alias set homekm http://localhost:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+mc mirror --overwrite homekm/homekm backups/minio/
+```
+
+See `docs/restore-drill.md` for the monthly verification procedure and `docs/backups.md` for off-host restic configuration.
+
+## Rotating the JWT secret
+
+See `docs/jwt-rotation.md`. Summary: change `JWT_SECRET` (32+ chars), restart API. All access tokens become invalid; users get a 401 and the frontend will refresh from the refresh token (which is stored hashed and not invalidated by JWT_SECRET change). To force everyone out, also revoke all refresh tokens:
+```sql
+UPDATE refresh_tokens SET revoked_at = now() WHERE revoked_at IS NULL;
+```
+
+## Rotating the TLS certificate
+
+If you front the app with a reverse proxy (Caddy/Traefik), restart the proxy after dropping in the new certificate. Browsers will pick it up on the next request — no app changes required.
+
+## Releasing a new version
+
+1. Merge to `master` with [Conventional Commit](https://www.conventionalcommits.org/) messages.
+2. The `release-please` workflow (`.github/workflows/release.yml`) opens/updates a release PR with a generated CHANGELOG.
+3. Review and merge that PR. It tags `vX.Y.Z`, which the image-build workflow reads to tag Docker images.
+4. Pull the new image and `docker compose -f docker-compose.app.yml up -d --build`.
+
+Graceful shutdown is wired (`server.shutdown=graceful`, 30s phase timeout, 35s `stop_grace_period`); existing in-flight requests will finish.
+
+## Common errors
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Login returns 403 (CORS) | Browser origin not in `CORS_ALLOWED_ORIGINS` | Add the LAN IP / hostname and restart API |
+| 503 with `STORAGE_UNAVAILABLE` | MinIO circuit breaker open | Check MinIO container: `docker compose -f docker-compose.infra.yml logs minio`; the breaker auto-resets after 30s of healthy calls |
+| 429 with `RATE_LIMITED` | A client exceeded `app.rate-limit` rules | Check `RateLimitFilter` rule that fired in API logs; increase per-rule limits in env or back off the client |
+| Slow queries | Set `log_min_duration_statement=500ms` is on; review postgres logs | Use `EXPLAIN ANALYZE` for the SQL and add indexes; consider `pg_stat_statements` |
+| Reminders not firing | Scheduler skipped during shutdown | Confirm `ShutdownState.isShuttingDown()` is false; restart API |
+
+## Slow query analysis
+
+PostgreSQL is configured (via `infra/postgres/init.sql`) to log statements over 500ms:
+```bash
+docker compose -f docker-compose.infra.yml logs postgres | grep "duration:"
+```
+Pull a representative slow query into `psql`, prefix with `EXPLAIN (ANALYZE, BUFFERS)`. Common culprits: missing indexes on `folder_id`, full-text query without `tsvector`, child-safe filter on a non-indexed column.
+
+## Observability stack
+
+The default deploy ships only `/actuator/prometheus`. To run a full Grafana/Prometheus/Loki/Tempo stack, bring up `docker-compose.observability.yml` (see `docs/observability.md`).

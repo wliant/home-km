@@ -1,0 +1,35 @@
+{
+  "title": "Home KM — Product",
+  "uid": "homekm-product",
+  "schemaVersion": 39,
+  "tags": ["homekm"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Logged-in users (last 24h, approx)",
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [{"expr": "increase(http_server_requests_seconds_count{uri=\"/api/auth/login\",status=~\"2..\"}[24h])"}]
+    },
+    {
+      "type": "stat",
+      "title": "Notes created (last 1h)",
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "targets": [{"expr": "increase(http_server_requests_seconds_count{uri=\"/api/notes\",method=\"POST\",status=~\"2..\"}[1h])"}]
+    },
+    {
+      "type": "stat",
+      "title": "Files uploaded (last 1h)",
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+      "targets": [{"expr": "increase(http_server_requests_seconds_count{uri=\"/api/files\",method=\"POST\",status=~\"2..\"}[1h])"}]
+    },
+    {
+      "type": "graph",
+      "title": "5xx error rate by route",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) by (uri)", "legendFormat": "{{uri}}"}
+      ]
+    }
+  ]
+}
