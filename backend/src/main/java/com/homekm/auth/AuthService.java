@@ -7,6 +7,7 @@ import com.homekm.common.EntityNotFoundException;
 import com.homekm.common.RequestContextHelper;
 import com.homekm.common.TokenHasher;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,14 +33,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AppProperties appProperties;
     private final AuditService auditService;
+    private final InvitationService invitationService;
 
-    // Dummy hash to ensure constant-time comparison for unknown emails
     private static final String DUMMY_HASH = "$2a$12$dummy.hash.for.timing.safety.xxxxxxxxxxxxxxxxxxxxxxxxxx";
 
     public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
                        JwtService jwtService, JwtDenylist jwtDenylist,
                        PasswordEncoder passwordEncoder, AppProperties appProperties,
-                       AuditService auditService) {
+                       AuditService auditService, InvitationService invitationService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtService = jwtService;
@@ -46,31 +48,48 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.appProperties = appProperties;
         this.auditService = auditService;
+        this.invitationService = invitationService;
     }
 
     @Transactional
-    public LoginResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.email())) {
+    public LoginResponse register(RegisterRequest req, HttpServletRequest httpReq) {
+        String email = req.email().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXISTS");
         }
+
+        Invitation invitation = null;
+        boolean firstUser = userRepository.count() == 0;
+        if (req.inviteToken() != null && !req.inviteToken().isBlank()) {
+            invitation = invitationService.verify(req.inviteToken());
+            if (!invitation.getEmail().equalsIgnoreCase(email)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_EMAIL_MISMATCH");
+            }
+        } else if (!firstUser && !invitationService.openRegistrationAllowed()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "INVITATION_REQUIRED");
+        }
+
         User user = new User();
-        user.setEmail(req.email().toLowerCase());
+        user.setEmail(email);
         user.setDisplayName(req.displayName());
         user.setPasswordHash(passwordEncoder.encode(req.password()));
-        if (userRepository.count() == 0) {
+        if (firstUser || (invitation != null && "ADMIN".equals(invitation.getRole()))) {
             user.setAdmin(true);
         }
         userRepository.save(user);
+        if (invitation != null) {
+            invitationService.accept(req.inviteToken(), user.getId());
+        }
         log.info("User registered: {}", user.getEmail());
         auditService.record(user.getId(), "AUTH_REGISTER", "user", String.valueOf(user.getId()),
                 null, null, RequestContextHelper.currentRequest());
         String token = jwtService.generateToken(user);
-        String refreshToken = createRefreshToken(user);
+        String refreshToken = createRefreshToken(user, false, null, httpReq);
         return new LoginResponse(token, refreshToken, jwtService.getExpiry(user), UserResponse.from(user));
     }
 
     @Transactional
-    public LoginResponse login(LoginRequest req) {
+    public LoginResponse login(LoginRequest req, HttpServletRequest httpReq) {
         User user = userRepository.findByEmail(req.email().toLowerCase()).orElse(null);
         String hashToCompare = user != null ? user.getPasswordHash() : DUMMY_HASH;
         boolean matches = passwordEncoder.matches(req.password(), hashToCompare);
@@ -87,13 +106,14 @@ public class AuthService {
         log.info("User logged in: {}", user.getEmail());
         auditService.record(user.getId(), "AUTH_LOGIN", "user", String.valueOf(user.getId()),
                 null, null, RequestContextHelper.currentRequest());
+        boolean rememberMe = req.rememberMe() != null && req.rememberMe();
         String token = jwtService.generateToken(user);
-        String refreshToken = createRefreshToken(user);
+        String refreshToken = createRefreshToken(user, rememberMe, req.deviceLabel(), httpReq);
         return new LoginResponse(token, refreshToken, jwtService.getExpiry(user), UserResponse.from(user));
     }
 
     @Transactional
-    public LoginResponse refresh(String rawRefreshToken) {
+    public LoginResponse refresh(String rawRefreshToken, HttpServletRequest httpReq) {
         String hash = TokenHasher.sha256(rawRefreshToken);
         RefreshToken stored = refreshTokenRepository.findByTokenHashForUpdate(hash)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN"));
@@ -105,7 +125,9 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_EXPIRED");
         }
 
-        // Rotate: revoke old token, create new one
+        boolean rememberMe = stored.isRememberMe();
+        String deviceLabel = stored.getDeviceLabel();
+
         stored.setRevokedAt(Instant.now());
         refreshTokenRepository.save(stored);
 
@@ -116,7 +138,7 @@ public class AuthService {
 
         log.debug("Token refreshed for user {}", user.getId());
         String newAccessToken = jwtService.generateToken(user);
-        String newRefreshToken = createRefreshToken(user);
+        String newRefreshToken = createRefreshToken(user, rememberMe, deviceLabel, httpReq);
         return new LoginResponse(newAccessToken, newRefreshToken, jwtService.getExpiry(user), UserResponse.from(user));
     }
 
@@ -144,6 +166,26 @@ public class AuthService {
         auditService.record(actorUserId, "AUTH_LOGOUT", "user",
                 actorUserId != null ? String.valueOf(actorUserId) : null,
                 null, null, RequestContextHelper.currentRequest());
+    }
+
+    public List<SessionResponse> listSessions(Long userId, String currentRefreshToken) {
+        String currentHash = currentRefreshToken != null ? TokenHasher.sha256(currentRefreshToken) : null;
+        return refreshTokenRepository.findActiveByUserId(userId).stream()
+                .map(rt -> SessionResponse.from(rt, rt.getTokenHash().equals(currentHash)))
+                .toList();
+    }
+
+    @Transactional
+    public void revokeSession(Long userId, Long sessionId) {
+        RefreshToken rt = refreshTokenRepository.findById(sessionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "SESSION_NOT_FOUND"));
+        if (!rt.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "SESSION_NOT_FOUND");
+        }
+        if (rt.getRevokedAt() == null) {
+            rt.setRevokedAt(Instant.now());
+            refreshTokenRepository.save(rt);
+        }
     }
 
     public UserResponse getMe(UserPrincipal principal) {
@@ -176,12 +218,25 @@ public class AuthService {
         return UserResponse.from(user);
     }
 
-    private String createRefreshToken(User user) {
+    private String createRefreshToken(User user, boolean rememberMe, String deviceLabel, HttpServletRequest httpReq) {
         String raw = UUID.randomUUID().toString();
         RefreshToken rt = new RefreshToken();
         rt.setTokenHash(TokenHasher.sha256(raw));
         rt.setUser(user);
-        rt.setExpiresAt(Instant.now().plus(appProperties.getJwt().getRefreshExpiryDays(), ChronoUnit.DAYS));
+        long ttlSeconds = rememberMe
+                ? appProperties.getJwt().getRefreshExpiryDays() * 24L * 3600
+                : appProperties.getJwt().getRefreshExpiryHoursDefault() * 3600L;
+        rt.setExpiresAt(Instant.now().plusSeconds(ttlSeconds));
+        rt.setRememberMe(rememberMe);
+        if (deviceLabel != null && !deviceLabel.isBlank()) {
+            rt.setDeviceLabel(deviceLabel.length() > 120 ? deviceLabel.substring(0, 120) : deviceLabel);
+        }
+        if (httpReq != null) {
+            String ua = httpReq.getHeader("User-Agent");
+            if (ua != null) rt.setUserAgent(ua.length() > 500 ? ua.substring(0, 500) : ua);
+            rt.setIpAddress(httpReq.getRemoteAddr());
+        }
+        rt.setLastSeenAt(Instant.now());
         refreshTokenRepository.save(rt);
         return raw;
     }

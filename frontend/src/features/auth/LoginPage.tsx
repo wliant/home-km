@@ -9,9 +9,21 @@ import { useAuthStore } from '../../lib/authStore'
 const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email'),
   password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
 })
 
 type FormData = z.infer<typeof schema>
+
+function defaultDeviceLabel(): string {
+  if (typeof navigator === 'undefined') return 'Browser'
+  const ua = navigator.userAgent ?? ''
+  if (/iPhone|iPad/i.test(ua)) return 'iOS device'
+  if (/Android/i.test(ua)) return 'Android device'
+  if (/Mac OS X/i.test(ua)) return 'Mac'
+  if (/Windows/i.test(ua)) return 'Windows PC'
+  if (/Linux/i.test(ua)) return 'Linux'
+  return 'Browser'
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -27,7 +39,12 @@ export default function LoginPage() {
   async function onSubmit(data: FormData) {
     setApiError(null)
     try {
-      const res = await authApi.login(data)
+      const res = await authApi.login({
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe ?? false,
+        deviceLabel: defaultDeviceLabel(),
+      })
       setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
       navigate('/', { replace: true })
     } catch (err: unknown) {
@@ -82,6 +99,15 @@ export default function LoginPage() {
               <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.password.message}</p>
             )}
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              {...register('rememberMe')}
+              type="checkbox"
+              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            Keep me signed in on this device
+          </label>
 
           <button
             type="submit"

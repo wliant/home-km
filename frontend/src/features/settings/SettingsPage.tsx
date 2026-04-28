@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../../api/authApi'
 import { useAuthStore } from '../../lib/authStore'
 import { usePushSubscription } from '../../lib/usePushSubscription'
@@ -17,9 +17,11 @@ type ProfileForm = z.infer<typeof profileSchema>
 export default function SettingsPage() {
   const user = useAuthStore(s => s.user)
   const setAuth = useAuthStore(s => s.setAuth)
+  const refreshToken = useAuthStore(s => s.refreshToken)
   const push = usePushSubscription()
   const theme = useThemeStore(s => s.theme)
   const setTheme = useThemeStore(s => s.setTheme)
+  const qc = useQueryClient()
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -37,6 +39,16 @@ export default function SettingsPage() {
       if (token && refreshToken && expiresAt) setAuth(token, refreshToken, res, expiresAt)
       reset({ displayName: res.displayName, newPassword: '' })
     },
+  })
+
+  const sessions = useQuery({
+    queryKey: ['auth', 'sessions'],
+    queryFn: () => authApi.listSessions(refreshToken),
+  })
+
+  const revokeSession = useMutation({
+    mutationFn: (id: number) => authApi.revokeSession(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['auth', 'sessions'] }),
   })
 
   return (
@@ -84,6 +96,43 @@ export default function SettingsPage() {
               )}
             </div>
           </form>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Active sessions</h2>
+          {sessions.isLoading && <p className="text-xs text-gray-500">Loading…</p>}
+          {sessions.data && sessions.data.length === 0 && (
+            <p className="text-xs text-gray-500">No active sessions.</p>
+          )}
+          {sessions.data && sessions.data.length > 0 && (
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+              {sessions.data.map(s => (
+                <li key={s.id} className="py-2 flex items-center justify-between">
+                  <div className="text-sm">
+                    <p className="text-gray-900 dark:text-gray-100">
+                      {s.deviceLabel ?? 'Unknown device'}
+                      {s.current && <span className="ml-2 text-xs text-primary-600">(this device)</span>}
+                      {s.rememberMe && <span className="ml-2 text-xs text-gray-500">extended</span>}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {s.userAgent ? s.userAgent.slice(0, 60) : 'No user-agent'} ·{' '}
+                      {s.lastSeenAt
+                        ? `last seen ${new Date(s.lastSeenAt).toLocaleString()}`
+                        : `created ${new Date(s.createdAt).toLocaleString()}`}
+                    </p>
+                  </div>
+                  {!s.current && (
+                    <button
+                      onClick={() => revokeSession.mutate(s.id)}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Sign out
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {'Notification' in window && (
