@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `FileService` calls MinIO directly with no protection. If MinIO becomes slow or unreachable, every file request blocks waiting on the SDK timeout, exhausting the request thread pool and potentially the whole API.
 

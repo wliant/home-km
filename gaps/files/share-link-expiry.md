@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Files are only accessible to authenticated household users. To send a kid's school photo to a grandparent, the user has to download then attach via another channel.
 

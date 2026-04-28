@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No automated accessibility checks. CI runs typecheck, unit tests, build, and (on `main` only) Playwright E2E.
 

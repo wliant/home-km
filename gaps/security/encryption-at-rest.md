@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** PostgreSQL data and MinIO objects are stored unencrypted on the Docker host. Anyone with disk access reads everything.
 

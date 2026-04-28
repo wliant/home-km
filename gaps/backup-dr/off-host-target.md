@@ -5,6 +5,7 @@
 | Category | Non-functional · Backup & DR |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Even when backups exist (`postgres-backups.md`, `minio-backups.md`), they sit on the same host. A house fire takes the originals and the backups together.
 

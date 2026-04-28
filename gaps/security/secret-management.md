@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** All secrets (`DB_PASSWORD`, `MINIO_SECRET_KEY`, `JWT_SECRET`, `VAPID_PRIVATE_KEY`) live in a single `.env` file on the host (referenced by both compose files). Anyone with shell access reads them.
 

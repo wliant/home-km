@@ -5,6 +5,7 @@
 | Category | Functional · Sharing & collaboration |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Notes have a `shopping_list` label and checklist items. Two people opening the same shopping list don't see each other's check-offs in real time.
 

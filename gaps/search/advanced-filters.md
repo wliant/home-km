@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `SearchService.search(...)` accepts `q`, `types` (note/file/folder), `folderId`, and `tagIds`. No date range, no owner filter, no file-type filter, no "has reminder", no "child-safe only".
 

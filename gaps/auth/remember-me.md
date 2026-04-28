@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Every login produces an identical 24h token regardless of device trust. Users on a personal phone re-authenticate as often as users on a borrowed laptop.
 

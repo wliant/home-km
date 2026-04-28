@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Reminders only fire as Web Push notifications. They are invisible to Apple Calendar, Google Calendar, Thunderbird, etc.
 

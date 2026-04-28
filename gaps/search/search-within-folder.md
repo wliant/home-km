@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Global `/search` accepts a `folderId` filter, but there is no in-context "search this folder" affordance from `FolderPage`.
 

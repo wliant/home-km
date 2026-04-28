@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `MdcFilter` populates a `requestId` MDC entry, which is logged in each line. No distributed traces; no spans; no propagation across the API → MinIO or API → DB boundaries.
 

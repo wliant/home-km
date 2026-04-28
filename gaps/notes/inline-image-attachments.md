@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Notes and files exist in the same folder tree but are unrelated entities. To put a photo inside a note (e.g., a screenshot of an assembly diagram), users upload it as a file and reference it verbally.
 

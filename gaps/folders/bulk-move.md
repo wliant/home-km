@@ -5,6 +5,7 @@
 | Category | Functional · Folders |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Each note, file, and subfolder must be moved one at a time via its own detail page or per-item action.
 

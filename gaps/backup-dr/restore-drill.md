@@ -5,6 +5,7 @@
 | Category | Non-functional · Backup & DR |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Even when backups exist, no documented restore procedure has been tested.
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No slow-query logging configured in PostgreSQL or Hibernate. Slow queries (e.g., a search hitting an unindexed predicate) are invisible until users complain.
 

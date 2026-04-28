@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Only `LoginRateLimiter` (20 attempts / 60s / IP) exists. All other endpoints (`POST /api/notes`, `POST /api/files`, push subscribe, password change) are unbounded.
 

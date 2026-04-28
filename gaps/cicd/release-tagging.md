@@ -5,6 +5,7 @@
 | Category | Non-functional · CI/CD |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No release process. Operators upgrade by pulling `main`. No changelog, no release notes.
 

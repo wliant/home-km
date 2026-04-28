@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `ErrorBoundary` catches React render errors but only displays a fallback. No error reporting reaches the operator. No web-vitals (LCP, CLS, INP) measurement.
 

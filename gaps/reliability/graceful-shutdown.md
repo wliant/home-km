@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Spring Boot's default shutdown is immediate. Docker sends SIGTERM and waits 10s before SIGKILL. In-flight uploads can be cut mid-stream.
 

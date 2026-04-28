@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `offlineDb.ts` queues file uploads when offline. Note edits made offline simply fail with a network error — the change is lost.
 

@@ -5,6 +5,7 @@
 | Category | Functional · Multi-device sync |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** All updates are pull-based via TanStack Query. A user adding a note on phone will not see it on a second open device until that device refetches (typically on tab focus).
 

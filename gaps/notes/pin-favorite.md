@@ -7,6 +7,7 @@
 | Category | Functional · Notes |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Notes sort by updated_at descending. There is no way to keep a frequently-used note (e.g., "Family Wifi Password", "Doctor numbers") at the top of the list.
 

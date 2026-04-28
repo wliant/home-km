@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No export. Notes only exist inside the app.
 

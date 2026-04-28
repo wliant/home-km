@@ -5,6 +5,7 @@
 | Category | Non-functional · Documentation |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Spec `11-api-conventions.md` describes envelope conventions (PageResponse, ErrorResponse) but no full endpoint reference. `frontend/src/api/` is the de facto contract.
 

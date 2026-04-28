@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `ReminderRecipient` supports many recipients per reminder, but the UI provides only an awkward picker. There is no "everyone in the household" shortcut, no group concept.
 

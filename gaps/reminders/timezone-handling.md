@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** All timestamps stored in UTC; the Jackson config writes dates with context timezone. The UI assumes the user is in a single timezone, but `ReminderScheduler` fires based on UTC clock without per-user TZ context.
 

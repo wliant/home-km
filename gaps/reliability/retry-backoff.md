@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Backend MinIO/DB calls have no retry on transient failures (network glitch, brief MinIO restart). Frontend retries are TanStack Query defaults (3 attempts, no backoff customization).
 

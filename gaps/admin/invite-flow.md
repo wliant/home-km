@@ -5,6 +5,7 @@
 | Category | Functional · Admin |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `POST /api/auth/register` is open. Anyone who can reach the API URL can create an account. The host can disable registration only by removing the route or via a network firewall.
 

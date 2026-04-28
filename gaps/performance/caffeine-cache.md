@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No backend caching layer. Every request to fetch the folder tree, the tag list, or a user record hits PostgreSQL.
 

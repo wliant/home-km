@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P1 |
 | Size | L |
+| Status | Closed |
 
 **Current state:** `infra/postgres/init.sql` installs `pgvector`, and the schema reserves `embedding vector(1536)` columns on notes/files/folders. Nothing populates or queries them. `SearchService` only uses PostgreSQL `tsvector` keyword matching.
 

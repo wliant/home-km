@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Uploaded files are stored in MinIO and made downloadable via presigned URLs without any malware check. A child clicking a forwarded "homework.pdf" downloads whatever bytes were uploaded.
 

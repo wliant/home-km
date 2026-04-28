@@ -5,6 +5,7 @@
 | Category | Functional · Sharing & collaboration |
 | Priority | P1 |
 | Size | L |
+| Status | Closed |
 
 **Current state:** Visibility is binary household-wide except for the child-safe filter. Every adult sees every adult's notes and files. There is no concept of "private to me" or "shared with parent only".
 

@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Most controls inherit native keyboard behavior, but custom components (folder tree, tag autocomplete, file grid) have no consistent arrow-key navigation, no skip-link, and no global shortcut for search.
 

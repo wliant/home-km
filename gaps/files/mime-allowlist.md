@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `FileService` accepts any MIME type and trusts the client-supplied `Content-Type`. There is no server-side content-type detection.
 

@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** All UI strings are English literals. No language picker.
 

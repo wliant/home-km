@@ -7,6 +7,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** A file's display name is set at upload from the original filename and is immutable thereafter. To "rename", the user must delete and re-upload.
 

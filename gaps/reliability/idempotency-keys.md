@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Only file uploads use `clientUploadId` (`StoredFile.client_upload_id` is unique-indexed). All other write endpoints — create note, add reminder, attach tag — accept duplicate POSTs and create duplicate rows.
 

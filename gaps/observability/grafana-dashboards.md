@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No dashboards. Once metrics exist (see `metrics-prometheus.md`), they would be raw without visualization.
 

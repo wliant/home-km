@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** A handful of ARIA attributes exist (3 `aria-*` references found across the frontend). No landmarks, most icon-only buttons lack `aria-label`, no `role="navigation"` on the sidebar, no `role="main"` on the content region.
 

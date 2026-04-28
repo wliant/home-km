@@ -5,6 +5,7 @@
 | Category | Non-functional · Operability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** The actuator health indicator only reflects Spring's lifecycle. `application.yml` sets `endpoint.health.show-details: never` — even if indicators existed, they'd be hidden.
 

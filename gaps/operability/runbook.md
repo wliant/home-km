@@ -5,6 +5,7 @@
 | Category | Non-functional · Operability |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Specs document the architecture; `CLAUDE.md` and `README.md` cover developer setup. There is no day-2 runbook for the operator (likely the household tech-savvy person, not a 24/7 ops team).
 

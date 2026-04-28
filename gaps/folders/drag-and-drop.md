@@ -5,6 +5,7 @@
 | Category | Functional · Folders |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Moving items requires navigating to the item, opening "Move", and picking a target folder. The sidebar folder tree is read-only.
 

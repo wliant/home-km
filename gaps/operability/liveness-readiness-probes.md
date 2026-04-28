@@ -5,6 +5,7 @@
 | Category | Non-functional · Operability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `docker-compose.app.yml` healthcheck uses `wget /actuator/health` for both readiness and liveness. The endpoint always returns `UP` once Spring boots, regardless of dependency state.
 

@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** The Workbox service worker uses `NetworkFirst` for `/api/*` with cache fallback. Note bodies happen to be cached as a side effect, but there is no explicit guarantee, no UX for "this note is available offline", and the cache is opaque.
 

@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `FileService` generates a single JPEG thumbnail per image at upload time. Original images are downloaded full-size for any preview larger than the thumb.
 

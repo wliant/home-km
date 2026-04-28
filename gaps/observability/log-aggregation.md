@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Logs only exist as the container's stdout, accessible via `docker compose logs`. No retention beyond Docker's default rotation; no full-text search; cannot correlate across services.
 

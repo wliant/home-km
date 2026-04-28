@@ -5,6 +5,7 @@
 | Category | Functional · i18n / l10n |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** All UI strings are inline English literals. No translation framework; no extraction tooling; no message keys.
 

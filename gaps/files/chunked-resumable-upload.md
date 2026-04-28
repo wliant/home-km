@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P1 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `POST /api/files` is a single multipart request capped at `MAX_FILE_UPLOAD_MB` (default 100MB). The offline queue (`offlineDb.ts`) retries the entire upload on reconnect — a partially-transferred 80MB video starts from zero.
 

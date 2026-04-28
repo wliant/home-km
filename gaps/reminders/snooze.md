@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** When `ReminderScheduler` fires a reminder, the user receives one push and that's it — it's gone. To be reminded again later, the user must edit the reminder.
 

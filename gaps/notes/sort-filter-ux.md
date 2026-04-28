@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P1 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Notes list is paginated and orderable by recent update. No UI to filter by label, tag, owner, date range, or "has reminder".
 
