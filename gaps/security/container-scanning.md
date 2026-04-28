@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Backend uses `eclipse-temurin:21-jre-alpine`; frontend uses `nginx:alpine` and `node:24-alpine` for build. CI builds images but does not scan them.
 

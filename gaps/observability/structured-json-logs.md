@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Spring's default Logback pattern produces human-readable text logs to stdout. MDC fields (`requestId`, `userId` from `MdcFilter`) appear inline but are not machine-parseable.
 

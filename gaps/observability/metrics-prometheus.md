@@ -5,6 +5,7 @@
 | Category | Non-functional · Observability |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `application.yml` exposes only the `health` actuator endpoint (`management.endpoints.web.exposure.include: health`). No metrics, no JVM, no HikariCP, no HTTP request stats.
 

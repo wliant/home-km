@@ -5,6 +5,7 @@
 | Category | Non-functional · Backup & DR |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** MinIO data lives in the `miniodata` Docker volume. No replication, no second-bucket mirror, no off-host backup. File loss == file gone.
 

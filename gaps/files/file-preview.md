@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Image files render via thumbnail + full-size on the file detail page. PDFs, videos, audio files, and Office documents have no preview — clicking "Open" forces a download.
 

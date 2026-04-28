@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `.github/workflows/ci.yml` declares the `e2e` job with `if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')`. Pull requests skip E2E entirely.
 

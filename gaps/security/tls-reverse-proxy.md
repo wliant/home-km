@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `frontend/Dockerfile` ships an `nginx:alpine` listening on port 80 only. `frontend/nginx.conf.template` configures `listen 80;`. There is no TLS, no certificate, no production reverse proxy in front of the stack.
 

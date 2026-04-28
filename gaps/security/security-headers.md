@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `frontend/nginx.conf.template` sets only `Cache-Control` headers. No `Content-Security-Policy`, no `Strict-Transport-Security`, no `X-Frame-Options`, no `X-Content-Type-Options`, no `Referrer-Policy`. `grep -ri "Content-Security-Policy" frontend backend` returns nothing.
 

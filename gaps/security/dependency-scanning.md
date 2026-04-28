@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `.github/workflows/ci.yml` runs build and tests but no vulnerability scan against backend or frontend dependencies. CVEs in transitive dependencies ship undetected.
 

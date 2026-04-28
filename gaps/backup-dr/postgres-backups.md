@@ -5,6 +5,7 @@
 | Category | Non-functional · Backup & DR |
 | Priority | P0 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** PostgreSQL data lives in the named Docker volume `pgdata`. There are no backup scripts, no WAL archiving, no off-host copy. A failed disk equals total data loss.
 

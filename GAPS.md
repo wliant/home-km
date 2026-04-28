@@ -263,7 +263,10 @@ These are P0 or P1 items sized **S** that unlock outsized improvements:
 
 ### Now (P0, ~next 4 weeks)
 
-Production-readiness baseline:
+> **All P0 items closed.** Production-readiness baseline complete; the items below are kept for historical reference. Next phase: **P2**.
+
+<details>
+<summary>Closed P0 production-readiness baseline</summary>
 
 - [TLS + reverse proxy](gaps/security/tls-reverse-proxy.md)
 - [Security headers](gaps/security/security-headers.md)
@@ -273,7 +276,7 @@ Production-readiness baseline:
 - [Restore guide](gaps/documentation/restore-guide.md)
 - [Dependency + container scanning in CI](gaps/security/dependency-scanning.md), [`container-scanning.md`](gaps/security/container-scanning.md)
 - [Image push to GHCR](gaps/cicd/image-push-registry.md)
-- [Renovate](gaps/cicd/renovate-dependabot.md)
+- [Renovate / Dependabot](gaps/cicd/renovate-dependabot.md)
 - [E2E on every PR](gaps/testing/e2e-on-pr.md)
 - [Token refresh + logout revocation](gaps/auth/token-refresh.md), [`logout-revocation.md`](gaps/auth/logout-revocation.md)
 - [Password reset email](gaps/auth/password-reset-email.md)
@@ -282,6 +285,8 @@ Production-readiness baseline:
 - [Dark mode](gaps/settings/dark-mode.md)
 - [Markdown rendering](gaps/notes/markdown-rendering.md)
 - [In-app file preview](gaps/files/file-preview.md)
+
+</details>
 
 ### Next (P1, 1–2 quarters)
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Documentation |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Once backups exist (`backup-dr/postgres-backups.md`, `backup-dr/minio-backups.md`), the restore path is undocumented.
 

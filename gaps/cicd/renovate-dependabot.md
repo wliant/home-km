@@ -5,6 +5,7 @@
 | Category | Non-functional · CI/CD |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No automated dependency updates. Updates happen ad hoc when someone notices.
 

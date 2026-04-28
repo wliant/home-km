@@ -5,6 +5,7 @@
 | Category | Non-functional · CI/CD |
 | Priority | P0 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** CI builds Docker images locally as a smoke test but does not push anywhere. Operators have to clone the repo and `docker compose build` on each host.
 
