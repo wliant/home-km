@@ -10,5 +10,10 @@ public record RegisterRequest(
         ) String password,
         @NotBlank @Size(min = 1, max = 100)
         @Pattern(regexp = "^[^\\p{Cntrl}]+$", message = "must not contain control characters")
-        String displayName
-) {}
+        String displayName,
+        @Size(max = 80) String inviteToken
+) {
+    public RegisterRequest(String email, String password, String displayName) {
+        this(email, password, displayName, null);
+    }
+}
