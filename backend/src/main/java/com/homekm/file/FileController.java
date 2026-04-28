@@ -54,6 +54,13 @@ public class FileController {
         return ResponseEntity.ok(fileService.update(id, req, principal));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<FileResponse> patch(@PathVariable Long id,
+                                                @Valid @RequestBody FileUpdateRequest req,
+                                                @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(fileService.update(id, req, principal));
+    }
+
     @PutMapping(value = "/{id}/content", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FileResponse> replaceContent(
             @PathVariable Long id,

@@ -47,11 +47,17 @@ public class FileService {
     private final MinioClient minioClient;
     private final AppProperties appProperties;
     private final AuditService auditService;
+    private final MimeService mimeService;
+    private final AvScanner avScanner;
+    private final com.homekm.common.MinioGateway minioGateway;
+    private final FileTransformRepository transformRepository;
 
     public FileService(StoredFileRepository fileRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
                        MinioClient minioClient, AppProperties appProperties,
-                       AuditService auditService) {
+                       AuditService auditService, MimeService mimeService, AvScanner avScanner,
+                       com.homekm.common.MinioGateway minioGateway,
+                       FileTransformRepository transformRepository) {
         this.fileRepository = fileRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
@@ -59,6 +65,10 @@ public class FileService {
         this.minioClient = minioClient;
         this.appProperties = appProperties;
         this.auditService = auditService;
+        this.mimeService = mimeService;
+        this.avScanner = avScanner;
+        this.minioGateway = minioGateway;
+        this.transformRepository = transformRepository;
     }
 
     public PageResponse<FileResponse> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -78,15 +88,35 @@ public class FileService {
             if (existing.isPresent()) return toResponse(existing.get());
         }
 
+        // Detect & validate MIME via Tika
+        byte[] bytes = file.getBytes();
+        String detectedMime;
+        try (InputStream sniff = new ByteArrayInputStream(bytes)) {
+            detectedMime = mimeService.detect(sniff, file.getOriginalFilename());
+        }
+        mimeService.enforceAllowed(detectedMime, file.getContentType());
+
+        // AV scan (no-op unless ClamAV configured)
+        AvScanner.ScanResult scan;
+        try (InputStream s = new ByteArrayInputStream(bytes)) {
+            scan = avScanner.scan(s);
+        }
+        if (scan.status() == AvScanner.Status.INFECTED) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "FILE_INFECTED: " + scan.detail());
+        }
+
         User owner = userRepository.getReferenceById(principal.getId());
         StoredFile stored = new StoredFile();
         stored.setOwner(owner);
         stored.setFilename(file.getOriginalFilename() != null ? sanitizeFilename(file.getOriginalFilename()) : "upload");
-        stored.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
+        stored.setMimeType(detectedMime != null ? detectedMime : "application/octet-stream");
         stored.setSizeBytes(file.getSize());
         stored.setMinioKey("pending");
         stored.setClientUploadId(clientUploadId);
         stored.setChildSafe(principal.isChild());
+        stored.setScanStatus(scan.status() == AvScanner.Status.CLEAN ? "CLEAN" : "PENDING");
+        if (scan.status() == AvScanner.Status.CLEAN) stored.setScannedAt(Instant.now());
 
         if (folderId != null) {
             Folder folder = folderRepository.findActiveById(folderId)
@@ -100,7 +130,7 @@ public class FileService {
 
         fileRepository.save(stored);
 
-        // Build MinIO key and upload
+        // Build MinIO key and upload (resilience4j-wrapped)
         String folderSegment = folderId != null ? String.valueOf(folderId) : "root";
         String minioKey = principal.getId() + "/" + folderSegment + "/" + stored.getId() + "/" + stored.getFilename();
         stored.setMinioKey(minioKey);
@@ -108,14 +138,19 @@ public class FileService {
         String bucket = appProperties.getMinio().getBucketName();
         ensureBucketExists(bucket);
 
-        try (InputStream is = file.getInputStream()) {
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(minioKey)
-                    .stream(is, file.getSize(), -1)
-                    .contentType(stored.getMimeType())
-                    .build());
-        }
+        final byte[] payload = bytes;
+        minioGateway.run(() -> {
+            try (InputStream is = new ByteArrayInputStream(payload)) {
+                minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(minioKey)
+                        .stream(is, payload.length, -1)
+                        .contentType(stored.getMimeType())
+                        .build());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         fileRepository.save(stored);
 
@@ -124,8 +159,74 @@ public class FileService {
         }
 
         generateThumbnailAsync(stored.getId(), minioKey, stored.getMimeType(), bucket);
+        generateImageVariantsAsync(stored.getId(), bucket);
 
         return toResponse(stored);
+    }
+
+    @Transactional
+    public FileResponse rename(Long id, String newFilename, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        StoredFile f = fileRepository.findActiveById(id)
+                .orElseThrow(() -> new EntityNotFoundException("File", id));
+        if (newFilename == null || newFilename.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_FILENAME");
+        }
+        f.setFilename(sanitizeFilename(newFilename));
+        fileRepository.save(f);
+        auditService.record(principal.getId(), "FILE_RENAME", "file", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+        return toResponse(f);
+    }
+
+    @Async
+    public void generateImageVariantsAsync(Long fileId, String bucket) {
+        StoredFile file = fileRepository.findById(fileId).orElse(null);
+        if (file == null || file.getMimeType() == null || !file.getMimeType().startsWith("image/")) return;
+        try {
+            byte[] bytes;
+            try (InputStream is = minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucket).object(file.getMinioKey()).build())) {
+                bytes = is.readAllBytes();
+            }
+            BufferedImage source = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (source == null) return;
+            int[] sizes = {320, 960, 1600};
+            String[] names = {"thumb", "preview", "display"};
+            for (int i = 0; i < sizes.length; i++) {
+                int targetW = sizes[i];
+                if (source.getWidth() <= targetW && i > 0) continue;
+                double scale = Math.min(1.0, (double) targetW / source.getWidth());
+                int w = (int) (source.getWidth() * scale);
+                int h = (int) (source.getHeight() * scale);
+                BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g = scaled.createGraphics();
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                g.drawImage(source.getScaledInstance(w, h, Image.SCALE_SMOOTH), 0, 0, null);
+                g.dispose();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(scaled, "JPEG", baos);
+                byte[] out = baos.toByteArray();
+                String key = file.getMinioKey() + "__" + names[i] + ".jpg";
+                try (InputStream is = new ByteArrayInputStream(out)) {
+                    minioClient.putObject(PutObjectArgs.builder()
+                            .bucket(bucket).object(key).stream(is, out.length, -1)
+                            .contentType("image/jpeg").build());
+                }
+                FileTransform t = transformRepository.findByFileIdAndVariant(fileId, names[i])
+                        .orElseGet(FileTransform::new);
+                t.setFileId(fileId);
+                t.setVariant(names[i]);
+                t.setMinioKey(key);
+                t.setWidth(w);
+                t.setHeight(h);
+                t.setSizeBytes(out.length);
+                t.setMimeType("image/jpeg");
+                transformRepository.save(t);
+            }
+        } catch (Exception e) {
+            log.warn("Image variant generation failed for file {}: {}", fileId, e.getMessage());
+        }
     }
 
     public FileResponse getById(Long id, UserPrincipal principal) {

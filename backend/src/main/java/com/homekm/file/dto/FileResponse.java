@@ -16,6 +16,8 @@ public record FileResponse(
         boolean hasThumbnail,
         String downloadUrl,
         String thumbnailUrl,
+        String visibility,
+        String scanStatus,
         Instant uploadedAt,
         Instant updatedAt
 ) {
@@ -32,6 +34,8 @@ public record FileResponse(
                 f.getThumbnailKey() != null,
                 downloadUrl,
                 thumbnailUrl,
+                f.getVisibility(),
+                f.getScanStatus(),
                 f.getUploadedAt(),
                 f.getUpdatedAt()
         );

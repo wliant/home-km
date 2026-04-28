@@ -42,6 +42,9 @@ public class StoredFile {
     @Column(name = "is_child_safe", nullable = false)
     private boolean childSafe = false;
 
+    @Column(name = "visibility", nullable = false, length = 16)
+    private String visibility = "household";
+
     @Column(name = "client_upload_id", length = 36)
     private String clientUploadId;
 
@@ -53,6 +56,12 @@ public class StoredFile {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
+
+    @Column(name = "scan_status", nullable = false, length = 16)
+    private String scanStatus = "CLEAN";
+
+    @Column(name = "scanned_at")
+    private Instant scannedAt;
 
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
@@ -82,4 +91,10 @@ public class StoredFile {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String v) { this.visibility = v; }
+    public String getScanStatus() { return scanStatus; }
+    public void setScanStatus(String s) { this.scanStatus = s; }
+    public Instant getScannedAt() { return scannedAt; }
+    public void setScannedAt(Instant t) { this.scannedAt = t; }
 }
