@@ -94,6 +94,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Bundle size budget
+        run: npm run size
+
   e2e:
     name: E2E tests (Playwright)
     needs: [backend-unit, backend-integration, frontend]

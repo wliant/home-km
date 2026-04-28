@@ -4,7 +4,14 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
-      maximum-pool-size: 10
+      # Sizing rule of thumb: pool_size = ((core_count * 2) + effective_spindle_count).
+      # 10 fits a 4-core host with SSD; tune via DB_POOL_SIZE for larger hosts.
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 30000
+      # Surface connection leaks: any connection held > 30s logs a stack trace
+      # tagged with the leak source. Adjust if long-running queries are legitimate.
+      leak-detection-threshold: 30000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -43,6 +50,13 @@ spring:
 server:
   port: 8080
   shutdown: graceful
+  compression:
+    # Gzip JSON list responses and OpenAPI docs. nginx in front already
+    # gzips static assets; this catches direct API hits (CLI, mobile clients,
+    # health checks bypassing the frontend nginx).
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,application/vnd.spring-boot.actuator.v3+json
+    min-response-size: 1KB
 
 management:
   endpoints:

@@ -2,6 +2,7 @@ package com.homekm.note;
 
 import com.homekm.auth.UserPrincipal;
 import com.homekm.common.PageResponse;
+import com.homekm.common.Pagination;
 import com.homekm.note.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class NoteController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(noteService.list(folderId, page, size, principal));
+        return ResponseEntity.ok(noteService.list(folderId, Pagination.clampPage(page), Pagination.clampSize(size), principal));
     }
 
     @GetMapping("/api/folders/{folderId}/notes")
@@ -35,7 +36,7 @@ public class NoteController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(noteService.list(folderId, page, size, principal));
+        return ResponseEntity.ok(noteService.list(folderId, Pagination.clampPage(page), Pagination.clampSize(size), principal));
     }
 
     @GetMapping("/api/notes/{id}")

@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `application.yml` sets `hikari.maximum-pool-size: 10`. Default minimum-idle, no leak detection, no connection timeout customization.
 

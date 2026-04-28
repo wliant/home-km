@@ -13,6 +13,8 @@ All configuration is through a `.env` file at the project root. Both Docker Comp
 | `DB_NAME` | PostgreSQL database name | `homekm` | No |
 | `DB_USER` | PostgreSQL username | `homekm` | Yes |
 | `DB_PASSWORD` | PostgreSQL password | — | Yes |
+| `DB_POOL_SIZE` | HikariCP `maximum-pool-size`. Sizing rule: `(core_count * 2) + effective_spindle_count`. Default fits a 4-core SSD host. | `10` | No |
+| `DB_POOL_MIN_IDLE` | HikariCP `minimum-idle`. Keep small to avoid wasting connections during quiet periods. | `2` | No |
 | `POSTGRES_PORT` | Host-mapped port for PostgreSQL (infra compose) | `5432` | No |
 | `MINIO_ENDPOINT` | MinIO server URL (from app container's perspective) | `http://minio:9000` | Yes |
 | `MINIO_ACCESS_KEY` | MinIO root user / access key | — | Yes |

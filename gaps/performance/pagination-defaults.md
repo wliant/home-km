@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `PageResponse` is the standard envelope, but per-endpoint default and max page sizes are ad hoc. Some endpoints (tags, folders) may return all rows unbounded.
 

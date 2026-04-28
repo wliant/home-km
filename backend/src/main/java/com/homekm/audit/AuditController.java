@@ -1,6 +1,7 @@
 package com.homekm.audit;
 
 import com.homekm.common.PageResponse;
+import com.homekm.common.Pagination;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +28,6 @@ public class AuditController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size) {
-        return ResponseEntity.ok(auditService.list(actorId, action, from, to, page, size));
+        return ResponseEntity.ok(auditService.list(actorId, action, from, to, Pagination.clampPage(page), Pagination.clampSize(size)));
     }
 }

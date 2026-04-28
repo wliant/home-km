@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Vite produces an optimized build (lazy routes, code-split). No bundle-size monitoring; no tracking of regressions.
 

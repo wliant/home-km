@@ -5,6 +5,7 @@
 | Category | Non-functional · Performance |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `frontend/nginx.conf.template` does not enable `gzip` or `brotli`. The static bundle and JSON API responses are sent uncompressed. nginx serves HTTP/1.1.
 

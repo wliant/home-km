@@ -2,6 +2,7 @@ package com.homekm.search;
 
 import com.homekm.auth.UserPrincipal;
 import com.homekm.common.PageResponse;
+import com.homekm.common.Pagination;
 import com.homekm.search.dto.SearchResult;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -44,7 +45,9 @@ public class SearchController {
             @AuthenticationPrincipal UserPrincipal principal) {
         SearchService.SearchOpts opts = new SearchService.SearchOpts(types, folderId, includeSubfolders,
                 tagIds, ownerId, mimePrefix, hasReminder, childSafe, from, to, smart);
+        // Search is more expensive than other lists; cap below the global ceiling.
+        int searchSize = Math.min(Pagination.clampSize(size), 50);
         return ResponseEntity.ok(
-                searchService.search(q, opts, page, Math.min(size, 50), principal));
+                searchService.search(q, opts, Pagination.clampPage(page), searchSize, principal));
     }
 }

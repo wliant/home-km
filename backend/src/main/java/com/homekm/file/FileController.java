@@ -2,6 +2,7 @@ package com.homekm.file;
 
 import com.homekm.auth.UserPrincipal;
 import com.homekm.common.PageResponse;
+import com.homekm.common.Pagination;
 import com.homekm.file.dto.FileResponse;
 import com.homekm.file.dto.FileUpdateRequest;
 import jakarta.validation.Valid;
@@ -28,7 +29,7 @@ public class FileController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(fileService.list(folderId, page, size, principal));
+        return ResponseEntity.ok(fileService.list(folderId, Pagination.clampPage(page), Pagination.clampSize(size), principal));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
