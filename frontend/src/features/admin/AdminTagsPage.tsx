@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tagApi } from '../../api'
 import AppLayout from '../../components/AppLayout'
+import ColorPicker from '../../components/ColorPicker'
 import type { TagResponse } from '../../types'
 
 function ColorDot({ color }: { color: string }) {
@@ -55,6 +56,35 @@ export default function AdminTagsPage() {
     onError: () => setError('Failed to delete tag.'),
   })
 
+  const mergeTag = useMutation({
+    mutationFn: (vars: { sourceId: number; targetId: number }) =>
+      tagApi.merge(vars.sourceId, vars.targetId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tags'] })
+      setError(null)
+    },
+    onError: () => setError('Failed to merge tag.'),
+  })
+
+  function handleMerge(source: TagResponse) {
+    const candidates = tags.filter(t => t.id !== source.id)
+    if (candidates.length === 0) {
+      setError('No other tag to merge into.')
+      return
+    }
+    const targetName = window.prompt(
+      `Merge "${source.name}" into which tag? (case-insensitive)\n\nOptions:\n${candidates.map(t => `  - ${t.name}`).join('\n')}`,
+    )
+    if (!targetName) return
+    const target = candidates.find(t => t.name.toLowerCase() === targetName.trim().toLowerCase())
+    if (!target) {
+      setError(`No tag named "${targetName.trim()}".`)
+      return
+    }
+    if (!confirm(`Move all "${source.name}" taggings to "${target.name}" and delete "${source.name}"? This cannot be undone.`)) return
+    mergeTag.mutate({ sourceId: source.id, targetId: target.id })
+  }
+
   function startEdit(tag: TagResponse) {
     setEditId(tag.id)
     setEditName(tag.name)
@@ -76,16 +106,11 @@ export default function AdminTagsPage() {
               placeholder="Tag name"
               className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <div className="flex items-center gap-1">
-              <ColorDot color={newColor} />
-              <input
-                type="color"
-                value={newColor}
-                onChange={e => setNewColor(e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer border-0 p-0"
-                title="Pick color"
-              />
-            </div>
+            <ColorPicker
+              value={newColor}
+              onChange={setNewColor}
+              ariaLabel="New tag colour"
+            />
             <button
               onClick={() => createTag.mutate()}
               disabled={!newName.trim() || createTag.isPending}
@@ -115,15 +140,11 @@ export default function AdminTagsPage() {
                     onChange={e => setEditName(e.target.value)}
                     className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
-                  <div className="flex items-center gap-1">
-                    <ColorDot color={editColor} />
-                    <input
-                      type="color"
-                      value={editColor}
-                      onChange={e => setEditColor(e.target.value)}
-                      className="w-8 h-8 rounded cursor-pointer border-0 p-0"
-                    />
-                  </div>
+                  <ColorPicker
+                    value={editColor}
+                    onChange={setEditColor}
+                    ariaLabel="Tag colour"
+                  />
                   <button
                     onClick={() => updateTag.mutate(tag.id)}
                     disabled={!editName.trim() || updateTag.isPending}
@@ -147,6 +168,13 @@ export default function AdminTagsPage() {
                     className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Edit
+                  </button>
+                  <button
+                    onClick={() => handleMerge(tag)}
+                    disabled={mergeTag.isPending}
+                    className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    Merge…
                   </button>
                   <button
                     onClick={() => {

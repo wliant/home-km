@@ -48,6 +48,41 @@ public class TagController {
         return ResponseEntity.noContent().build();
     }
 
+    public record MergeRequest(Long targetId) {}
+
+    @PostMapping("/{sourceId}/merge")
+    public ResponseEntity<Void> merge(@PathVariable Long sourceId,
+                                       @RequestBody MergeRequest req,
+                                       @AuthenticationPrincipal UserPrincipal principal) {
+        tagService.merge(sourceId, req.targetId(), principal);
+        return ResponseEntity.noContent().build();
+    }
+
+    public record BulkItemDto(@jakarta.validation.constraints.NotBlank
+                              @jakarta.validation.constraints.Pattern(regexp = "note|file|folder") String type,
+                              @jakarta.validation.constraints.NotNull Long id) {}
+
+    public record BulkUpdateRequest(@jakarta.validation.constraints.NotEmpty List<BulkItemDto> items,
+                                     List<Long> addTagIds,
+                                     List<Long> removeTagIds) {}
+
+    public record BulkUpdateResponse(int mutated) {}
+
+    /**
+     * Apply add/remove tag operations across many items in one transaction.
+     * Frontend pairs this with the multi-select pattern (see folders/bulk-move).
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<BulkUpdateResponse> bulkUpdate(
+            @Valid @RequestBody BulkUpdateRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        var items = req.items().stream()
+                .map(d -> new TagService.BulkItem(d.type(), d.id()))
+                .toList();
+        int mutated = tagService.bulkUpdateTaggings(items, req.addTagIds(), req.removeTagIds(), principal);
+        return ResponseEntity.ok(new BulkUpdateResponse(mutated));
+    }
+
     // Tag attachment endpoints for notes
     @GetMapping("/notes/{entityId}/tags")
     public ResponseEntity<List<TagResponse>> getNoteTags(@PathVariable Long entityId) {

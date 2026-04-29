@@ -44,6 +44,15 @@ public class Folder {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
+    @Column(length = 7)
+    private String color;
+
+    @Column(length = 32)
+    private String icon;
+
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
 
@@ -66,4 +75,10 @@ public class Folder {
     public void setVisibility(String v) { this.visibility = v; }
     public int getSortOrder() { return sortOrder; }
     public void setSortOrder(int v) { this.sortOrder = v; }
+    public Instant getArchivedAt() { return archivedAt; }
+    public void setArchivedAt(Instant v) { this.archivedAt = v; }
+    public String getColor() { return color; }
+    public void setColor(String v) { this.color = v; }
+    public String getIcon() { return icon; }
+    public void setIcon(String v) { this.icon = v; }
 }

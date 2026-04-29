@@ -5,6 +5,7 @@
 | Category | Functional · Tags |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Renaming a tag in `AdminController` updates only the `tags.name`; merging two tags (e.g., `recipe` and `recipes`) requires manual re-tagging.
 

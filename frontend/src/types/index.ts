@@ -9,7 +9,11 @@ export interface FolderResponse {
   isChildSafe: boolean
   createdAt: string
   updatedAt: string
+  archivedAt: string | null
+  color: string | null
+  icon: string | null
   children: FolderResponse[]
+  ancestors: { id: number; name: string }[] | null
 }
 
 export interface NoteSummary {

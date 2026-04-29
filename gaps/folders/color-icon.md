@@ -5,6 +5,7 @@
 | Category | Functional · Folders |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** All folders render as identical generic folder icons. Distinguishing "Recipes" from "Receipts" in a glance requires reading the label.
 

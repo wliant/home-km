@@ -61,6 +61,24 @@ public class FolderController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/archive")
+    public ResponseEntity<FolderResponse> archive(@PathVariable Long id,
+                                                   @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(folderService.archive(id, principal));
+    }
+
+    @DeleteMapping("/{id}/archive")
+    public ResponseEntity<FolderResponse> unarchive(@PathVariable Long id,
+                                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(folderService.unarchive(id, principal));
+    }
+
+    @GetMapping("/archived")
+    public ResponseEntity<List<FolderResponse>> listArchived(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(folderService.listArchived(principal));
+    }
+
     @PutMapping("/{id}/child-safe")
     public ResponseEntity<FolderResponse> setChildSafe(@PathVariable Long id,
                                                         @RequestBody Map<String, Boolean> body,

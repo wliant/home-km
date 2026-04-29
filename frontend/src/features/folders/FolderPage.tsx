@@ -94,16 +94,51 @@ export default function FolderPage() {
 
   if (!folder) return <AppLayout><div className="text-gray-400 dark:text-gray-500">Loading…</div></AppLayout>
 
+  // ancestors include the folder itself as the last entry — drop it for the
+  // breadcrumb trail so the trailing item isn't a self-link.
+  const breadcrumbs = (folder.ancestors ?? []).slice(0, -1)
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto space-y-6">
+        {breadcrumbs.length > 0 && (
+          <nav aria-label="Folder breadcrumb" className="text-sm text-gray-500 dark:text-gray-400">
+            <ol className="flex flex-wrap items-center gap-1">
+              {breadcrumbs.map(crumb => (
+                <li key={crumb.id} className="flex items-center gap-1">
+                  <Link
+                    to={`/folders/${crumb.id}`}
+                    className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                  >
+                    {crumb.name}
+                  </Link>
+                  <span aria-hidden="true">/</span>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{folder.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              {folder.color && (
+                <span
+                  aria-hidden="true"
+                  className="inline-block w-4 h-4 rounded"
+                  style={{ backgroundColor: folder.color }}
+                />
+              )}
+              {folder.name}
+            </h1>
             {folder.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{folder.description}</p>}
             {folder.isChildSafe && (
               <span className="inline-block mt-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
                 Child-safe
+              </span>
+            )}
+            {folder.archivedAt && (
+              <span className="inline-block mt-1 ml-2 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                Archived
               </span>
             )}
           </div>

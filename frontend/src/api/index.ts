@@ -112,6 +112,13 @@ export const tagApi = {
     apiClient.post<TagResponse[]>(`/tags/files/${entityId}/tags`, { tagIds }).then(r => r.data),
   detachFromFile: (entityId: number, tagId: number) =>
     apiClient.delete(`/tags/files/${entityId}/tags/${tagId}`),
+  merge: (sourceId: number, targetId: number) =>
+    apiClient.post(`/tags/${sourceId}/merge`, { targetId }),
+  bulkUpdate: (body: {
+    items: { type: 'note' | 'file' | 'folder'; id: number }[]
+    addTagIds?: number[]
+    removeTagIds?: number[]
+  }) => apiClient.post<{ mutated: number }>('/tags/bulk', body).then(r => r.data),
 }
 
 // Search

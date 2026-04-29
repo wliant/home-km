@@ -69,8 +69,11 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     @Query("SELECT f FROM Folder f WHERE f.id = :id AND f.childSafe = :childSafe AND f.deletedAt IS NULL")
     Optional<Folder> findByIdAndChildSafeAndDeletedAtIsNull(@Param("id") Long id, @Param("childSafe") boolean childSafe);
 
-    @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NULL")
+    @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NULL AND f.archivedAt IS NULL")
     List<Folder> findAllActive();
+
+    @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NULL AND f.archivedAt IS NOT NULL ORDER BY f.archivedAt DESC")
+    List<Folder> findAllArchived();
 
     @Query("SELECT f FROM Folder f WHERE f.deletedAt IS NOT NULL ORDER BY f.deletedAt DESC")
     List<Folder> findAllDeleted();

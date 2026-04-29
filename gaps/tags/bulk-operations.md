@@ -5,6 +5,7 @@
 | Category | Functional · Tags |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Tags are added/removed one at a time on each note/file/folder via the `TagAutocomplete` chip control.
 

@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,7 +72,25 @@ public class FolderService {
 
     public FolderResponse getById(Long id, UserPrincipal principal) {
         Folder folder = findVisibleFolder(id, principal);
-        return FolderResponse.from(folder);
+        return FolderResponse.from(folder).withAncestors(buildAncestorChain(folder));
+    }
+
+    /**
+     * Climb the parent chain for a single folder, capped at {@link #MAX_DEPTH}
+     * to defend against any cycle that escaped {@code wouldCreateCycle}. Root
+     * → folder order. The folder itself is included as the last crumb so the
+     * frontend can render either with or without the trailing entry.
+     */
+    private List<FolderResponse.Crumb> buildAncestorChain(Folder folder) {
+        List<FolderResponse.Crumb> chain = new ArrayList<>();
+        Folder cursor = folder;
+        int safety = 0;
+        while (cursor != null && safety++ < MAX_DEPTH + 1) {
+            chain.add(new FolderResponse.Crumb(cursor.getId(), cursor.getName()));
+            cursor = cursor.getParent();
+        }
+        Collections.reverse(chain);
+        return chain;
     }
 
     @Transactional
@@ -93,6 +113,8 @@ public class FolderService {
         } else {
             validateRootName(req.name(), null);
         }
+        if (req.color() != null && !req.color().isBlank()) folder.setColor(req.color());
+        if (req.icon() != null && !req.icon().isBlank()) folder.setIcon(req.icon());
 
         folderRepository.save(folder);
         return FolderResponse.from(folder);
@@ -117,6 +139,8 @@ public class FolderService {
         }
 
         if (req.description() != null) folder.setDescription(req.description());
+        if (req.color() != null) folder.setColor(req.color().isBlank() ? null : req.color());
+        if (req.icon() != null) folder.setIcon(req.icon().isBlank() ? null : req.icon());
 
         // Handle move
         Long newParentId = req.parentId();
@@ -193,6 +217,42 @@ public class FolderService {
         folderRepository.save(folder);
         auditService.record(principal.getId(), "FOLDER_DELETE", "folder", String.valueOf(id),
                 null, null, RequestContextHelper.currentRequest());
+    }
+
+    @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
+    public FolderResponse archive(Long id, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        Folder folder = folderRepository.findActiveById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Folder", id));
+        folder.setArchivedAt(Instant.now());
+        folderRepository.save(folder);
+        auditService.record(principal.getId(), "FOLDER_ARCHIVE", "folder", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+        return FolderResponse.from(folder);
+    }
+
+    @Transactional
+    @CacheEvict(value = "folderTree", allEntries = true)
+    public FolderResponse unarchive(Long id, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        Folder folder = folderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Folder", id));
+        if (folder.getDeletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "FOLDER_DELETED");
+        }
+        folder.setArchivedAt(null);
+        folderRepository.save(folder);
+        auditService.record(principal.getId(), "FOLDER_UNARCHIVE", "folder", String.valueOf(id),
+                null, null, RequestContextHelper.currentRequest());
+        return FolderResponse.from(folder);
+    }
+
+    public List<FolderResponse> listArchived(UserPrincipal principal) {
+        if (principal.isChild()) return List.of();
+        return folderRepository.findAllArchived().stream()
+                .map(FolderResponse::from)
+                .toList();
     }
 
     @Transactional

@@ -5,6 +5,7 @@
 | Category | Functional · Tags |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `tags.color` exists in the schema but the admin UI exposes either no picker or a raw text input. No palette, no contrast preview.
 

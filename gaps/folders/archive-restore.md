@@ -5,6 +5,7 @@
 | Category | Functional · Folders |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Folders are either present or deleted. There is no in-between for "old but I don't want to throw it away" (e.g., last year's school papers).
 

@@ -35,6 +35,28 @@ public class TagService {
         return tagRepository.findByNameContaining(q).stream().map(TagResponse::from).toList();
     }
 
+    /**
+     * Move every tagging from {@code sourceId} to {@code targetId} and delete
+     * the source. Adults only. Idempotent at the row level (already-tagged
+     * entities are skipped, leftover source rows are wiped).
+     */
+    @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
+    public void merge(Long sourceId, Long targetId, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        if (sourceId.equals(targetId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "SAME_TAG");
+        }
+        Tag source = tagRepository.findById(sourceId)
+                .orElseThrow(() -> new EntityNotFoundException("Tag", sourceId));
+        if (!tagRepository.existsById(targetId)) {
+            throw new EntityNotFoundException("Tag", targetId);
+        }
+        taggingRepository.moveTaggings(sourceId, targetId);
+        taggingRepository.deleteByTagId(sourceId);
+        tagRepository.delete(source);
+    }
+
     @Transactional
     @CacheEvict(value = "tags", allEntries = true)
     public TagResponse create(TagRequest req, UserPrincipal principal) {
@@ -105,5 +127,52 @@ public class TagService {
     public List<TagResponse> getTagsForEntity(String entityType, Long entityId) {
         return taggingRepository.findByEntityTypeAndEntityId(entityType, entityId)
                 .stream().map(t -> TagResponse.from(t.getTag())).toList();
+    }
+
+    public record BulkItem(String entityType, Long entityId) {}
+
+    /**
+     * Apply {@code addTagIds} and remove {@code removeTagIds} across every
+     * item in one transaction. Skips no-op operations (already-attached
+     * adds, already-absent removes). Adults only. Returns the number of
+     * (item, tag) pairs that were actually mutated.
+     */
+    @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
+    public int bulkUpdateTaggings(List<BulkItem> items,
+                                   List<Long> addTagIds,
+                                   List<Long> removeTagIds,
+                                   UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        if (items == null || items.isEmpty()) return 0;
+        int mutated = 0;
+        for (BulkItem item : items) {
+            if (addTagIds != null) {
+                long current = taggingRepository.countByEntityTypeAndEntityId(item.entityType(), item.entityId());
+                for (Long tagId : addTagIds) {
+                    if (taggingRepository.existsByTagIdAndEntityTypeAndEntityId(tagId, item.entityType(), item.entityId())) continue;
+                    if (current >= 20) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "MAX_TAGS_EXCEEDED");
+                    Tag tag = tagRepository.findById(tagId)
+                            .orElseThrow(() -> new EntityNotFoundException("Tag", tagId));
+                    Tagging t = new Tagging();
+                    t.setTag(tag);
+                    t.setEntityType(item.entityType());
+                    t.setEntityId(item.entityId());
+                    taggingRepository.save(t);
+                    current++;
+                    mutated++;
+                }
+            }
+            if (removeTagIds != null) {
+                for (Long tagId : removeTagIds) {
+                    var existing = taggingRepository.findByTagIdAndEntityTypeAndEntityId(tagId, item.entityType(), item.entityId());
+                    if (existing.isPresent()) {
+                        taggingRepository.delete(existing.get());
+                        mutated++;
+                    }
+                }
+            }
+        }
+        return mutated;
     }
 }

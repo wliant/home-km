@@ -5,6 +5,7 @@
 | Category | Functional · Folders |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `FolderPage` shows the current folder name but no full ancestor path. Deep folders (`Household / Bills / Utilities / Electricity / 2025`) are hard to orient in.
 
