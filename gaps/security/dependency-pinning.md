@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Backend uses Gradle `implementation(...)` declarations without version locking. Frontend `package.json` uses caret/tilde ranges. Dockerfiles pin major image tags (`node:24-alpine`, `nginx:alpine`) but not digests.
 

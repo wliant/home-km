@@ -259,3 +259,19 @@ Reset another user's password (e.g. for a child who forgot theirs).
 
 - `password_hash` must never appear in any API response, log line, or exception message
 - Login timing must be consistent (bcrypt comparison runs even for unknown emails to prevent timing attacks — use a dummy hash comparison)
+
+## 7. CSRF posture
+
+Spring Security has CSRF protection **disabled** in `SecurityConfig`. This is correct for the current architecture, and the rationale is recorded here so a future change does not silently invalidate the assumption.
+
+**Why CSRF is not a threat today:**
+
+- Auth tokens travel only in the `Authorization: Bearer <jwt>` header, never in cookies. CSRF attacks rely on the browser auto-attaching authentication credentials (cookies) to a forged cross-site request — without an ambient credential, the forged request is unauthenticated and is rejected by `JwtAuthFilter`.
+- `Authorization` cannot be set on a cross-origin request without preflight; `Origin` is checked by `CorsConfig` against `CORS_ALLOWED_ORIGINS`.
+- The frontend stores tokens in `localStorage`, which is partitioned per-origin and unreachable to other sites' JavaScript.
+
+**When this changes — re-evaluate:**
+
+- If refresh tokens move from request body to `HttpOnly` cookie (a common hardening step), the refresh endpoint becomes CSRF-vulnerable. Mitigations: set `SameSite=Strict; Secure` on the cookie and require a header-confirmed double-submit token, or scope the cookie with `Path=/api/auth/refresh` so it only attaches to the one endpoint that needs it.
+- If session-based auth replaces JWT, re-enable Spring's CSRF filter and provide the token via a meta tag the frontend reads.
+- If the frontend ever embeds another origin's content in an iframe, the existing `Content-Security-Policy: frame-ancestors 'none'` header (set by `frontend/nginx.conf.template`) is the relevant control, not CSRF — but the `X-Frame-Options: DENY` header is the belt-and-braces default.

@@ -1,0 +1,51 @@
+# Pre-commit hooks. Install with `npx lefthook install` (lefthook is a
+# devDependency of frontend/). To bypass for emergencies: `git commit --no-verify`
+# — CI still enforces these checks, so the bypass is local-only.
+
+pre-commit:
+  parallel: true
+  commands:
+    frontend-eslint:
+      glob: 'frontend/src/**/*.{ts,tsx,js,jsx}'
+      run: npx --prefix frontend eslint {staged_files}
+      stage_fixed: true
+
+    backend-format:
+      # Light-touch: just refuse trailing whitespace and CRLF on Java sources.
+      # Spotless would be ideal but pulls in another ~30MB of plugins; revisit
+      # when someone wants opinionated formatting beyond IDE defaults.
+      glob: 'backend/src/**/*.java'
+      run: |
+        for f in {staged_files}; do
+          if grep -lE ' +$' "$f" > /dev/null 2>&1; then
+            echo "Trailing whitespace in $f"; exit 1
+          fi
+          if file "$f" | grep -q CRLF; then
+            echo "CRLF line endings in $f"; exit 1
+          fi
+        done
+
+    no-large-files:
+      run: |
+        for f in {staged_files}; do
+          [ -f "$f" ] || continue
+          size=$(wc -c < "$f")
+          if [ "$size" -gt 1048576 ]; then
+            echo "File $f is larger than 1MB ($size bytes)"
+            echo "If intentional (e.g. baseline fixture), pass --no-verify"
+            exit 1
+          fi
+        done
+
+commit-msg:
+  commands:
+    conventional:
+      # Same regex used by release-please. Allows feat / fix / chore / etc.
+      run: |
+        msg=$(head -n1 "{1}")
+        if ! echo "$msg" | grep -qE '^(feat|fix|chore|docs|test|refactor|perf|build|ci|style|revert)(\([^)]+\))?!?: .+'; then
+          echo "Commit subject must follow Conventional Commits."
+          echo "  Got: $msg"
+          echo "  Example: feat(scope): short description"
+          exit 1
+        fi

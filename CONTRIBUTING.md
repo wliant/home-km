@@ -31,6 +31,23 @@ fix(auth): refresh token TTL was using days regardless of remember-me
 docs: add restore drill procedure
 ```
 
+## Pre-commit hooks
+
+`lefthook` runs lightweight checks on staged files before each commit. Install once:
+
+```bash
+cd frontend && npm install     # pulls in lefthook
+npx lefthook install           # registers .git/hooks/pre-commit + commit-msg
+```
+
+What it enforces:
+- ESLint + auto-fix on staged frontend `.ts/.tsx/.js/.jsx`
+- No trailing whitespace or CRLF in staged Java files
+- No staged file larger than 1 MB (intentional baselines bypass with `git commit --no-verify`)
+- Commit subject follows Conventional Commits
+
+CI re-runs these checks, so a `--no-verify` bypass is local-only — the PR still needs to pass.
+
 ## PR checklist
 
 - [ ] Backend tests pass: `cd backend && ./gradlew test`

@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No SBOM (Software Bill of Materials) generated for releases.
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Security |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Spring Security has CSRF disabled (correct for a stateless JWT-in-Authorization-header API). No cookie-based session, so no traditional CSRF surface.
 

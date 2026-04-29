@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
     id("org.owasp.dependencycheck") version "9.0.10"
     id("info.solidsoft.pitest") version "1.15.0"
+    id("org.cyclonedx.bom") version "1.10.0"
 }
 
 group = "com.homekm"
@@ -24,6 +25,14 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+// Pin transitive deps so the same commit produces the same classpath months
+// apart. Lock files live under gradle/dependency-locks/. Refresh after an
+// intentional dep change with: ./gradlew dependencies --write-locks
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
 }
 
 dependencies {
@@ -136,3 +145,13 @@ pitest {
 // To regenerate the committed baseline at backend/openapi.yaml, run:
 //   UPDATE_OPENAPI_BASELINE=1 ./gradlew test --tests "*OpenApiContractTest"
 // The test fetches /v3/api-docs.yaml from a Testcontainers-backed Spring app.
+
+// CycloneDX SBOM — emit at build time alongside the boot jar so release CI
+// can attach it to the GitHub release. Run: ./gradlew cyclonedxBom
+tasks.named("cyclonedxBom") {
+    // Skip dev-only configurations to keep the SBOM focused on shipped deps.
+    setProperty("includeConfigs", listOf("runtimeClasspath"))
+    setProperty("skipConfigs", listOf("testCompileClasspath", "testRuntimeClasspath"))
+    setProperty("outputFormat", "json")
+    setProperty("outputName", "sbom-backend")
+}

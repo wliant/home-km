@@ -75,6 +75,30 @@ Pull a representative slow query into `psql`, prefix with `EXPLAIN (ANALYZE, BUF
 
 The default deploy ships only `/actuator/prometheus`. To run a full Grafana/Prometheus/Loki/Tempo stack, bring up `docker-compose.observability.yml` (see `docs/observability.md`).
 
+## Reproducible builds
+
+Three layers keep the same commit producing the same artefact months apart:
+
+1. **Backend** — Gradle dependency locking is enabled (`dependencyLocking { lockAllConfigurations(); lockMode = STRICT }`). `gradle.lockfile` is committed; CI will fail if the resolved versions drift. To intentionally update a dep, run `./gradlew dependencies --write-locks` and commit the new lockfile alongside the build change.
+2. **Frontend** — `frontend/package-lock.json` is committed; CI uses `npm ci` (refuses to install anything not in the lockfile). The Alpine-musl Dockerfile uses `npm install` instead — see CLAUDE.md for the platform-deps rationale.
+3. **Docker** — base images are pinned to major tags (`node:24-alpine`, `eclipse-temurin:21-jre-alpine`). Dependabot monitors them weekly via `.github/dependabot.yml` and opens digest-updating PRs. We do not commit `@sha256:` digests directly because every base-image security rebuild would otherwise require a manual ratchet.
+
+## Verifying signed images
+
+Release images are signed with cosign keyless OIDC (Sigstore). Verify before pulling on a sensitive host:
+
+```bash
+cosign verify ghcr.io/wliant/home-km/api:vX.Y.Z \
+  --certificate-identity-regexp '^https://github.com/wliant/home-km/' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+```
+
+Each release also publishes CycloneDX SBOMs as release assets and as cosign attestations on the image. Inspect the attestation:
+
+```bash
+cosign download attestation ghcr.io/wliant/home-km/api:vX.Y.Z | jq -r .payload | base64 -d | jq .
+```
+
 ## Security scanning in CI
 
 The CI workflow runs OWASP Dependency-Check (`dependency-scan` job) and Trivy image scans (inside `docker-build`). Without an NVD API key, OWASP DC throttles severely (~30+ minutes per run) because the public NVD endpoint rate-limits unauthenticated requests.

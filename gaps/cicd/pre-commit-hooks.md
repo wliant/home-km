@@ -5,6 +5,7 @@
 | Category | Non-functional · CI/CD |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No pre-commit hooks. Lint and format issues are caught in CI (or worse, in review).
 

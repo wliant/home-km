@@ -5,6 +5,7 @@
 | Category | Non-functional · CI/CD |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Once images are pushed (`image-push-registry.md`), they are unsigned. Operators cannot prove the image they pulled was actually built by this project's CI.
 
