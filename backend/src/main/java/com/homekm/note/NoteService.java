@@ -29,6 +29,9 @@ import java.util.List;
 @Service
 public class NoteService {
 
+    /** Cap on revisions kept per note — older entries are trimmed on every update. */
+    private static final int REVISION_KEEP = 50;
+
     private final NoteRepository noteRepository;
     private final ChecklistItemRepository checklistItemRepository;
     private final ReminderRepository reminderRepository;
@@ -37,11 +40,13 @@ public class NoteService {
     private final ChildSafeService childSafeService;
     private final AuditService auditService;
     private final EventBus eventBus;
+    private final NoteRevisionRepository revisionRepository;
 
     public NoteService(NoteRepository noteRepository, ChecklistItemRepository checklistItemRepository,
                        ReminderRepository reminderRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
-                       AuditService auditService, EventBus eventBus) {
+                       AuditService auditService, EventBus eventBus,
+                       NoteRevisionRepository revisionRepository) {
         this.noteRepository = noteRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.reminderRepository = reminderRepository;
@@ -50,6 +55,7 @@ public class NoteService {
         this.childSafeService = childSafeService;
         this.auditService = auditService;
         this.eventBus = eventBus;
+        this.revisionRepository = revisionRepository;
     }
 
     public PageResponse<NoteSummary> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -110,6 +116,58 @@ public class NoteService {
         }
 
         return NoteDetail.from(note, List.of(), List.of());
+    }
+
+    public record RevisionResponse(long id, long noteId, String title, String body,
+                                    String label, long editedBy, java.time.Instant editedAt) {
+        public static RevisionResponse from(NoteRevision r) {
+            return new RevisionResponse(r.getId(), r.getNote().getId(),
+                    r.getTitle(), r.getBody(), r.getLabel(),
+                    r.getEditedBy().getId(), r.getEditedAt());
+        }
+    }
+
+    /** Newest-first list of stored revisions for a note. */
+    public List<RevisionResponse> listRevisions(Long noteId, UserPrincipal principal) {
+        Note note = findVisibleNote(noteId, principal);
+        return revisionRepository.findByNoteIdOrderByEditedAtDesc(note.getId()).stream()
+                .map(RevisionResponse::from)
+                .toList();
+    }
+
+    /**
+     * Restore the note to a previous revision. The note's current title /
+     * body / label are themselves snapshotted into a new revision row first,
+     * so the restore is itself reversible. Adults only.
+     */
+    @Transactional
+    public NoteDetail restoreRevision(Long noteId, Long revisionId, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        Note note = noteRepository.findActiveById(noteId)
+                .orElseThrow(() -> new EntityNotFoundException("Note", noteId));
+        NoteRevision target = revisionRepository.findById(revisionId)
+                .orElseThrow(() -> new EntityNotFoundException("Revision", revisionId));
+        if (!target.getNote().getId().equals(noteId)) {
+            throw new EntityNotFoundException("Revision", revisionId);
+        }
+
+        NoteRevision snapshot = new NoteRevision();
+        snapshot.setNote(note);
+        snapshot.setTitle(note.getTitle());
+        snapshot.setBody(note.getBody());
+        snapshot.setLabel(note.getLabel());
+        snapshot.setEditedBy(userRepository.getReferenceById(principal.getId()));
+        revisionRepository.save(snapshot);
+        revisionRepository.trimToLast(note.getId(), REVISION_KEEP);
+
+        note.setTitle(target.getTitle());
+        note.setBody(target.getBody());
+        note.setLabel(target.getLabel());
+        noteRepository.save(note);
+
+        List<ChecklistItem> items = checklistItemRepository.findByNoteIdOrderBySortOrder(noteId);
+        List<com.homekm.reminder.Reminder> reminders = reminderRepository.findByNoteId(noteId);
+        return NoteDetail.from(note, items, reminders);
     }
 
     public List<NoteSummary> listTemplates(UserPrincipal principal) {
@@ -183,6 +241,24 @@ public class NoteService {
                 throw new ChildAccountWriteException();
             }
             // Children cannot change child-safe flag
+        }
+
+        // Snapshot pre-edit state into note_revisions before applying changes
+        // so the History tab can roll back. Skip when nothing changed about
+        // title/body/label — moves and child-safe toggles aren't worth a row.
+        boolean contentChanged =
+                (req.title() != null && !req.title().equals(note.getTitle()))
+             || (req.body() != null && !java.util.Objects.equals(req.body(), note.getBody()))
+             || (req.label() != null && !req.label().equals(note.getLabel()));
+        if (contentChanged) {
+            NoteRevision rev = new NoteRevision();
+            rev.setNote(note);
+            rev.setTitle(note.getTitle());
+            rev.setBody(note.getBody());
+            rev.setLabel(note.getLabel());
+            rev.setEditedBy(userRepository.getReferenceById(principal.getId()));
+            revisionRepository.save(rev);
+            revisionRepository.trimToLast(note.getId(), REVISION_KEEP);
         }
 
         if (req.title() != null) note.setTitle(req.title());

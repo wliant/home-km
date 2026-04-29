@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `Reminder.recurrence` is constrained to `daily`, `weekly`, `monthly`, `yearly` (validated by a CHECK constraint).
 

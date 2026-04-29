@@ -51,6 +51,19 @@ public class NoteController {
                 .body(noteService.createFromTemplate(templateId, principal));
     }
 
+    @GetMapping("/api/notes/{id}/revisions")
+    public ResponseEntity<List<NoteService.RevisionResponse>> listRevisions(
+            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(noteService.listRevisions(id, principal));
+    }
+
+    @PostMapping("/api/notes/{id}/revisions/{revisionId}/restore")
+    public ResponseEntity<NoteDetail> restoreRevision(@PathVariable Long id,
+                                                       @PathVariable Long revisionId,
+                                                       @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(noteService.restoreRevision(id, revisionId, principal));
+    }
+
     @GetMapping("/api/notes/{id}")
     public ResponseEntity<NoteDetail> getById(@PathVariable Long id,
                                                @AuthenticationPrincipal UserPrincipal principal) {

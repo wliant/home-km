@@ -76,7 +76,30 @@ public class ReminderScheduler {
         pushService.sendToUsers(recipientIds, title, body, url, reminder.getId());
     }
 
+    /**
+     * Advance the next-fire timestamp using either an iCalendar RRULE
+     * string (post V024) or a legacy enum value (pre V024 — kept for the
+     * narrow window where a row written before the migration could still
+     * be in flight). Falls back to the original timestamp on parse failure
+     * so a malformed RRULE never crashes the scheduler.
+     */
     private Instant advanceRemindAt(Instant remindAt, String recurrence) {
+        if (recurrence == null || recurrence.isBlank()) return remindAt;
+        if (recurrence.startsWith("FREQ=")) {
+            try {
+                net.fortuna.ical4j.model.Recur recur = new net.fortuna.ical4j.model.Recur(recurrence);
+                net.fortuna.ical4j.model.DateTime seed = new net.fortuna.ical4j.model.DateTime(java.util.Date.from(remindAt));
+                seed.setUtc(true);
+                net.fortuna.ical4j.model.DateTime after = new net.fortuna.ical4j.model.DateTime(seed.getTime() + 1000L);
+                after.setUtc(true);
+                net.fortuna.ical4j.model.Date next = recur.getNextDate(seed, after);
+                return next != null ? next.toInstant() : remindAt;
+            } catch (Exception e) {
+                log.warn("Bad RRULE '{}' on reminder advance: {}", recurrence, e.getMessage());
+                return remindAt;
+            }
+        }
+        // Legacy values, kept until rolling deploy clears stragglers.
         return switch (recurrence) {
             case "daily" -> remindAt.plus(1, ChronoUnit.DAYS);
             case "weekly" -> remindAt.plus(7, ChronoUnit.DAYS);

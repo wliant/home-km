@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Each `PATCH /api/notes/{id}` overwrites the body. Previous versions are unrecoverable.
 
