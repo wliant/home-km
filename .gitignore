@@ -17,6 +17,7 @@ frontend/dist/
 frontend/.vite/
 frontend/playwright-report/
 frontend/coverage/
+frontend/.lighthouseci/
 *.tsbuildinfo
 
 # Stray root-level deps (no package.json lives at repo root)
