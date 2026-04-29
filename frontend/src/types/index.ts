@@ -93,6 +93,17 @@ export interface SearchResult {
   updatedAt: string
 }
 
+export interface SearchResponse extends PageResponse<SearchResult> {
+  suggestion: string | null
+}
+
+export interface SavedSearch {
+  id: number
+  name: string
+  query: string
+  createdAt: string
+}
+
 export interface PageResponse<T> {
   content: T[]
   page: number

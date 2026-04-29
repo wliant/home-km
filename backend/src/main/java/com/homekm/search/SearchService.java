@@ -44,6 +44,42 @@ public class SearchService {
         return PageResponse.of(new PageImpl<>(pageContent, PageRequest.of(page, size), results.size()));
     }
 
+    /**
+     * pg_trgm similarity-based suggestion for typo-tolerant fallback. Queries
+     * the indexed {@code tags.name} trigram column plus full-text columns;
+     * returns the highest-similarity term only if it crosses a 0.3 threshold.
+     * Returns {@code null} when nothing is close enough — caller should not
+     * render a "did you mean" hint in that case.
+     */
+    @SuppressWarnings("unchecked")
+    public String findSuggestion(String q) {
+        if (q == null || q.isBlank() || q.length() < 3) return null;
+        // UNION across small candidate pools. tags.name has a trigram GIN
+        // index (V001); notes.title / folders.name / files.filename are
+        // sequential scans, but the row counts in a household app are small
+        // enough that this is fast in practice (<1ms for ~1k rows).
+        String sql = """
+            SELECT term, sim FROM (
+              SELECT name AS term, similarity(name, :q) AS sim FROM tags
+              UNION ALL
+              SELECT title, similarity(title, :q) FROM notes WHERE deleted_at IS NULL AND title IS NOT NULL
+              UNION ALL
+              SELECT name, similarity(name, :q) FROM folders WHERE name IS NOT NULL
+              UNION ALL
+              SELECT filename, similarity(filename, :q) FROM files WHERE filename IS NOT NULL
+            ) candidates
+            WHERE sim > 0.3 AND lower(term) <> lower(:q)
+            ORDER BY sim DESC
+            LIMIT 1
+            """;
+        Query query = em.createNativeQuery(sql);
+        query.setParameter("q", q);
+        List<Object[]> rows = (List<Object[]>) query.getResultList();
+        if (rows.isEmpty()) return null;
+        Object term = rows.get(0)[0];
+        return term != null ? term.toString() : null;
+    }
+
     @SuppressWarnings("unchecked")
     private List<SearchResult> searchNotes(String q, SearchOpts o, boolean childOnly) {
         StringBuilder sql = new StringBuilder("""

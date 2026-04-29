@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** A search for `recip` matches via `pg_trgm` indexes on tag names but typos in note bodies (e.g., `electircity`) return zero results.
 

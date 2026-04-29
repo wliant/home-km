@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Search results are a single chronological list of mixed notes, files, and folders. Tabbed switching requires re-querying with a `types` filter.
 

@@ -4,7 +4,7 @@ export * from './authApi'
 import { apiClient } from './client'
 import type {
   FolderResponse, NoteSummary, NoteDetail, FileResponse, TagResponse,
-  SearchResult, PageResponse, ChecklistItemResponse, ReminderResponse,
+  SearchResponse, SavedSearch, PageResponse, ChecklistItemResponse, ReminderResponse,
 } from '../types'
 
 // Folders
@@ -117,7 +117,15 @@ export const tagApi = {
 // Search
 export const searchApi = {
   search: (params: { q: string; types?: string[]; folderId?: number; tagIds?: number[]; page?: number; size?: number }) =>
-    apiClient.get<PageResponse<SearchResult>>('/search', { params }).then(r => r.data),
+    apiClient.get<SearchResponse>('/search', { params }).then(r => r.data),
+}
+
+// Saved searches
+export const savedSearchApi = {
+  list: () => apiClient.get<SavedSearch[]>('/saved-searches').then(r => r.data),
+  create: (body: { name: string; query: string }) =>
+    apiClient.post<SavedSearch>('/saved-searches', body).then(r => r.data),
+  delete: (id: number) => apiClient.delete(`/saved-searches/${id}`),
 }
 
 // Trash

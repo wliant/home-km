@@ -3,6 +3,7 @@ package com.homekm.search;
 import com.homekm.auth.UserPrincipal;
 import com.homekm.common.PageResponse;
 import com.homekm.common.Pagination;
+import com.homekm.search.dto.SearchResponse;
 import com.homekm.search.dto.SearchResult;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -27,7 +28,7 @@ public class SearchController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<SearchResult>> search(
+    public ResponseEntity<SearchResponse> search(
             @RequestParam @NotBlank @Size(min = 1, max = 500) String q,
             @RequestParam(required = false) List<String> types,
             @RequestParam(required = false) Long folderId,
@@ -47,7 +48,11 @@ public class SearchController {
                 tagIds, ownerId, mimePrefix, hasReminder, childSafe, from, to, smart);
         // Search is more expensive than other lists; cap below the global ceiling.
         int searchSize = Math.min(Pagination.clampSize(size), 50);
-        return ResponseEntity.ok(
-                searchService.search(q, opts, Pagination.clampPage(page), searchSize, principal));
+        PageResponse<SearchResult> results = searchService.search(q, opts,
+                Pagination.clampPage(page), searchSize, principal);
+        // Only spend the trigram lookup when there is nothing to show — typo
+        // suggestions exist to rescue empty result pages.
+        String suggestion = results.totalElements() == 0 ? searchService.findSuggestion(q) : null;
+        return ResponseEntity.ok(SearchResponse.of(results, suggestion));
     }
 }

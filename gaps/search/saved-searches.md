@@ -5,6 +5,7 @@
 | Category | Functional · Search |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Searches are one-shot. Re-running "all unpaid bills with reminder due this month" requires re-typing the query and re-applying filters every time.
 

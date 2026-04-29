@@ -11,6 +11,7 @@ export const QK = {
   noteTags: (noteId: number) => ['tags', 'note', noteId] as const,
   fileTags: (fileId: number) => ['tags', 'file', fileId] as const,
   search: (params: object) => ['search', params] as const,
+  savedSearches: () => ['savedSearches'] as const,
   adminUsers: () => ['admin', 'users'] as const,
   me: () => ['me'] as const,
   trash: () => ['trash'] as const,
