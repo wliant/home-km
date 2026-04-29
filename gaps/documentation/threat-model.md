@@ -5,6 +5,7 @@
 | Category | Non-functional · Documentation |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** No documented threat model. Security choices (bcrypt cost, login rate limit) exist without a traceable rationale.
 

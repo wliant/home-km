@@ -5,6 +5,7 @@
 | Category | Non-functional · Documentation |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No playbook. The operator (likely a household member, not a 24/7 ops team) has no shortlist of "what to do when the API is returning 500s".
 

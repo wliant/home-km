@@ -31,6 +31,10 @@ fix(auth): refresh token TTL was using days regardless of remember-me
 docs: add restore drill procedure
 ```
 
+## Architecture Decision Records
+
+Material architectural changes go alongside an ADR under `specs/adr/` — see `specs/adr/README.md` for the "when" matrix and the template. The PR that lands the change should land the ADR (status `Accepted`); the bar is "would a future contributor benefit from knowing why we did this".
+
 ## Pre-commit hooks
 
 `lefthook` runs lightweight checks on staged files before each commit. Install once:

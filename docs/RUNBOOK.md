@@ -53,6 +53,10 @@ If you front the app with a reverse proxy (Caddy/Traefik), restart the proxy aft
 
 Graceful shutdown is wired (`server.shutdown=graceful`, 30s phase timeout, 35s `stop_grace_period`); existing in-flight requests will finish.
 
+## On-call playbook
+
+For symptom → fix entries (5xx, upload failures, push, login, disk full, etc.), see `PLAYBOOK.md` at the repo root. This runbook covers routine operations; the playbook covers incidents.
+
 ## Common errors
 
 | Symptom | Cause | Fix |

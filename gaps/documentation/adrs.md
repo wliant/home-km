@@ -5,6 +5,7 @@
 | Category | Non-functional · Documentation |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `specs/00-overview.md` includes a "Decision Log" (D1–D20). Future decisions made by PRs are not consistently recorded.
 
