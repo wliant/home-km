@@ -5,6 +5,7 @@
 | Category | Functional · Files |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `PUT /api/files/{id}/content` (replace endpoint) overwrites the MinIO object in place. The old bytes are lost.
 

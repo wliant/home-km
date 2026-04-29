@@ -49,4 +49,31 @@ public interface TaggingRepository extends JpaRepository<Tagging, Long> {
     @Modifying
     @Query("DELETE FROM Tagging t WHERE t.tag.id = :tagId")
     void deleteByTagId(@Param("tagId") Long tagId);
+
+    /**
+     * Tag IDs applied to items sharing {@code folderId} with the given
+     * entity (excluding the entity itself). Powers the folder-neighbour
+     * signal in the tag-suggestion service. Duplicates are deliberate so
+     * the caller can rank by frequency.
+     */
+    @Query(value = """
+        SELECT t.tag_id FROM taggings t
+        WHERE NOT (t.entity_type = :selfType AND t.entity_id = :selfId)
+          AND (
+            (t.entity_type = 'note'   AND t.entity_id IN (SELECT id FROM notes  WHERE folder_id = :folderId AND deleted_at IS NULL))
+         OR (t.entity_type = 'file'   AND t.entity_id IN (SELECT id FROM files  WHERE folder_id = :folderId AND deleted_at IS NULL))
+         OR (t.entity_type = 'folder' AND t.entity_id IN (SELECT id FROM folders WHERE parent_id = :folderId AND deleted_at IS NULL))
+          )
+        """, nativeQuery = true)
+    List<Long> findFolderNeighbourTagIds(@Param("folderId") Long folderId,
+                                          @Param("selfType") String selfType,
+                                          @Param("selfId") Long selfId);
+
+    /** Tags that have ever co-appeared on the same entity as {@code tagId}. */
+    @Query(value = """
+        SELECT b.tag_id FROM taggings a
+        JOIN taggings b ON a.entity_type = b.entity_type AND a.entity_id = b.entity_id
+        WHERE a.tag_id = :tagId AND b.tag_id <> :tagId
+        """, nativeQuery = true)
+    List<Long> findCoOccurringTagIds(@Param("tagId") Long tagId);
 }

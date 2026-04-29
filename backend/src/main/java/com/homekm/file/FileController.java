@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import java.util.List;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -60,6 +61,19 @@ public class FileController {
                                                 @Valid @RequestBody FileUpdateRequest req,
                                                 @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(fileService.update(id, req, principal));
+    }
+
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<List<FileService.FileVersionResponse>> listVersions(@PathVariable Long id,
+                                                                                @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(fileService.listVersions(id, principal));
+    }
+
+    @PostMapping("/{id}/versions/{versionId}/restore")
+    public ResponseEntity<FileResponse> restoreVersion(@PathVariable Long id,
+                                                        @PathVariable Long versionId,
+                                                        @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(fileService.restoreVersion(id, versionId, principal));
     }
 
     @PutMapping(value = "/{id}/content", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

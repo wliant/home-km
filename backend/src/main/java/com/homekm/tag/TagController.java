@@ -14,6 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tags")
+@org.springframework.validation.annotation.Validated
 public class TagController {
 
     private final TagService tagService;
@@ -26,6 +27,14 @@ public class TagController {
     public ResponseEntity<List<TagResponse>> list(@RequestParam(required = false) String q) {
         if (q != null && !q.isBlank()) return ResponseEntity.ok(tagService.autocomplete(q));
         return ResponseEntity.ok(tagService.list());
+    }
+
+    @GetMapping("/suggest")
+    public ResponseEntity<List<TagResponse>> suggest(
+            @RequestParam @jakarta.validation.constraints.Pattern(regexp = "note|file|folder") String entityType,
+            @RequestParam Long entityId,
+            @RequestParam(required = false) Long folderId) {
+        return ResponseEntity.ok(tagService.suggest(entityType, entityId, folderId));
     }
 
     @PostMapping

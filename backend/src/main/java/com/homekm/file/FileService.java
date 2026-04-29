@@ -33,6 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -51,13 +52,15 @@ public class FileService {
     private final AvScanner avScanner;
     private final com.homekm.common.MinioGateway minioGateway;
     private final FileTransformRepository transformRepository;
+    private final FileVersionRepository versionRepository;
 
     public FileService(StoredFileRepository fileRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
                        MinioClient minioClient, AppProperties appProperties,
                        AuditService auditService, MimeService mimeService, AvScanner avScanner,
                        com.homekm.common.MinioGateway minioGateway,
-                       FileTransformRepository transformRepository) {
+                       FileTransformRepository transformRepository,
+                       FileVersionRepository versionRepository) {
         this.fileRepository = fileRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
@@ -69,6 +72,7 @@ public class FileService {
         this.avScanner = avScanner;
         this.minioGateway = minioGateway;
         this.transformRepository = transformRepository;
+        this.versionRepository = versionRepository;
     }
 
     public PageResponse<FileResponse> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -289,11 +293,18 @@ public class FileService {
         String bucket = appProperties.getMinio().getBucketName();
         String oldKey = f.getMinioKey();
         String oldThumbKey = f.getThumbnailKey();
+        String oldFilename = f.getFilename();
+        String oldMime = f.getMimeType();
+        long oldSize = f.getSizeBytes();
 
         String folderSegment = f.getFolder() != null ? String.valueOf(f.getFolder().getId()) : "root";
         String newFilename = file.getOriginalFilename() != null
                 ? sanitizeFilename(file.getOriginalFilename()) : f.getFilename();
-        String newKey = principal.getId() + "/" + folderSegment + "/" + f.getId() + "/" + newFilename;
+        // Stable per-version key so we can keep historical bytes around for
+        // GET /versions/{vid}/download. Without the version-id suffix the
+        // restore path would have nothing to point at.
+        long versionTimestamp = System.currentTimeMillis();
+        String newKey = principal.getId() + "/" + folderSegment + "/" + f.getId() + "/v" + versionTimestamp + "/" + newFilename;
 
         ensureBucketExists(bucket);
         try (InputStream is = file.getInputStream()) {
@@ -304,14 +315,40 @@ public class FileService {
                     .build());
         }
 
-        // remove old objects
-        try {
-            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(oldKey).build());
-            if (oldThumbKey != null) {
+        // Snapshot the old head into file_versions so it can be restored.
+        // Skip when no head row exists yet (legacy upload before versioning).
+        if (versionRepository.findByFileId(f.getId()).isEmpty()) {
+            FileVersion legacy = new FileVersion();
+            legacy.setFile(f);
+            legacy.setMinioKey(oldKey);
+            legacy.setFilename(oldFilename);
+            legacy.setMimeType(oldMime);
+            legacy.setSizeBytes(oldSize);
+            legacy.setUploadedBy(userRepository.getReferenceById(principal.getId()));
+            legacy.setCurrent(false);
+            versionRepository.save(legacy);
+        }
+
+        // Mark previous current=false; insert a new row marked current.
+        versionRepository.clearCurrent(f.getId());
+        FileVersion v = new FileVersion();
+        v.setFile(f);
+        v.setMinioKey(newKey);
+        v.setFilename(newFilename);
+        v.setMimeType(file.getContentType() != null ? file.getContentType() : f.getMimeType());
+        v.setSizeBytes(file.getSize());
+        v.setUploadedBy(userRepository.getReferenceById(principal.getId()));
+        v.setCurrent(true);
+        versionRepository.save(v);
+
+        // Old thumbnail no longer applies; old MinIO content survives in
+        // file_versions until the user (or a future cap policy) deletes it.
+        if (oldThumbKey != null) {
+            try {
                 minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucket).object(oldThumbKey).build());
+            } catch (Exception e) {
+                log.warn("Could not remove old thumbnail {}: {}", oldThumbKey, e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("Could not remove old MinIO object {}: {}", oldKey, e.getMessage());
         }
 
         f.setFilename(newFilename);
@@ -325,6 +362,52 @@ public class FileService {
         generateThumbnailAsync(f.getId(), newKey, mimeType, bucket);
 
         return toResponse(f);
+    }
+
+    public List<FileVersionResponse> listVersions(Long fileId, UserPrincipal principal) {
+        if (principal.isChild()) return java.util.Collections.emptyList();
+        if (!fileRepository.findActiveById(fileId).isPresent()) {
+            throw new EntityNotFoundException("File", fileId);
+        }
+        return versionRepository.findByFileId(fileId).stream()
+                .map(FileVersionResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public FileResponse restoreVersion(Long fileId, Long versionId, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        StoredFile f = fileRepository.findActiveById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
+        FileVersion target = versionRepository.findById(versionId)
+                .orElseThrow(() -> new EntityNotFoundException("FileVersion", versionId));
+        if (!target.getFile().getId().equals(fileId)) {
+            throw new EntityNotFoundException("FileVersion", versionId);
+        }
+        // Flip current pointer; the head row's bytes already exist in MinIO
+        // under the version's key. Filename/mime/size mirror the version.
+        versionRepository.clearCurrent(fileId);
+        target.setCurrent(true);
+        versionRepository.save(target);
+
+        f.setFilename(target.getFilename());
+        f.setMimeType(target.getMimeType());
+        f.setSizeBytes(target.getSizeBytes());
+        f.setMinioKey(target.getMinioKey());
+        f.setThumbnailKey(null);
+        fileRepository.save(f);
+        return toResponse(f);
+    }
+
+    public record FileVersionResponse(long id, long fileId, String filename,
+                                       String mimeType, long sizeBytes,
+                                       long uploadedBy, Instant uploadedAt,
+                                       boolean isCurrent) {
+        public static FileVersionResponse from(FileVersion v) {
+            return new FileVersionResponse(v.getId(), v.getFile().getId(),
+                    v.getFilename(), v.getMimeType(), v.getSizeBytes(),
+                    v.getUploadedBy().getId(), v.getUploadedAt(), v.isCurrent());
+        }
     }
 
     @Async

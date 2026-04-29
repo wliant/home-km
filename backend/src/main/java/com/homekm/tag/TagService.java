@@ -129,6 +129,52 @@ public class TagService {
                 .stream().map(t -> TagResponse.from(t.getTag())).toList();
     }
 
+    /**
+     * Cheap v1: suggest tags by frequency-of-use among items sharing this
+     * one's folder, then co-occurrence with the entity's existing tags.
+     * Returns up to 5 tags the entity does not already carry, ranked by
+     * blended score. Empty when nothing nearby is tagged yet.
+     */
+    public List<TagResponse> suggest(String entityType, Long entityId, Long folderId) {
+        if (entityType == null || entityId == null) return List.of();
+        var attached = taggingRepository.findByEntityTypeAndEntityId(entityType, entityId).stream()
+                .map(t -> t.getTag().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+        java.util.Map<Long, Double> score = new java.util.HashMap<>();
+
+        // Folder-neighbour signal: tags applied to other items in the same
+        // folder. Weight = 1.0 per occurrence so a tag used by many siblings
+        // ranks higher than a tag used by one.
+        if (folderId != null) {
+            var folderTagIds = taggingRepository.findFolderNeighbourTagIds(folderId, entityType, entityId);
+            for (Long id : folderTagIds) {
+                score.merge(id, 1.0, Double::sum);
+            }
+        }
+
+        // Co-occurrence signal: for every tag this item already carries,
+        // count tags that co-appear elsewhere. Weight = 0.5 per co-hit so
+        // folder neighbours rank above pure co-occurrence ties.
+        for (Long tagId : attached) {
+            var coTagIds = taggingRepository.findCoOccurringTagIds(tagId);
+            for (Long id : coTagIds) {
+                if (attached.contains(id)) continue;
+                score.merge(id, 0.5, Double::sum);
+            }
+        }
+
+        return score.entrySet().stream()
+                .filter(e -> !attached.contains(e.getKey()))
+                .sorted(java.util.Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(5)
+                .map(java.util.Map.Entry::getKey)
+                .map(id -> tagRepository.findById(id).orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .map(TagResponse::from)
+                .toList();
+    }
+
     public record BulkItem(String entityType, Long entityId) {}
 
     /**

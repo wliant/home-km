@@ -5,6 +5,7 @@
 | Category | Functional · Tags |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `TagAutocomplete` only matches what the user types. Tagging a brand-new note/file requires the user to remember which tags exist and choose them.
 
