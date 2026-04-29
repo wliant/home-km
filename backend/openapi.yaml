@@ -235,6 +235,41 @@ paths:
       responses:
         "200":
           description: OK
+  /api/me/notification-prefs:
+    get:
+      tags:
+      - me-controller
+      operationId: getNotificationPrefs
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+    put:
+      tags:
+      - me-controller
+      operationId: updateNotificationPrefs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
   /api/items/{type}/{id}/visibility:
     get:
       tags:
@@ -518,6 +553,19 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/UserResponse'
+    delete:
+      tags:
+      - auth-controller
+      operationId: deleteMe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAccountRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/admin/users/{id}:
     put:
       tags:
@@ -2982,6 +3030,13 @@ components:
           type: boolean
         last:
           type: boolean
+    DeleteAccountRequest:
+      required:
+      - password
+      type: object
+      properties:
+        password:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http

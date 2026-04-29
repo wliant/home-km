@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Accent color is fixed at build time via `APP_THEME_COLOR` (default `#6366f1`). Changing it requires a frontend rebuild.
 

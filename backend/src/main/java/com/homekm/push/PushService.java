@@ -58,6 +58,26 @@ public class PushService {
     }
 
     /**
+     * Drop user IDs whose {@code notification_prefs.reminders} is explicitly
+     * false. Absent or {@code true} means push is allowed (default-on so
+     * existing users keep getting reminders without opting in to anything).
+     */
+    private List<Long> filterByReminderPref(List<Long> userIds) {
+        if (userIds.isEmpty()) return userIds;
+        List<User> users = userRepository.findAllById(userIds);
+        java.util.List<Long> kept = new java.util.ArrayList<>(users.size());
+        for (User u : users) {
+            String prefs = u.getNotificationPrefs();
+            if (prefs == null || prefs.isBlank()
+                    || !prefs.contains("\"reminders\"")
+                    || prefs.contains("\"reminders\":true")) {
+                kept.add(u.getId());
+            }
+        }
+        return kept;
+    }
+
+    /**
      * Send a push to every device subscribed by any user in {@code userIds}.
      * When {@code reminderId} is non-null it is embedded in the payload so the
      * service worker can render Done / Snooze action buttons that POST back to
@@ -70,7 +90,12 @@ public class PushService {
             return;
         }
 
-        List<PushSubscription> subs = subscriptionRepository.findByUserIdIn(userIds);
+        // Reminder pushes (reminderId != null) honour user prefs; other
+        // call paths bypass — they're either critical (security) or already
+        // gated by the caller.
+        List<Long> targets = reminderId != null ? filterByReminderPref(userIds) : userIds;
+        if (targets.isEmpty()) return;
+        List<PushSubscription> subs = subscriptionRepository.findByUserIdIn(targets);
         for (PushSubscription sub : subs) {
             try {
                 nl.martijndwars.webpush.PushService pushService = new nl.martijndwars.webpush.PushService(

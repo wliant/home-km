@@ -5,6 +5,7 @@
 | Category | Non-functional · Compliance & data |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** The frontend stores the JWT in `localStorage` (`authStore` with persist middleware) and uses IndexedDB for the offline upload queue. No disclosure of what's stored or why.
 

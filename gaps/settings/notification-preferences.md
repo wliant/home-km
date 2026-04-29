@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Web Push is all-or-nothing — subscribed or unsubscribed. There is no granular control over which event types trigger a push.
 

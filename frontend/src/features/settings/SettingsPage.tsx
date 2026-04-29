@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../../api/authApi'
-import { buildInfoApi } from '../../api'
+import { buildInfoApi, meApi } from '../../api'
 import { useAuthStore } from '../../lib/authStore'
 import { usePushSubscription } from '../../lib/usePushSubscription'
 import { useThemeStore, type Theme } from '../../lib/themeStore'
+import { ACCENT_PRESETS } from '../../lib/accentPresets'
 import AppLayout from '../../components/AppLayout'
 
 const profileSchema = z.object({
@@ -22,6 +24,8 @@ export default function SettingsPage() {
   const push = usePushSubscription()
   const theme = useThemeStore(s => s.theme)
   const setTheme = useThemeStore(s => s.setTheme)
+  const accent = useThemeStore(s => s.accent)
+  const setAccent = useThemeStore(s => s.setAccent)
   const qc = useQueryClient()
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileForm>({
@@ -141,7 +145,7 @@ export default function SettingsPage() {
         {'Notification' in window && (
           <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 mb-6">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Push notifications</h2>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-4">
               <button
                 onClick={push.subscribed ? push.unsubscribe : push.subscribe}
                 disabled={push.loading}
@@ -157,12 +161,13 @@ export default function SettingsPage() {
                 <span className="text-xs text-green-600">Enabled on this device</span>
               )}
             </div>
+            <NotificationPrefs />
           </section>
         )}
 
         <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 mb-6">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Appearance</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mb-4">
             <label htmlFor="settings-theme" className="text-xs text-gray-500 dark:text-gray-400">Theme</label>
             <select
               id="settings-theme"
@@ -174,6 +179,28 @@ export default function SettingsPage() {
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Accent</span>
+            <div role="radiogroup" aria-label="Accent colour" className="flex flex-wrap gap-1.5">
+              {ACCENT_PRESETS.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={accent === p.id}
+                  aria-label={p.name}
+                  title={p.name}
+                  onClick={() => setAccent(p.id)}
+                  className={`w-7 h-7 rounded-full border ${
+                    accent === p.id
+                      ? 'border-gray-900 dark:border-gray-100 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-primary-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  style={{ backgroundColor: p.swatch }}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
@@ -194,8 +221,183 @@ export default function SettingsPage() {
         </section>
 
         <AboutSection />
+        <PrivacySection />
+        <DangerZone />
       </div>
     </AppLayout>
+  )
+}
+
+function PrivacySection() {
+  const clearAuth = useAuthStore(s => s.clearAuth)
+  const [busy, setBusy] = useState(false)
+
+  async function clearLocal() {
+    if (!confirm('Sign out and wipe all locally-stored data on this device?')) return
+    setBusy(true)
+    try {
+      // Wipe all storage layers we use. Each .catch(() => {}) handles
+      // browsers that don't expose the API.
+      try { localStorage.clear() } catch {}
+      try { sessionStorage.clear() } catch {}
+      if (typeof indexedDB !== 'undefined' && indexedDB.databases) {
+        try {
+          const dbs = await indexedDB.databases()
+          await Promise.all(dbs.map(d => d.name && new Promise<void>(res => {
+            const req = indexedDB.deleteDatabase(d.name!)
+            req.onsuccess = req.onerror = req.onblocked = () => res()
+          })))
+        } catch {}
+      }
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys()
+          await Promise.all(keys.map(k => caches.delete(k)))
+        } catch {}
+      }
+      if ('serviceWorker' in navigator) {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          await Promise.all(regs.map(r => r.unregister()))
+        } catch {}
+      }
+    } finally {
+      clearAuth()
+      window.location.href = '/login'
+    }
+  }
+
+  return (
+    <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+      <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Privacy</h2>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+        On this device the app stores your auth token in <code>localStorage</code>,
+        queued uploads + cached notes in <code>IndexedDB</code>, and the offline shell in
+        the service-worker cache. See <a className="text-primary-600 dark:text-primary-400 hover:underline" href="/PRIVACY.md">PRIVACY.md</a> for the full list.
+      </p>
+      <button
+        onClick={clearLocal}
+        disabled={busy}
+        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+      >
+        {busy ? 'Clearing…' : 'Clear local data and sign out'}
+      </button>
+    </section>
+  )
+}
+
+function DangerZone() {
+  const clearAuth = useAuthStore(s => s.clearAuth)
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!password) return
+    setBusy(true)
+    setError(null)
+    try {
+      await authApi.deleteMe(password)
+      clearAuth()
+      window.location.href = '/login'
+    } catch (err) {
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code
+      setError(
+        code === 'INVALID_PASSWORD' ? 'Wrong password.' :
+        code === 'LAST_ADMIN' ? 'You are the only admin — promote another user before deactivating.' :
+        'Could not deactivate. Try again.',
+      )
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="rounded-lg border border-red-200 dark:border-red-900/50 p-5 bg-red-50/30 dark:bg-red-900/10">
+      <h2 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Danger zone</h2>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+        Deactivating signs you out everywhere and blocks future sign-ins. Your data is preserved
+        so an admin can re-enable the account; ask the household admin to fully delete your data
+        if needed.
+      </p>
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40"
+        >
+          Deactivate my account…
+        </button>
+      ) : (
+        <form onSubmit={submit} className="space-y-2">
+          <label htmlFor="danger-password" className="block text-xs text-gray-600 dark:text-gray-400">
+            Confirm with your password to continue
+          </label>
+          <input
+            id="danger-password"
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            autoComplete="current-password"
+            className="w-full max-w-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+          />
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={busy || !password}
+              className="px-3 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {busy ? 'Deactivating…' : 'Yes, deactivate'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setPassword(''); setError(null) }}
+              className="px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  )
+}
+
+function NotificationPrefs() {
+  const qc = useQueryClient()
+  const { data: prefs } = useQuery({
+    queryKey: ['me', 'notification-prefs'],
+    queryFn: () => meApi.getNotificationPrefs(),
+  })
+  const update = useMutation({
+    mutationFn: (next: Record<string, unknown>) => meApi.updateNotificationPrefs(next),
+    onSuccess: data => qc.setQueryData(['me', 'notification-prefs'], data),
+  })
+
+  if (!prefs) return null
+  // Default-on: an absent key means "send".
+  const remindersEnabled = prefs.reminders !== false
+
+  return (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
+      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        What to push
+      </h3>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={remindersEnabled}
+          onChange={e => update.mutate({ ...prefs, reminders: e.target.checked })}
+          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        <span className="text-gray-700 dark:text-gray-300">Reminders</span>
+      </label>
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Disabling stops the server from sending push notifications for reminders, but the
+        scheduler still records when each reminder fires (visible in the unread badge).
+      </p>
+    </div>
   )
 }
 

@@ -1,6 +1,9 @@
 package com.homekm.auth;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 
 @Entity
@@ -38,6 +41,15 @@ public class User {
     @Column(name = "ics_token", length = 64, unique = true)
     private String icsToken;
 
+    /**
+     * Per-user notification routing. Open-ended JSON so future event types
+     * (mentions, share invites) can be added without a schema change.
+     * Currently: {@code {"reminders": true|false}}. Absent = default true.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "notification_prefs", nullable = false, columnDefinition = "jsonb")
+    private String notificationPrefs = "{}";
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -68,6 +80,8 @@ public class User {
     public void setLocale(String v) { this.locale = v; }
     public String getIcsToken() { return icsToken; }
     public void setIcsToken(String v) { this.icsToken = v; }
+    public String getNotificationPrefs() { return notificationPrefs; }
+    public void setNotificationPrefs(String v) { this.notificationPrefs = v; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

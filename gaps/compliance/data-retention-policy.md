@@ -5,6 +5,7 @@
 | Category | Non-functional · Compliance & data |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Data lives forever unless explicitly deleted. No documented retention policy for any data class — notes, files, push subscriptions, audit logs, search history.
 

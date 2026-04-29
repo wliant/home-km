@@ -108,4 +108,18 @@ public class AuthController {
     public ResponseEntity<InvitationResponse> verifyInvitation(@PathVariable String token) {
         return ResponseEntity.ok(InvitationResponse.from(invitationService.verify(token)));
     }
+
+    public record DeleteAccountRequest(@jakarta.validation.constraints.NotBlank String password) {}
+
+    /**
+     * Self-service account deactivation. Returns 401 on bad password, 409
+     * if the caller is the last active admin, 204 on success.
+     */
+    @org.springframework.web.bind.annotation.DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal UserPrincipal principal,
+                                          @Valid @RequestBody DeleteAccountRequest req) {
+        if (principal == null) throw new AccessDeniedException("login required");
+        authService.deactivateSelf(principal.getId(), req.password());
+        return ResponseEntity.noContent().build();
+    }
 }

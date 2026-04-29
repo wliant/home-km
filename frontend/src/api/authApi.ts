@@ -37,6 +37,9 @@ export const authApi = {
   revokeSession: (id: number) =>
     apiClient.delete(`/auth/sessions/${id}`),
 
+  deleteMe: (password: string) =>
+    apiClient.delete('/auth/me', { data: { password } }),
+
   verifyInvitation: (token: string) =>
     apiClient.get<InvitationResponse>(`/auth/invitations/${token}`).then((r) => r.data),
 

@@ -67,6 +67,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 function useApplyTheme() {
   const theme = useThemeStore(s => s.theme)
+  const accent = useThemeStore(s => s.accent)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
     function apply() {
@@ -77,6 +78,9 @@ function useApplyTheme() {
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
   }, [theme])
+  useEffect(() => {
+    void import('./lib/accentPresets').then(m => m.applyAccent(accent))
+  }, [accent])
 }
 
 export default function App() {

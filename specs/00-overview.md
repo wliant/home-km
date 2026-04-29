@@ -31,6 +31,8 @@ Home KM is a self-hosted household knowledge management Progressive Web App (PWA
 
 Service-Level Objectives for availability, latency, and push delivery are documented in `docs/slo.md` and surface as Prometheus alerts (see `docker-compose.observability.yml`).
 
+**Data retention** defaults — including the 30-day trash window, 1-year audit log, and refresh-token TTLs — are catalogued in `RETENTION.md`. **Privacy** disclosures (what is stored client- and server-side) live in `PRIVACY.md`.
+
 ---
 
 ## 3. App Name Configurability

@@ -188,6 +188,37 @@ public class AuthService {
         }
     }
 
+    /**
+     * Self-service deactivation. Verifies the password, flips
+     * {@code is_active} false (login + refresh both gate on it), revokes
+     * every active refresh token so the user signs out everywhere, and
+     * audits the event so an admin can re-activate inside any grace window
+     * the household policy chooses. Hard data deletion remains an admin
+     * path; see RETENTION.md for the per-data-class policy.
+     */
+    @Transactional
+    public void deactivateSelf(Long userId, String passwordConfirmation) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND"));
+        if (!passwordEncoder.matches(passwordConfirmation, user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_PASSWORD");
+        }
+        if (user.isAdmin()) {
+            long otherActiveAdmins = userRepository.countOtherActiveAdmins(userId);
+            if (otherActiveAdmins == 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "LAST_ADMIN");
+            }
+        }
+        user.setActive(false);
+        userRepository.save(user);
+        for (RefreshToken rt : refreshTokenRepository.findActiveByUserId(userId)) {
+            rt.setRevokedAt(Instant.now());
+            refreshTokenRepository.save(rt);
+        }
+        auditService.record(userId, "USER_SELF_DEACTIVATE", "user",
+                String.valueOf(userId), null, null, RequestContextHelper.currentRequest());
+    }
+
     public UserResponse getMe(UserPrincipal principal) {
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new EntityNotFoundException("User", principal.getId()));

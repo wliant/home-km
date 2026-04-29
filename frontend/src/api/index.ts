@@ -130,6 +130,10 @@ export const searchApi = {
 // Me — ambient state for the current user (badge count, etc.)
 export const meApi = {
   unread: () => apiClient.get<{ count: number }>('/me/unread').then(r => r.data),
+  getNotificationPrefs: () =>
+    apiClient.get<Record<string, unknown>>('/me/notification-prefs').then(r => r.data),
+  updateNotificationPrefs: (prefs: Record<string, unknown>) =>
+    apiClient.put<Record<string, unknown>>('/me/notification-prefs', prefs).then(r => r.data),
 }
 
 export interface BuildInfo {

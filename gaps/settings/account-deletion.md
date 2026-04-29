@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Only an admin can delete a user via `AdminController`. A user cannot request their own deletion.
 
