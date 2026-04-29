@@ -829,6 +829,21 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/SnoozeResponse'
+  /api/reminders/{id}/done:
+    post:
+      tags:
+      - reminder-snooze-controller
+      operationId: markDone
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
   /api/reminders/me.ics/regenerate:
     post:
       tags:
@@ -1623,6 +1638,18 @@ paths:
               schema:
                 type: string
                 format: byte
+  /api/me/unread:
+    get:
+      tags:
+      - me-controller
+      operationId: unread
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UnreadResponse'
   /api/folders/{folderId}/notes:
     get:
       tags:
@@ -2677,6 +2704,12 @@ components:
           type: boolean
         last:
           type: boolean
+    UnreadResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
     PageResponseFileResponse:
       type: object
       properties:

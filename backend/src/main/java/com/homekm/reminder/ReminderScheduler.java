@@ -73,7 +73,7 @@ public class ReminderScheduler {
         String title = "Reminder: " + reminder.getNote().getTitle();
         String body = reminder.getNote().getTitle();
         String url = "/notes/" + reminder.getNote().getId();
-        pushService.sendToUsers(recipientIds, title, body, url);
+        pushService.sendToUsers(recipientIds, title, body, url, reminder.getId());
     }
 
     private Instant advanceRemindAt(Instant remindAt, String recurrence) {

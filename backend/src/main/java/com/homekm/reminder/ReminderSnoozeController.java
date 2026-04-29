@@ -46,6 +46,28 @@ public class ReminderSnoozeController {
                 .body(new SnoozeResponse(r.getId(), r.getRemindAt()));
     }
 
+    /**
+     * Mark a reminder as completed. Non-recurring reminders are deleted;
+     * recurring reminders have their pushSent flag reset so the scheduler
+     * advances to the next occurrence on its next tick. Reachable from the
+     * push notification's "Done" action button.
+     */
+    @PostMapping("/{id}/done")
+    @Transactional
+    public ResponseEntity<Void> markDone(@PathVariable Long id,
+                                          @AuthenticationPrincipal UserPrincipal principal) {
+        if (principal == null) throw new AccessDeniedException("login required");
+        Reminder r = reminderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reminder", id));
+        if (r.getRecurrence() != null && !r.getRecurrence().isBlank()) {
+            r.setPushSent(false);
+            reminderRepository.save(r);
+        } else {
+            reminderRepository.delete(r);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     public record SnoozeRequest(@NotNull @Min(1) Integer minutes) {}
     public record SnoozeResponse(Long id, Instant remindAt) {}
 }

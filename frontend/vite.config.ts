@@ -29,11 +29,28 @@ export default defineConfig(({ mode }) => {
           theme_color: themeColor,
           background_color: '#ffffff',
           display: 'standalone',
+          // Lets desktop installs use the title-bar overlay when supported,
+          // falling back to standalone everywhere else.
+          display_override: ['window-controls-overlay', 'standalone'],
           start_url: '/',
           icons: [
             { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
             { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           ],
+          // Receive shared text/links from other apps. /share reads the
+          // query params and forwards into the note editor. File-based shares
+          // require a SW POST interceptor (deferred — users can still upload
+          // via the regular UI).
+          share_target: {
+            action: '/share',
+            method: 'GET',
+            params: {
+              title: 'title',
+              text: 'text',
+              url: 'url',
+            },
+          },
         },
         injectManifest: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

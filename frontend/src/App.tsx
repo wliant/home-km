@@ -24,6 +24,8 @@ const SettingsPage = lazy(() => import('./features/settings/SettingsPage'))
 const TrashPage = lazy(() => import('./features/trash/TrashPage'))
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./features/auth/ResetPasswordPage'))
+const SharePage = lazy(() => import('./features/share/SharePage'))
+const NotificationActionPage = lazy(() => import('./features/notifications/NotificationActionPage'))
 
 function HomePage() {
   const user = useAuthStore(s => s.user)
@@ -103,6 +105,8 @@ export default function App() {
         <Route path="/admin/invitations" element={<AdminRoute><AdminInvitationsPage /></AdminRoute>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/trash" element={<Protected><TrashPage /></Protected>} />
+        <Route path="/share" element={<Protected><SharePage /></Protected>} />
+        <Route path="/notifications/action" element={<Protected><NotificationActionPage /></Protected>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

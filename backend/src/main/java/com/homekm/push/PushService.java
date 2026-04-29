@@ -54,6 +54,16 @@ public class PushService {
     }
 
     public void sendToUsers(List<Long> userIds, String title, String body, String url) {
+        sendToUsers(userIds, title, body, url, null);
+    }
+
+    /**
+     * Send a push to every device subscribed by any user in {@code userIds}.
+     * When {@code reminderId} is non-null it is embedded in the payload so the
+     * service worker can render Done / Snooze action buttons that POST back to
+     * /api/reminders/{id}/done and /api/reminders/{id}/snooze.
+     */
+    public void sendToUsers(List<Long> userIds, String title, String body, String url, Long reminderId) {
         AppProperties.Vapid vapid = appProperties.getVapid();
         if (vapid.getPublicKey() == null || vapid.getPublicKey().isBlank()) {
             log.warn("VAPID keys not configured; skipping push delivery");
@@ -65,7 +75,7 @@ public class PushService {
             try {
                 nl.martijndwars.webpush.PushService pushService = new nl.martijndwars.webpush.PushService(
                         vapid.getPublicKey(), vapid.getPrivateKey(), vapid.getSubject());
-                String payload = buildPayload(title, body, url);
+                String payload = buildPayload(title, body, url, reminderId);
                 Subscription subscription = new Subscription(sub.getEndpoint(),
                         new Subscription.Keys(sub.getP256dhKey(), sub.getAuthKey()));
                 Notification notification = new Notification(subscription, payload);
@@ -76,8 +86,14 @@ public class PushService {
         }
     }
 
-    private String buildPayload(String title, String body, String url) {
-        return "{\"title\":\"" + escape(title) + "\",\"body\":\"" + escape(body) + "\",\"url\":\"" + escape(url) + "\"}";
+    private String buildPayload(String title, String body, String url, Long reminderId) {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"title\":\"").append(escape(title)).append("\",");
+        sb.append("\"body\":\"").append(escape(body)).append("\",");
+        sb.append("\"url\":\"").append(escape(url)).append("\"");
+        if (reminderId != null) sb.append(",\"reminderId\":").append(reminderId);
+        sb.append("}");
+        return sb.toString();
     }
 
     private String escape(String s) {

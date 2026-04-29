@@ -28,6 +28,9 @@ export default function NoteEditorPage() {
   const noteId = Number(id)
   const [searchParams] = useSearchParams()
   const defaultFolderId = searchParams.get('folderId') ? Number(searchParams.get('folderId')) : undefined
+  // Pre-fill from PWA share-target redirect or any deep-link.
+  const defaultTitle = searchParams.get('title') ?? ''
+  const defaultBody = searchParams.get('body') ?? ''
   const qc = useQueryClient()
   const navigate = useNavigate()
 
@@ -46,7 +49,7 @@ export default function NoteEditorPage() {
 
   const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { title: '', folderId: defaultFolderId },
+    defaultValues: { title: defaultTitle, body: defaultBody || undefined, folderId: defaultFolderId },
     values: existing ? {
       title: existing.title,
       body: existing.body ?? '',

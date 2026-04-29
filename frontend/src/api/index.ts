@@ -120,6 +120,18 @@ export const searchApi = {
     apiClient.get<SearchResponse>('/search', { params }).then(r => r.data),
 }
 
+// Me — ambient state for the current user (badge count, etc.)
+export const meApi = {
+  unread: () => apiClient.get<{ count: number }>('/me/unread').then(r => r.data),
+}
+
+// Reminder actions surfaced from push notifications.
+export const reminderActionApi = {
+  done: (id: number) => apiClient.post(`/reminders/${id}/done`),
+  snoozeMinutes: (id: number, minutes: number) =>
+    apiClient.post(`/reminders/${id}/snooze`, { minutes }),
+}
+
 // Saved searches
 export const savedSearchApi = {
   list: () => apiClient.get<SavedSearch[]>('/saved-searches').then(r => r.data),

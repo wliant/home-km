@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No app-icon badge. Unseen reminders, mentions, or comments are invisible until the user opens the app.
 

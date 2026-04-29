@@ -14,4 +14,15 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long> {
 
     @Query("SELECT r FROM Reminder r WHERE r.pushSent = false AND r.remindAt <= :now")
     List<Reminder> findDueReminders(Instant now);
+
+    /**
+     * Count reminders that the given user should see as pending — already due
+     * (remindAt &lt;= now) and the user is a recipient. Source for the
+     * navigator.setAppBadge count.
+     */
+    @Query("""
+            SELECT COUNT(r) FROM Reminder r JOIN r.recipients rr
+            WHERE rr.user.id = :userId AND r.remindAt <= :now
+            """)
+    long countUnreadForUser(Long userId, Instant now);
 }

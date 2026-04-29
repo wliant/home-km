@@ -5,12 +5,13 @@ import { useQuery } from '@tanstack/react-query'
 import { folderApi, authApi } from '../api'
 import { QK } from '../lib/queryKeys'
 import QueueStatusBadge from './QueueStatusBadge'
-import IOSInstallPrompt from './IOSInstallPrompt'
 import ThemeToggle from './ThemeToggle'
 import type { FolderResponse } from '../types'
 import { useRealtimeEvents } from '../lib/useRealtimeEvents'
+import { useUnreadBadge } from '../lib/useUnreadBadge'
 import SkipLink from './SkipLink'
 import CommandPalette from './CommandPalette'
+import InstallBanner from './InstallBanner'
 
 function FolderTreeItem({ folder, depth = 0 }: { folder: FolderResponse; depth?: number }) {
   return (
@@ -113,7 +114,10 @@ function BottomTabBar() {
     location.pathname === path ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex z-10">
+    <nav
+      className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex z-10"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       {[
         { to: '/', icon: '🏠', label: 'Home' },
         { to: '/search', icon: '🔍', label: 'Search' },
@@ -149,13 +153,14 @@ function OfflineBanner() {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const user = useAuthStore(s => s.user)
   useRealtimeEvents()
+  useUnreadBadge()
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <SkipLink />
       <CommandPalette />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
-        <IOSInstallPrompt />
+        <InstallBanner />
         <OfflineBanner />
         {user?.isChild && (
           <div role="status" className="bg-purple-50 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-700 px-4 py-1.5 text-xs text-purple-800 dark:text-purple-200 text-center font-medium">

@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Push notifications fired by `ReminderScheduler` show only a title and body. Tapping opens the related note.
 

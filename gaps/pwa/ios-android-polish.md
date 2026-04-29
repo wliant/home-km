@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** `IOSInstallPrompt` exists, manifest is configured, basic install works. iOS-specific quirks (status-bar color, safe-area insets, splash screens) are not all addressed; Android's Web Share Target is not implemented.
 

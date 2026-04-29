@@ -5,6 +5,7 @@
 | Category | Functional · PWA & offline |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** The iOS install prompt component is shown to iOS users. Android users see only the browser's default `beforeinstallprompt` (often missed).
 
