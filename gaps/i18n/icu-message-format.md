@@ -5,6 +5,7 @@
 | Category | Functional · i18n / l10n |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** N/A — no messages.
 

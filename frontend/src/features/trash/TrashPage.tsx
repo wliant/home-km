@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { trashApi, type TrashItem } from '../../api'
 import { QK } from '../../lib/queryKeys'
 import { toast } from '../../lib/toastStore'
+import { formatDate } from '../../lib/format'
 import AppLayout from '../../components/AppLayout'
 
 export default function TrashPage() {
@@ -42,7 +43,7 @@ export default function TrashPage() {
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Deleted {new Date(item.deletedAt).toLocaleDateString()}
+                  Deleted {formatDate(item.deletedAt)}
                 </p>
               </div>
               <button

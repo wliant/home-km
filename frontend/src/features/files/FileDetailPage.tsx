@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fileApi, tagApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
+import { formatBytes, formatDate } from '../../lib/format'
 import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import TagAutocomplete from '../../components/TagAutocomplete'
@@ -135,9 +136,9 @@ export default function FileDetailPage() {
           <dt className="text-gray-500 dark:text-gray-400">Type</dt>
           <dd className="text-gray-900 dark:text-gray-100">{file.mimeType}</dd>
           <dt className="text-gray-500 dark:text-gray-400">Size</dt>
-          <dd className="text-gray-900 dark:text-gray-100">{formatSize(file.sizeBytes)}</dd>
+          <dd className="text-gray-900 dark:text-gray-100">{formatBytes(file.sizeBytes)}</dd>
           <dt className="text-gray-500 dark:text-gray-400">Uploaded</dt>
-          <dd className="text-gray-900 dark:text-gray-100">{new Date(file.uploadedAt).toLocaleDateString()}</dd>
+          <dd className="text-gray-900 dark:text-gray-100">{formatDate(file.uploadedAt)}</dd>
           {file.description && (
             <>
               <dt className="text-gray-500 dark:text-gray-400">Description</dt>
@@ -174,12 +175,6 @@ export default function FileDetailPage() {
       </div>
     </AppLayout>
   )
-}
-
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 interface FilePreviewProps {

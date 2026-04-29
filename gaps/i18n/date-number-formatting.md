@@ -5,6 +5,7 @@
 | Category | Functional · i18n / l10n |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Dates render via ad-hoc `toLocaleString()` calls or hand-formatted strings. No central helper. Currency rarely appears now, but receipts and budgets are foreseeable.
 

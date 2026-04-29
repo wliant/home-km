@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { savedSearchApi, searchApi } from '../../api'
 import type { SavedSearch, SearchResult } from '../../types'
@@ -10,6 +11,7 @@ import AppLayout from '../../components/AppLayout'
 type TypeFilter = 'all' | SearchResult['type']
 
 export default function SearchPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [input, setInput] = useState(searchParams.get('q') ?? '')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
@@ -142,6 +144,12 @@ export default function SearchPage() {
             </button>
           )}
         </form>
+
+        {q.length >= 2 && data && data.content.length > 0 && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2" aria-live="polite">
+            {t('search.results', { count: data.content.length })}
+          </p>
+        )}
 
         {q.length >= 2 && data && data.content.length > 0 && (
           <div role="tablist" aria-label="Filter by type" className="flex gap-1 border-b border-gray-200 dark:border-gray-700 mb-4 text-sm">
