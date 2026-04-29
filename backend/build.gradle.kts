@@ -6,6 +6,7 @@ plugins {
     id("org.owasp.dependencycheck") version "9.0.10"
     id("info.solidsoft.pitest") version "1.15.0"
     id("org.cyclonedx.bom") version "1.10.0"
+    id("com.gorylenko.gradle-git-properties") version "2.4.2"
 }
 
 group = "com.homekm"
@@ -102,6 +103,23 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
+}
+
+// gradle-git-properties writes git.properties into the boot jar so
+// /actuator/info reports commit SHA, build time, and project version.
+gitProperties {
+    keys = listOf(
+        "git.branch",
+        "git.commit.id",
+        "git.commit.id.abbrev",
+        "git.commit.time",
+        "git.tags",
+    )
+    failOnNoGitDirectory = false
+}
+
+springBoot {
+    buildInfo()
 }
 
 dependencyCheck {

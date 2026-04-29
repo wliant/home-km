@@ -1726,6 +1726,20 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/UnreadResponse'
+  /api/info:
+    get:
+      tags:
+      - build-info-controller
+      operationId: info
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
   /api/folders/{folderId}/notes:
     get:
       tags:

@@ -5,6 +5,7 @@
 | Category | Non-functional · Operability |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** The running container exposes no version, commit SHA, or build timestamp. `actuator/info` is not in the exposed endpoints list.
 

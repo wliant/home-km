@@ -48,6 +48,15 @@ services:
       retries: 5
     stop_grace_period: 35s
     restart: unless-stopped
+    # Cap container log growth — without this the json-file driver retains
+    # logs forever and a chatty week can fill /var/lib/docker. Five 50MB
+    # files (~250MB) suits a household-scale backend; bump for chatty
+    # debug logging or migrate to docs/observability.md once Loki is up.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 
   frontend:
     build:
@@ -67,3 +76,8 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"

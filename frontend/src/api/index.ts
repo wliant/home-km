@@ -132,6 +132,15 @@ export const meApi = {
   unread: () => apiClient.get<{ count: number }>('/me/unread').then(r => r.data),
 }
 
+export interface BuildInfo {
+  build?: { name?: string; version?: string; time?: string }
+  git?: { branch?: string; commitId?: string; commitTime?: string; tags?: string }
+}
+
+export const buildInfoApi = {
+  get: () => apiClient.get<BuildInfo>('/info').then(r => r.data).catch(() => ({} as BuildInfo)),
+}
+
 // Reminder actions surfaced from push notifications.
 export const reminderActionApi = {
   done: (id: number) => apiClient.post(`/reminders/${id}/done`),

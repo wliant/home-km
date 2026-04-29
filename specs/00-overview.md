@@ -25,6 +25,12 @@ Home KM is a self-hosted household knowledge management Progressive Web App (PWA
 
 **Target scale:** 2–6 household members. Thousands of files. Not designed for multi-tenant or enterprise use.
 
+**Recovery objectives** (sized for the target scale):
+- **RTO 4 hours** — acceptable downtime after a hardware failure or restore.
+- **RPO 1 hour** — maximum data loss tolerated. Backup cadence (`docs/backups.md`) and the monthly restore drill (`docs/restore-drill.md`) must keep this achievable.
+
+Service-Level Objectives for availability, latency, and push delivery are documented in `docs/slo.md` and surface as Prometheus alerts (see `docker-compose.observability.yml`).
+
 ---
 
 ## 3. App Name Configurability

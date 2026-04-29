@@ -5,6 +5,7 @@
 | Category | Non-functional · Operability |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Container logs accumulate on the Docker host with default driver settings (json-file, no rotation cap unless configured globally on the daemon).
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Backup & DR |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No defined recovery objectives.
 

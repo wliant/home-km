@@ -75,6 +75,38 @@ Pull a representative slow query into `psql`, prefix with `EXPLAIN (ANALYZE, BUF
 
 The default deploy ships only `/actuator/prometheus`. To run a full Grafana/Prometheus/Loki/Tempo stack, bring up `docker-compose.observability.yml` (see `docs/observability.md`).
 
+## Service Level Objectives
+
+See `docs/slo.md` for the full table. TL;DR for paging decisions:
+
+- API availability < 99.5% over 10 min → page on-call (warning).
+- Read p95 > 500 ms over 10 min → investigate (warning).
+- Push delivery < 95% over 1 h → check FCM/APNS bridge (warning).
+
+Recovery targets: **RTO 4 h, RPO 1 h**. If a restore would take longer or lose more data than that, the backup cadence is broken — fix it before declaring the restore drill green.
+
+## Container log retention
+
+Each compose service caps its `json-file` log driver at a few hundred MB
+(`max-size` × `max-file`). Without this, Docker's default unlimited log
+file fills disks silently. Tunings:
+
+| Service | max-size × max-file | Rationale |
+|---------|--------------------|-----------|
+| `api` | 50m × 5 | Chatty during request bursts; structured JSON is verbose. |
+| `postgres` | 50m × 5 | Slow-query log + extension warnings. |
+| `minio` | 50m × 5 | Mostly access logs; the bucket-event firehose is verbose. |
+| `frontend` (nginx) | 20m × 3 | Just access + error logs. |
+
+When `docker-compose.observability.yml` is up, Loki ingests these files
+on a 30-day retention; the per-driver caps still apply as a floor.
+
+## Build / version info
+
+- `/api/info` returns `{ build: { name, version, time }, git: { branch, commitId, commitTime } }` populated by the gradle `springBoot.buildInfo()` task and the gradle-git-properties plugin.
+- The frontend Settings → About panel surfaces the same payload — ask users to copy that block into bug reports.
+- `/actuator/info` exposes the full Spring Boot info contributor set (env disabled to avoid leaking secret env-var names).
+
 ## Reproducible builds
 
 Three layers keep the same commit producing the same artefact months apart:

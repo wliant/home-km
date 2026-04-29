@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No defined Service Level Objectives. Acceptable error rate, latency p99, and uptime are implicit.
 

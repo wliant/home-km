@@ -44,7 +44,7 @@ public class SecurityConfig {
                         "/api/auth/password-reset/request", "/api/auth/password-reset/confirm").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/push/vapid-public-key",
                         "/api/auth/invitations/*", "/api/share/*", "/api/files/share/*",
-                        "/api/reminders/me.ics").permitAll()
+                        "/api/reminders/me.ics", "/api/info").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info",
                         "/actuator/prometheus").permitAll()
                 .requestMatchers("/api/docs", "/api/docs/**", "/api/openapi", "/api/openapi/**",

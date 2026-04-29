@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../../api/authApi'
+import { buildInfoApi } from '../../api'
 import { useAuthStore } from '../../lib/authStore'
 import { usePushSubscription } from '../../lib/usePushSubscription'
 import { useThemeStore, type Theme } from '../../lib/themeStore'
@@ -191,7 +192,53 @@ export default function SettingsPage() {
             </div>
           </dl>
         </section>
+
+        <AboutSection />
       </div>
     </AppLayout>
+  )
+}
+
+function AboutSection() {
+  const { data: info } = useQuery({
+    queryKey: ['build-info'],
+    queryFn: () => buildInfoApi.get(),
+    staleTime: Infinity,
+  })
+
+  if (!info?.build && !info?.git) return null
+
+  return (
+    <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+      <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">About</h2>
+      <dl className="text-sm space-y-1">
+        {info.build?.version && (
+          <div className="flex gap-2">
+            <dt className="text-gray-500 dark:text-gray-400 w-28 shrink-0">Version</dt>
+            <dd className="text-gray-900 dark:text-gray-100 font-mono">{info.build.version}</dd>
+          </div>
+        )}
+        {info.git?.commitId && (
+          <div className="flex gap-2">
+            <dt className="text-gray-500 dark:text-gray-400 w-28 shrink-0">Commit</dt>
+            <dd className="text-gray-900 dark:text-gray-100 font-mono">
+              {info.git.commitId}
+              {info.git.branch && info.git.branch !== 'master' && info.git.branch !== 'main'
+                ? ` (${info.git.branch})`
+                : ''}
+            </dd>
+          </div>
+        )}
+        {info.build?.time && (
+          <div className="flex gap-2">
+            <dt className="text-gray-500 dark:text-gray-400 w-28 shrink-0">Built</dt>
+            <dd className="text-gray-900 dark:text-gray-100">{new Date(info.build.time).toLocaleString()}</dd>
+          </div>
+        )}
+      </dl>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
+        Include these in bug reports.
+      </p>
+    </section>
   )
 }
