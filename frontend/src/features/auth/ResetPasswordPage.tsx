@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">Invalid or missing reset token.</p>
-          <Link to="/forgot-password" className="text-primary-600 hover:underline font-medium">
+          <Link to="/forgot-password" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Request a new reset link
           </Link>
         </div>
@@ -84,8 +84,9 @@ export default function ResetPasswordPage() {
         {!success && (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label>
+              <label htmlFor="reset-new-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New password</label>
               <input
+                id="reset-new-password"
                 {...register('newPassword')}
                 type="password"
                 autoComplete="new-password"
@@ -97,8 +98,9 @@ export default function ResetPasswordPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm password</label>
+              <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm password</label>
               <input
+                id="reset-confirm-password"
                 {...register('confirmPassword')}
                 type="password"
                 autoComplete="new-password"
@@ -120,7 +122,7 @@ export default function ResetPasswordPage() {
         )}
 
         <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          <Link to="/login" className="text-primary-600 hover:underline font-medium">
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Back to sign in
           </Link>
         </p>

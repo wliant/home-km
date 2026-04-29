@@ -75,8 +75,9 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
+              id="login-email"
               {...register('email')}
               type="email"
               autoComplete="email"
@@ -88,8 +89,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
             <input
+              id="login-password"
               {...register('password')}
               type="password"
               autoComplete="current-password"
@@ -119,14 +121,14 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-4 text-center">
-          <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline font-medium">
+          <Link to="/forgot-password" className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Forgot password?
           </Link>
         </div>
 
         <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
           No account?{' '}
-          <Link to="/register" className="text-primary-600 hover:underline font-medium">
+          <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Register
           </Link>
         </p>

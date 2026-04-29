@@ -4,6 +4,7 @@ import LoginPage from './features/auth/LoginPage'
 import RegisterPage from './features/auth/RegisterPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import RouteAnnouncer from './components/RouteAnnouncer'
 import { useAuthStore } from './lib/authStore'
 import { useThemeStore } from './lib/themeStore'
 import AppLayout from './components/AppLayout'
@@ -29,7 +30,7 @@ function HomePage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-primary-600 mb-2">
+        <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-2">
           {import.meta.env.VITE_APP_NAME}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6">Welcome{user?.displayName ? `, ${user.displayName}` : ''}.</p>
@@ -80,6 +81,7 @@ export default function App() {
   useApplyTheme()
   return (
     <Suspense fallback={<Loading />}>
+      <RouteAnnouncer />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

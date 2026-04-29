@@ -61,8 +61,9 @@ export default function SettingsPage() {
 
           <form onSubmit={handleSubmit(d => updateMe.mutate(d))} className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Display name</label>
+              <label htmlFor="settings-display-name" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Display name</label>
               <input
+                id="settings-display-name"
                 {...register('displayName')}
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
               />
@@ -70,8 +71,9 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">New password (leave blank to keep current)</label>
+              <label htmlFor="settings-new-password" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">New password (leave blank to keep current)</label>
               <input
+                id="settings-new-password"
                 {...register('newPassword')}
                 type="password"
                 placeholder="••••••••"
@@ -111,7 +113,7 @@ export default function SettingsPage() {
                   <div className="text-sm">
                     <p className="text-gray-900 dark:text-gray-100">
                       {s.deviceLabel ?? 'Unknown device'}
-                      {s.current && <span className="ml-2 text-xs text-primary-600">(this device)</span>}
+                      {s.current && <span className="ml-2 text-xs text-primary-600 dark:text-primary-400">(this device)</span>}
                       {s.rememberMe && <span className="ml-2 text-xs text-gray-500">extended</span>}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -160,8 +162,9 @@ export default function SettingsPage() {
         <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 mb-6">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Appearance</h2>
           <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-500 dark:text-gray-400">Theme</label>
+            <label htmlFor="settings-theme" className="text-xs text-gray-500 dark:text-gray-400">Theme</label>
             <select
+              id="settings-theme"
               value={theme}
               onChange={e => setTheme(e.target.value as Theme)}
               className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"

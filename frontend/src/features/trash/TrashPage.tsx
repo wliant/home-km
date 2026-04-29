@@ -48,7 +48,7 @@ export default function TrashPage() {
               <button
                 onClick={() => onRestore(item.id)}
                 disabled={restoring}
-                className="shrink-0 ml-3 px-3 py-1.5 text-xs font-medium text-primary-600 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50"
+                className="shrink-0 ml-3 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50"
               >
                 Restore
               </button>

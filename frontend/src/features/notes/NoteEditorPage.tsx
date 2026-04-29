@@ -98,11 +98,11 @@ export default function NoteEditorPage() {
           <div>
             <div className="flex border-b border-gray-300 dark:border-gray-600 mb-2">
               <button type="button" onClick={() => setTab('edit')}
-                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'edit' ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'edit' ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
                 Edit
               </button>
               <button type="button" onClick={() => setTab('preview')}
-                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'preview' ? 'border-b-2 border-primary-600 text-primary-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+                className={`px-4 py-1.5 text-sm font-medium -mb-px ${tab === 'preview' ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}>
                 Preview
               </button>
             </div>

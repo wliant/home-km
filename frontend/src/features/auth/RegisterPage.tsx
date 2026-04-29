@@ -107,10 +107,11 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="register-invite" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Invitation token <span className="text-gray-400">(optional for first user)</span>
             </label>
             <input
+              id="register-invite"
               {...register('inviteToken')}
               type="text"
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -118,8 +119,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
+              id="register-email"
               {...register('email')}
               type="email"
               autoComplete="email"
@@ -132,8 +134,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display name</label>
+            <label htmlFor="register-display-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display name</label>
             <input
+              id="register-display-name"
               {...register('displayName')}
               type="text"
               autoComplete="name"
@@ -145,8 +148,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
             <input
+              id="register-password"
               {...register('password')}
               type="password"
               autoComplete="new-password"
@@ -168,7 +172,7 @@ export default function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary-600 hover:underline font-medium">
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Sign in
           </Link>
         </p>

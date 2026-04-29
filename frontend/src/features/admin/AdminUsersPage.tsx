@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
                         const pw = prompt('New password (min 8 chars, upper+lower+digit):')
                         if (pw) resetPassword.mutate({ id: u.id, password: pw })
                       }}
-                      className="text-xs text-primary-600 hover:underline mr-3"
+                      className="text-xs text-primary-600 dark:text-primary-400 hover:underline mr-3"
                     >
                       Reset pw
                     </button>

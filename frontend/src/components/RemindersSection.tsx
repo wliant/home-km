@@ -71,7 +71,7 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="text-xs text-primary-600 hover:underline"
+            className="text-xs text-primary-600 dark:text-primary-400 hover:underline"
           >
             + Add
           </button>
@@ -105,7 +105,7 @@ export default function RemindersSection({ noteId, reminders, readOnly = false }
                 </div>
                 {!readOnly && (
                   <div className="flex gap-2 text-xs">
-                    <button onClick={() => startEdit(r)} className="text-primary-600 hover:underline">Edit</button>
+                    <button onClick={() => startEdit(r)} className="text-primary-600 dark:text-primary-400 hover:underline">Edit</button>
                     <button
                       onClick={() => { if (confirm('Delete reminder?')) deleteReminder.mutate(r.id) }}
                       className="text-red-500 hover:underline"

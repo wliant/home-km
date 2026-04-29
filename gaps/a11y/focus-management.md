@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** React Router transitions do not move keyboard focus. After clicking a sidebar link, focus stays on the sidebar item; screen-reader users hear nothing about the new page.
 

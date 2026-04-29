@@ -48,7 +48,7 @@ function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-60 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 h-screen sticky top-0 overflow-y-auto">
       <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-700">
-        <Link to="/" className="text-lg font-bold text-primary-600">
+        <Link to="/" className="text-lg font-bold text-primary-600 dark:text-primary-400">
           {import.meta.env.VITE_APP_NAME}
         </Link>
         {user?.isChild && (
@@ -110,7 +110,7 @@ function Sidebar() {
 function BottomTabBar() {
   const location = useLocation()
   const active = (path: string) =>
-    location.pathname === path ? 'text-primary-600' : 'text-gray-500 dark:text-gray-400'
+    location.pathname === path ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex z-10">

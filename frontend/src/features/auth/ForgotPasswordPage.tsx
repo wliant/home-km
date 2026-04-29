@@ -36,8 +36,9 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
+                id="forgot-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -57,7 +58,7 @@ export default function ForgotPasswordPage() {
         )}
 
         <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          <Link to="/login" className="text-primary-600 hover:underline font-medium">
+          <Link to="/login" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
             Back to sign in
           </Link>
         </p>

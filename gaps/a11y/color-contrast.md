@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No documented contrast verification. The `APP_THEME_COLOR` (default indigo `#6366f1`) is configurable, and tag colors are picked freely — both can fall below WCAG AA thresholds.
 
