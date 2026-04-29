@@ -5,6 +5,7 @@
 | Category | Functional · Child-safe mode |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No queue. Parents must remember to set `is_child_safe` whenever they create an item kids should see, and there is no central view of recently added items.
 

@@ -44,11 +44,23 @@ public class User {
     /**
      * Per-user notification routing. Open-ended JSON so future event types
      * (mentions, share invites) can be added without a schema change.
-     * Currently: {@code {"reminders": true|false}}. Absent = default true.
+     * Currently: {@code {"reminders": true|false, "emailReminders": true|false}}.
+     * Absent keys default to true.
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "notification_prefs", nullable = false, columnDefinition = "jsonb")
     private String notificationPrefs = "{}";
+
+    /**
+     * Quiet-hours window for child accounts. Both null = no quiet hours.
+     * Times are interpreted in {@link #timezone}; a window where start &gt;
+     * end wraps midnight (e.g. 21:00–07:00).
+     */
+    @Column(name = "quiet_hours_start")
+    private java.time.LocalTime quietHoursStart;
+
+    @Column(name = "quiet_hours_end")
+    private java.time.LocalTime quietHoursEnd;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -82,6 +94,10 @@ public class User {
     public void setIcsToken(String v) { this.icsToken = v; }
     public String getNotificationPrefs() { return notificationPrefs; }
     public void setNotificationPrefs(String v) { this.notificationPrefs = v; }
+    public java.time.LocalTime getQuietHoursStart() { return quietHoursStart; }
+    public void setQuietHoursStart(java.time.LocalTime v) { this.quietHoursStart = v; }
+    public java.time.LocalTime getQuietHoursEnd() { return quietHoursEnd; }
+    public void setQuietHoursEnd(java.time.LocalTime v) { this.quietHoursEnd = v; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

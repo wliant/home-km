@@ -5,6 +5,7 @@
 | Category | Functional · Child-safe mode |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** A child account can sign in and use the app any time of day or night.
 

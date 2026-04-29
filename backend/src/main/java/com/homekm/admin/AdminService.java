@@ -95,4 +95,44 @@ public class AdminService {
         user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
         userRepository.save(user);
     }
+
+    /**
+     * Bulk-create accounts. Each successful row gets a randomly-generated
+     * placeholder password — the user is expected to follow up with a
+     * standard password-reset (admin can copy the email address from the
+     * UI and trigger /api/auth/password-reset/request, or the operator can
+     * dispatch one of the documented invitation flows). Duplicates are
+     * skipped without aborting the batch so a CSV typo doesn't lose the
+     * other rows.
+     */
+    @Transactional
+    public AdminController.BulkImportResult bulkImport(List<AdminController.BulkRow> rows) {
+        int created = 0;
+        int skipped = 0;
+        java.util.List<AdminController.BulkImportError> errors = new java.util.ArrayList<>();
+        for (AdminController.BulkRow row : rows) {
+            String email = row.email().toLowerCase().trim();
+            if (row.isAdmin() && row.isChild()) {
+                errors.add(new AdminController.BulkImportError(email, "isAdmin and isChild cannot both be true"));
+                skipped++;
+                continue;
+            }
+            if (userRepository.existsByEmail(email)) {
+                errors.add(new AdminController.BulkImportError(email, "already exists"));
+                skipped++;
+                continue;
+            }
+            User user = new User();
+            user.setEmail(email);
+            user.setDisplayName(row.displayName());
+            // Placeholder hash — user must reset before sign-in works.
+            user.setPasswordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+            user.setAdmin(row.isAdmin());
+            user.setChild(row.isChild());
+            user.setActive(false);
+            userRepository.save(user);
+            created++;
+        }
+        return new AdminController.BulkImportResult(created, skipped, errors);
+    }
 }

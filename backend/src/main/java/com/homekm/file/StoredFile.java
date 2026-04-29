@@ -57,6 +57,9 @@ public class StoredFile {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(name = "child_safe_review_at")
+    private Instant childSafeReviewAt;
+
     @Column(name = "scan_status", nullable = false, length = 16)
     private String scanStatus = "CLEAN";
 
@@ -91,6 +94,8 @@ public class StoredFile {
     public Instant getUpdatedAt() { return updatedAt; }
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+    public Instant getChildSafeReviewAt() { return childSafeReviewAt; }
+    public void setChildSafeReviewAt(Instant v) { this.childSafeReviewAt = v; }
     public String getVisibility() { return visibility; }
     public void setVisibility(String v) { this.visibility = v; }
     public String getScanStatus() { return scanStatus; }

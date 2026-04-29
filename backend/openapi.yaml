@@ -1579,11 +1579,71 @@ paths:
       responses:
         "200":
           description: OK
+  /api/admin/users/bulk:
+    post:
+      tags:
+      - admin-controller
+      operationId: bulkImport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/BulkImportResult'
+  /api/admin/review-queue/note/{id}:
+    post:
+      tags:
+      - admin-review-controller
+      operationId: reviewNote
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/admin/review-queue/file/{id}:
+    post:
+      tags:
+      - admin-review-controller
+      operationId: reviewFile
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/admin/invitations:
     get:
       tags:
       - invitation-controller
-      operationId: list_6
+      operationId: list_7
       responses:
         "200":
           description: OK
@@ -1918,11 +1978,37 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/InvitationResponse'
+  /api/admin/usage:
+    get:
+      tags:
+      - admin-usage-controller
+      operationId: usage
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UsageSummary'
+  /api/admin/review-queue:
+    get:
+      tags:
+      - admin-review-controller
+      operationId: list_6
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueueItem'
   /api/admin/audit:
     get:
       tags:
       - audit-controller
-      operationId: list_7
+      operationId: list_8
       parameters:
       - name: actorId
         in: query
@@ -2799,6 +2885,56 @@ components:
           minLength: 8
           pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
           type: string
+    BulkImportRequest:
+      required:
+      - rows
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkRow'
+    BulkRow:
+      required:
+      - displayName
+      - email
+      type: object
+      properties:
+        email:
+          type: string
+        displayName:
+          maxLength: 100
+          minLength: 0
+          type: string
+        isAdmin:
+          type: boolean
+        isChild:
+          type: boolean
+    BulkImportError:
+      type: object
+      properties:
+        email:
+          type: string
+        reason:
+          type: string
+    BulkImportResult:
+      type: object
+      properties:
+        created:
+          type: integer
+          format: int32
+        skipped:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkImportError'
+    ReviewRequest:
+      type: object
+      properties:
+        childSafe:
+          type: boolean
     CreateInvitationRequest:
       required:
       - email
@@ -3030,6 +3166,102 @@ components:
           type: boolean
         current:
           type: boolean
+    FolderUsage:
+      type: object
+      properties:
+        folderId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        itemCount:
+          type: integer
+          format: int64
+    TagUsage:
+      type: object
+      properties:
+        tagId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        usageCount:
+          type: integer
+          format: int64
+    UsageSummary:
+      type: object
+      properties:
+        users:
+          type: integer
+          format: int64
+        activeUsers:
+          type: integer
+          format: int64
+        notes:
+          type: integer
+          format: int64
+        files:
+          type: integer
+          format: int64
+        folders:
+          type: integer
+          format: int64
+        tags:
+          type: integer
+          format: int64
+        reminders:
+          type: integer
+          format: int64
+        savedSearches:
+          type: integer
+          format: int64
+        storageBytes:
+          type: integer
+          format: int64
+        topStorageUsers:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserStorage'
+        topTags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagUsage'
+        topFolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/FolderUsage'
+    UserStorage:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        displayName:
+          type: string
+        bytes:
+          type: integer
+          format: int64
+        fileCount:
+          type: integer
+          format: int64
+    QueueItem:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        isChildSafe:
+          type: boolean
+        ownerId:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
     AuditEventResponse:
       type: object
       properties:

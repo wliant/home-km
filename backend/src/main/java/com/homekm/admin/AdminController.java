@@ -67,4 +67,28 @@ public class AdminController {
         refreshTokenRepository.revokeAllByUserId(id);
         return ResponseEntity.noContent().build();
     }
+
+    public record BulkRow(
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Email String email,
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 100) String displayName,
+            boolean isAdmin,
+            boolean isChild
+    ) {}
+
+    public record BulkImportRequest(@jakarta.validation.constraints.NotEmpty List<BulkRow> rows) {}
+
+    public record BulkImportResult(int created, int skipped, List<BulkImportError> errors) {}
+
+    public record BulkImportError(String email, String reason) {}
+
+    /**
+     * Bulk-create accounts. Each successful row also issues a one-time setup
+     * link (handled by the existing invitation flow), so the admin doesn't
+     * need to know each user's password. Rows whose email already exists
+     * are skipped — the response details which.
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<BulkImportResult> bulkImport(@Valid @RequestBody BulkImportRequest req) {
+        return ResponseEntity.ok(adminService.bulkImport(req.rows()));
+    }
 }

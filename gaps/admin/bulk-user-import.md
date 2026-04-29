@@ -5,6 +5,7 @@
 | Category | Functional · Admin |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Admin must create users one by one in `AdminController`.
 

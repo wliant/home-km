@@ -111,6 +111,12 @@ on a 30-day retention; the per-driver caps still apply as a floor.
 - The frontend Settings → About panel surfaces the same payload — ask users to copy that block into bug reports.
 - `/actuator/info` exposes the full Spring Boot info contributor set (env disabled to avoid leaking secret env-var names).
 
+## Break-glass admin reset
+
+If the sole admin has lost their credentials and no other admin is available, run `scripts/admin-reset.sh <email>` from the host. The script bcrypts a new password, writes it directly into Postgres, and revokes every refresh token for that account. Source your `.env` first so `DB_USER` and `DB_NAME` are exported.
+
+This is intended for genuine lockouts. Routine resets go through `/api/admin/users/{id}/reset-password` or the user's own `/api/auth/password-reset/request` flow.
+
 ## Reproducible builds
 
 Three layers keep the same commit producing the same artefact months apart:

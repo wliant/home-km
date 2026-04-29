@@ -48,6 +48,10 @@ public class Note {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    /** Timestamp when an admin reviewed the child-safe flag. Null = pending. */
+    @Column(name = "child_safe_review_at")
+    private Instant childSafeReviewAt;
+
     @Column(name = "is_template", nullable = false)
     private boolean template = false;
 
@@ -83,6 +87,8 @@ public class Note {
     public void setPinnedAt(Instant pinnedAt) { this.pinnedAt = pinnedAt; }
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+    public Instant getChildSafeReviewAt() { return childSafeReviewAt; }
+    public void setChildSafeReviewAt(Instant v) { this.childSafeReviewAt = v; }
     public String getVisibility() { return visibility; }
     public void setVisibility(String v) { this.visibility = v; }
     public boolean isTemplate() { return template; }

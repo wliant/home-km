@@ -5,6 +5,7 @@
 | Category | Functional · Admin |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No insight into how the household actually uses the app. Storage growth, active-user counts, file-type breakdown — all invisible without manual SQL.
 

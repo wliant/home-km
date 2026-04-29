@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Only an admin can restore access to a locked-out user. No recovery codes, no recovery email, no security questions.
 
