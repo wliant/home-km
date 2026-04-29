@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** JaCoCo coverage reports are produced (`./gradlew jacocoTestReport`) but the project has no documented coverage target and no mutation testing — coverage of executed lines doesn't prove the assertions actually catch bugs.
 

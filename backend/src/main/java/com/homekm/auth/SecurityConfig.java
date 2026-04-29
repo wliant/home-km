@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info",
                         "/actuator/prometheus").permitAll()
                 .requestMatchers("/api/docs", "/api/docs/**", "/api/openapi", "/api/openapi/**",
-                        "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs.yaml", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedEntryPoint()))

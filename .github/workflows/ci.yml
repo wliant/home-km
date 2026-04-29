@@ -97,6 +97,11 @@ jobs:
       - name: Bundle size budget
         run: npm run size
 
+      - name: Lighthouse CI
+        run: npm run lhci
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
   e2e:
     name: E2E tests (Playwright)
     needs: [backend-unit, backend-integration, frontend]

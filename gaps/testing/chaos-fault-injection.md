@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No tests verify behavior when MinIO is down, when the DB is slow, or when the network drops mid-upload.
 

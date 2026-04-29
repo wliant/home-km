@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Frontend and backend share no enforced contract. Manual coordination keeps DTOs in sync. Specs (`11-api-conventions.md`) describe conventions but no machine-checked schema.
 

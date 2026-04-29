@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No automated performance/PWA/accessibility/best-practice scoring. Manual Lighthouse runs only.
 

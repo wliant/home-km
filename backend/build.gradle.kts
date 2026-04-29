@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "3.2.4"
     id("io.spring.dependency-management") version "1.1.4"
     id("org.owasp.dependencycheck") version "9.0.10"
+    id("info.solidsoft.pitest") version "1.15.0"
 }
 
 group = "com.homekm"
@@ -86,6 +87,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:toxiproxy")
 }
 
 tasks.withType<Test> {
@@ -107,3 +109,30 @@ tasks.jacocoTestReport {
         html.required = true
     }
 }
+
+// Mutation testing — runs weekly via .github/workflows/mutation-testing.yml.
+// Skipped on every-PR runs because Pitest is slow (~5–10 min per package).
+pitest {
+    junit5PluginVersion = "1.2.1"
+    pitestVersion = "1.16.1"
+    targetClasses = listOf(
+        "com.homekm.auth.*",
+        "com.homekm.common.*",
+        "com.homekm.file.*",
+    )
+    threads = 4
+    outputFormats = listOf("HTML", "XML")
+    timestampedReports = false
+    mutationThreshold = 70
+    coverageThreshold = 70
+    avoidCallsTo = listOf(
+        "kotlin.jvm.internal",
+        "java.util.logging",
+        "org.slf4j",
+    )
+}
+
+// OpenAPI contract drift is checked via OpenApiContractTest (integration test).
+// To regenerate the committed baseline at backend/openapi.yaml, run:
+//   UPDATE_OPENAPI_BASELINE=1 ./gradlew test --tests "*OpenApiContractTest"
+// The test fetches /v3/api-docs.yaml from a Testcontainers-backed Spring app.

@@ -1,0 +1,2708 @@
+openapi: 3.0.1
+info:
+  title: Home KM API
+  description: "Home KM REST API. All authenticated endpoints require an `Authorization:\
+    \ Bearer <jwt>` header."
+  version: v1
+servers:
+- url: /
+  description: Same-origin (proxied via the frontend nginx)
+security:
+- bearerAuth: []
+paths:
+  /api/tags/{id}:
+    put:
+      tags:
+      - tag-controller
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+    delete:
+      tags:
+      - tag-controller
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/notes/{noteId}/reminders/{reminderId}:
+    put:
+      tags:
+      - reminder-controller
+      operationId: update_1
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: reminderId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+    delete:
+      tags:
+      - reminder-controller
+      operationId: delete_1
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: reminderId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/notes/{noteId}/checklist-items/{itemId}:
+    put:
+      tags:
+      - note-controller
+      operationId: updateChecklistItem
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistItemRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
+    delete:
+      tags:
+      - note-controller
+      operationId: deleteChecklistItem
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/notes/{noteId}/checklist-items/reorder:
+    put:
+      tags:
+      - note-controller
+      operationId: reorderChecklistItems
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChecklistItemResponse'
+  /api/notes/{id}:
+    get:
+      tags:
+      - note-controller
+      operationId: getById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NoteDetail'
+    put:
+      tags:
+      - note-controller
+      operationId: update_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NoteDetail'
+    delete:
+      tags:
+      - note-controller
+      operationId: delete_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/items/{type}/{id}/visibility:
+    get:
+      tags:
+      - item-access-controller
+      operationId: getVisibility
+      parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/VisibilityResponse'
+    put:
+      tags:
+      - item-access-controller
+      operationId: setVisibility
+      parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisibilityRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/VisibilityResponse'
+  /api/folders/{id}:
+    get:
+      tags:
+      - folder-controller
+      operationId: getById_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+    put:
+      tags:
+      - folder-controller
+      operationId: update_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+    delete:
+      tags:
+      - folder-controller
+      operationId: delete_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+  /api/folders/{id}/child-safe:
+    put:
+      tags:
+      - folder-controller
+      operationId: setChildSafe
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+  /api/files/{id}:
+    get:
+      tags:
+      - file-controller
+      operationId: getById_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+    put:
+      tags:
+      - file-controller
+      operationId: update_4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUpdateRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+    delete:
+      tags:
+      - file-controller
+      operationId: delete_4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+    patch:
+      tags:
+      - file-controller
+      operationId: patch
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUpdateRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+  /api/files/{id}/content:
+    put:
+      tags:
+      - file-controller
+      operationId: replaceContent
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+  /api/auth/me:
+    get:
+      tags:
+      - auth-controller
+      operationId: me
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      tags:
+      - auth-controller
+      operationId: updateMe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /api/admin/users/{id}:
+    put:
+      tags:
+      - admin-controller
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    delete:
+      tags:
+      - admin-controller
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/tags:
+    get:
+      tags:
+      - tag-controller
+      operationId: list
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+    post:
+      tags:
+      - tag-controller
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+  /api/tags/notes/{entityId}/tags:
+    get:
+      tags:
+      - tag-controller
+      operationId: getNoteTags
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+    post:
+      tags:
+      - tag-controller
+      operationId: attachToNote
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+  /api/tags/folders/{entityId}/tags:
+    get:
+      tags:
+      - tag-controller
+      operationId: getFolderTags
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+    post:
+      tags:
+      - tag-controller
+      operationId: attachToFolder
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+  /api/tags/files/{entityId}/tags:
+    get:
+      tags:
+      - tag-controller
+      operationId: getFileTags
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+    post:
+      tags:
+      - tag-controller
+      operationId: attachToFile
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagResponse'
+  /api/share/{token}:
+    post:
+      tags:
+      - file-share-controller
+      operationId: resolve
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResolvedShare'
+  /api/reminders/{id}/snooze:
+    post:
+      tags:
+      - reminder-snooze-controller
+      operationId: snooze
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnoozeRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/SnoozeResponse'
+  /api/reminders/me.ics/regenerate:
+    post:
+      tags:
+      - ics-export-controller
+      operationId: regenerate
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+  /api/push/subscribe:
+    post:
+      tags:
+      - push-controller
+      operationId: subscribe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushSubscribeRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - push-controller
+      operationId: unsubscribe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/notes:
+    get:
+      tags:
+      - note-controller
+      operationId: list_1
+      parameters:
+      - name: folderId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageResponseNoteSummary'
+    post:
+      tags:
+      - note-controller
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NoteDetail'
+  /api/notes/{noteId}/reminders:
+    get:
+      tags:
+      - reminder-controller
+      operationId: list_2
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReminderResponse'
+    post:
+      tags:
+      - reminder-controller
+      operationId: create_2
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReminderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ReminderResponse'
+  /api/notes/{noteId}/checklist-items:
+    get:
+      tags:
+      - note-controller
+      operationId: listChecklist
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChecklistItemResponse'
+    post:
+      tags:
+      - note-controller
+      operationId: addChecklistItem
+      parameters:
+      - name: noteId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistItemRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
+  /api/notes/{id}/restore:
+    post:
+      tags:
+      - note-controller
+      operationId: restore
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/notes/{id}/pin:
+    post:
+      tags:
+      - note-controller
+      operationId: pin
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NoteDetail'
+    delete:
+      tags:
+      - note-controller
+      operationId: unpin
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/NoteDetail'
+  /api/items/move:
+    post:
+      tags:
+      - bulk-move-controller
+      operationId: move
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkMoveRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/BulkMoveResponse'
+  /api/folders:
+    get:
+      tags:
+      - folder-controller
+      operationId: getTree
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FolderResponse'
+    post:
+      tags:
+      - folder-controller
+      operationId: create_3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+  /api/folders/{id}/restore:
+    post:
+      tags:
+      - folder-controller
+      operationId: restore_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/files:
+    get:
+      tags:
+      - file-controller
+      operationId: list_3
+      parameters:
+      - name: folderId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageResponseFileResponse'
+    post:
+      tags:
+      - file-controller
+      operationId: upload
+      parameters:
+      - name: folderId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: clientUploadId
+        in: query
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FileResponse'
+  /api/files/{id}/restore:
+    post:
+      tags:
+      - file-controller
+      operationId: restore_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/files/{fileId}/share-links:
+    get:
+      tags:
+      - file-share-controller
+      operationId: list_4
+      parameters:
+      - name: fileId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShareLinkResponse'
+    post:
+      tags:
+      - file-share-controller
+      operationId: create_4
+      parameters:
+      - name: fileId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShareLinkRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/IssuedShareLinkResponse'
+  /api/auth/register:
+    post:
+      tags:
+      - auth-controller
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/auth/refresh:
+    post:
+      tags:
+      - auth-controller
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/auth/password-reset/request:
+    post:
+      tags:
+      - auth-controller
+      operationId: requestPasswordReset
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/auth/password-reset/confirm:
+    post:
+      tags:
+      - auth-controller
+      operationId: confirmPasswordReset
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/auth/logout:
+    post:
+      tags:
+      - auth-controller
+      operationId: logout
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        "200":
+          description: OK
+  /api/auth/login:
+    post:
+      tags:
+      - auth-controller
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/admin/users:
+    get:
+      tags:
+      - admin-controller
+      operationId: listUsers
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+    post:
+      tags:
+      - admin-controller
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /api/admin/users/{id}/sessions/revoke:
+    post:
+      tags:
+      - admin-controller
+      operationId: revokeUserSessions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/admin/users/{id}/reset-password:
+    post:
+      tags:
+      - admin-controller
+      operationId: resetPassword
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/admin/invitations:
+    get:
+      tags:
+      - invitation-controller
+      operationId: list_5
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationResponse'
+    post:
+      tags:
+      - invitation-controller
+      operationId: create_5
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/IssuedInvitationResponse'
+  /api/trash:
+    get:
+      tags:
+      - trash-controller
+      operationId: getTrash
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TrashResponse'
+  /api/search:
+    get:
+      tags:
+      - search-controller
+      operationId: search
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          maxLength: 500
+          minLength: 1
+          type: string
+      - name: types
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: folderId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: includeSubfolders
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+      - name: tagIds
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: ownerId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: mimePrefix
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: hasReminder
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: childSafe
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: smart
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageResponseSearchResult'
+  /api/reminders/me.ics:
+    get:
+      tags:
+      - ics-export-controller
+      operationId: ics
+      parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/calendar:
+              schema:
+                type: string
+                format: byte
+  /api/push/vapid-public-key:
+    get:
+      tags:
+      - push-controller
+      operationId: getVapidPublicKey
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /api/notes/{id}/export:
+    get:
+      tags:
+      - note-export-controller
+      operationId: export
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: format
+        in: query
+        required: false
+        schema:
+          type: string
+          default: md
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: byte
+  /api/folders/{folderId}/notes:
+    get:
+      tags:
+      - note-controller
+      operationId: listByFolder
+      parameters:
+      - name: folderId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageResponseNoteSummary'
+  /api/events:
+    get:
+      tags:
+      - events-controller
+      operationId: stream
+      responses:
+        "200":
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SseEmitter'
+  /api/auth/sessions:
+    get:
+      tags:
+      - auth-controller
+      operationId: sessions
+      parameters:
+      - name: X-Refresh-Token
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionResponse'
+  /api/auth/invitations/{token}:
+    get:
+      tags:
+      - auth-controller
+      operationId: verifyInvitation
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/InvitationResponse'
+  /api/admin/audit:
+    get:
+      tags:
+      - audit-controller
+      operationId: list_6
+      parameters:
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: action
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PageResponseAuditEventResponse'
+  /api/tags/notes/{entityId}/tags/{tagId}:
+    delete:
+      tags:
+      - tag-controller
+      operationId: detachFromNote
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/tags/folders/{entityId}/tags/{tagId}:
+    delete:
+      tags:
+      - tag-controller
+      operationId: detachFromFolder
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/tags/files/{entityId}/tags/{tagId}:
+    delete:
+      tags:
+      - tag-controller
+      operationId: detachFromFile
+      parameters:
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/files/share-links/{linkId}:
+    delete:
+      tags:
+      - file-share-controller
+      operationId: revoke
+      parameters:
+      - name: linkId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/auth/sessions/{id}:
+    delete:
+      tags:
+      - auth-controller
+      operationId: revokeSession
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/admin/invitations/{id}:
+    delete:
+      tags:
+      - invitation-controller
+      operationId: revoke_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    TagRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 100
+          minLength: 0
+          type: string
+        color:
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          type: string
+    TagResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ReminderRequest:
+      required:
+      - remindAt
+      type: object
+      properties:
+        remindAt:
+          type: string
+          format: date-time
+        recurrence:
+          pattern: daily|weekly|monthly|yearly
+          type: string
+        recipientUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    ReminderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        remindAt:
+          type: string
+          format: date-time
+        recurrence:
+          type: string
+        pushSent:
+          type: boolean
+        recipientUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ChecklistItemRequest:
+      required:
+      - text
+      type: object
+      properties:
+        text:
+          type: string
+        isChecked:
+          type: boolean
+        sortOrder:
+          type: integer
+          format: int32
+    ChecklistItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        text:
+          type: string
+        isChecked:
+          type: boolean
+        sortOrder:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ReorderItem:
+      required:
+      - id
+      - sortOrder
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        sortOrder:
+          type: integer
+          format: int32
+    ReorderRequest:
+      required:
+      - items
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReorderItem'
+    NoteRequest:
+      required:
+      - title
+      type: object
+      properties:
+        title:
+          maxLength: 500
+          minLength: 0
+          type: string
+        body:
+          maxLength: 100000
+          minLength: 0
+          type: string
+        label:
+          pattern: recipe|todo|reminder|shopping_list|home_items|usage_manual|goal|aspiration|wish_list|travel_log|custom
+          type: string
+        folderId:
+          type: integer
+          format: int64
+        isChildSafe:
+          type: boolean
+    NoteDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        folderId:
+          type: integer
+          format: int64
+        ownerId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        body:
+          type: string
+        label:
+          type: string
+        isChildSafe:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pinnedAt:
+          type: string
+          format: date-time
+        checklistItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistItemResponse'
+        reminders:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReminderResponse'
+    AclEntry:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        role:
+          type: string
+    VisibilityRequest:
+      required:
+      - visibility
+      type: object
+      properties:
+        visibility:
+          pattern: private|household|custom
+          type: string
+        acls:
+          type: array
+          items:
+            $ref: '#/components/schemas/AclEntry'
+    VisibilityResponse:
+      type: object
+      properties:
+        visibility:
+          type: string
+        acls:
+          type: array
+          items:
+            $ref: '#/components/schemas/AclEntry'
+    FolderRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 0
+          type: string
+        description:
+          type: string
+        parentId:
+          type: integer
+          format: int64
+    FolderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        parentId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        ownerId:
+          type: integer
+          format: int64
+        isChildSafe:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FolderResponse'
+    FileUpdateRequest:
+      type: object
+      properties:
+        filename:
+          maxLength: 500
+          minLength: 0
+          pattern: ^(?!\s*$).+
+          type: string
+        description:
+          type: string
+        folderId:
+          type: integer
+          format: int64
+        isChildSafe:
+          type: boolean
+    FileResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        folderId:
+          type: integer
+          format: int64
+        ownerId:
+          type: integer
+          format: int64
+        filename:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        description:
+          type: string
+        isChildSafe:
+          type: boolean
+        hasThumbnail:
+          type: boolean
+        downloadUrl:
+          type: string
+        thumbnailUrl:
+          type: string
+        visibility:
+          type: string
+        scanStatus:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateMeRequest:
+      type: object
+      properties:
+        displayName:
+          maxLength: 100
+          minLength: 1
+          pattern: "^[^\\p{Cntrl}]+$"
+          type: string
+        currentPassword:
+          type: string
+        newPassword:
+          maxLength: 2147483647
+          minLength: 8
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          type: string
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        displayName:
+          type: string
+        isAdmin:
+          type: boolean
+        isChild:
+          type: boolean
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    UpdateUserRequest:
+      type: object
+      properties:
+        displayName:
+          maxLength: 100
+          minLength: 1
+          pattern: "^[^\\p{Cntrl}]+$"
+          type: string
+        isAdmin:
+          type: boolean
+        isChild:
+          type: boolean
+        isActive:
+          type: boolean
+    ResolveRequest:
+      type: object
+      properties:
+        password:
+          type: string
+    ResolvedShare:
+      type: object
+      properties:
+        filename:
+          type: string
+        mimeType:
+          type: string
+        downloadUrl:
+          type: string
+    SnoozeRequest:
+      required:
+      - minutes
+      type: object
+      properties:
+        minutes:
+          minimum: 1
+          type: integer
+          format: int32
+    SnoozeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        remindAt:
+          type: string
+          format: date-time
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+    PushSubscribeRequest:
+      required:
+      - authKey
+      - endpoint
+      - p256dhKey
+      type: object
+      properties:
+        endpoint:
+          type: string
+        p256dhKey:
+          type: string
+        authKey:
+          type: string
+        userAgent:
+          type: string
+    BulkMoveItem:
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        type:
+          pattern: note|file|folder
+          type: string
+        id:
+          type: integer
+          format: int64
+    BulkMoveRequest:
+      required:
+      - items
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkMoveItem'
+        targetFolderId:
+          type: integer
+          format: int64
+    BulkMoveResponse:
+      type: object
+      properties:
+        moved:
+          type: integer
+          format: int32
+    CreateShareLinkRequest:
+      type: object
+      properties:
+        ttlHours:
+          minimum: 1
+          type: integer
+          format: int32
+        password:
+          maxLength: 80
+          minLength: 4
+          type: string
+        maxDownloads:
+          minimum: 1
+          type: integer
+          format: int32
+    IssuedShareLinkResponse:
+      type: object
+      properties:
+        link:
+          $ref: '#/components/schemas/ShareLinkResponse'
+        token:
+          type: string
+    ShareLinkResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        fileId:
+          type: integer
+          format: int64
+        expiresAt:
+          type: string
+          format: date-time
+        maxDownloads:
+          type: integer
+          format: int32
+        downloadCount:
+          type: integer
+          format: int32
+        revoked:
+          type: boolean
+        expired:
+          type: boolean
+        exhausted:
+          type: boolean
+        passwordProtected:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    RegisterRequest:
+      required:
+      - displayName
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          maxLength: 320
+          minLength: 0
+          type: string
+        password:
+          maxLength: 2147483647
+          minLength: 8
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          type: string
+        displayName:
+          maxLength: 100
+          minLength: 1
+          pattern: "^[^\\p{Cntrl}]+$"
+          type: string
+        inviteToken:
+          maxLength: 80
+          minLength: 0
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/UserResponse'
+    RefreshRequest:
+      required:
+      - refreshToken
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    PasswordResetRequest:
+      required:
+      - email
+      type: object
+      properties:
+        email:
+          type: string
+    PasswordResetConfirmRequest:
+      required:
+      - newPassword
+      - token
+      type: object
+      properties:
+        token:
+          type: string
+        newPassword:
+          maxLength: 2147483647
+          minLength: 8
+          type: string
+    LogoutRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    LoginRequest:
+      required:
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        rememberMe:
+          type: boolean
+        deviceLabel:
+          maxLength: 120
+          minLength: 0
+          type: string
+    CreateUserRequest:
+      required:
+      - displayName
+      - email
+      - password
+      type: object
+      properties:
+        email:
+          maxLength: 320
+          minLength: 0
+          type: string
+        password:
+          maxLength: 2147483647
+          minLength: 8
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          type: string
+        displayName:
+          maxLength: 100
+          minLength: 1
+          pattern: "^[^\\p{Cntrl}]+$"
+          type: string
+        isAdmin:
+          type: boolean
+        isChild:
+          type: boolean
+    ResetPasswordRequest:
+      required:
+      - newPassword
+      type: object
+      properties:
+        newPassword:
+          maxLength: 2147483647
+          minLength: 8
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          type: string
+    CreateInvitationRequest:
+      required:
+      - email
+      type: object
+      properties:
+        email:
+          maxLength: 255
+          minLength: 0
+          type: string
+        role:
+          pattern: USER|ADMIN
+          type: string
+    InvitationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+        role:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+        accepted:
+          type: boolean
+        expired:
+          type: boolean
+    IssuedInvitationResponse:
+      type: object
+      properties:
+        invitation:
+          $ref: '#/components/schemas/InvitationResponse'
+        token:
+          type: string
+    TrashItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        name:
+          type: string
+        deletedAt:
+          type: string
+          format: date-time
+    TrashResponse:
+      type: object
+      properties:
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrashItem'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrashItem'
+        folders:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrashItem'
+    PageResponseSearchResult:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        folderId:
+          type: integer
+          format: int64
+        isChildSafe:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+    NoteSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        folderId:
+          type: integer
+          format: int64
+        ownerId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        label:
+          type: string
+        isChildSafe:
+          type: boolean
+        checklistItemCount:
+          type: integer
+          format: int64
+        checkedItemCount:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pinnedAt:
+          type: string
+          format: date-time
+    PageResponseNoteSummary:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteSummary'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+    PageResponseFileResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileResponse'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+    SseEmitter:
+      type: object
+      properties:
+        timeout:
+          type: integer
+          format: int64
+    SessionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        deviceLabel:
+          type: string
+        userAgent:
+          type: string
+        ipAddress:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        rememberMe:
+          type: boolean
+        current:
+          type: boolean
+    AuditEventResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        actorUserId:
+          type: integer
+          format: int64
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: string
+        ip:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+    PageResponseAuditEventResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEventResponse'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

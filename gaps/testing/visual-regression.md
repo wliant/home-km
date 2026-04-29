@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No screenshot or visual diff tests. CSS regressions (broken layout, accidental color change) are caught only by humans during review.
 
