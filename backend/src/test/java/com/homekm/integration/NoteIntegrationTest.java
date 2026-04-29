@@ -38,7 +38,7 @@ class NoteIntegrationTest extends IntegrationTestBase {
     @Test
     void createNote_returns201WithId() {
         var resp = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("My First Note", "Hello world", "custom", null, false)),
+                auth(new NoteRequest("My First Note", "Hello world", "custom", null, false, null, null)),
                 NoteDetail.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -50,7 +50,7 @@ class NoteIntegrationTest extends IntegrationTestBase {
     @Test
     void getNote_returns200WithBody() {
         var created = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("Readable Note", "Body text", "todo", null, false)),
+                auth(new NoteRequest("Readable Note", "Body text", "todo", null, false, null, null)),
                 NoteDetail.class).getBody();
 
         var resp = rest.exchange("/api/notes/" + created.id(), HttpMethod.GET,
@@ -63,7 +63,7 @@ class NoteIntegrationTest extends IntegrationTestBase {
     @Test
     void updateNote_changesTitle() {
         var created = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("Old Title", null, "custom", null, false)),
+                auth(new NoteRequest("Old Title", null, "custom", null, false, null, null)),
                 NoteDetail.class).getBody();
 
         var resp = rest.exchange("/api/notes/" + created.id(), HttpMethod.PUT,
@@ -76,7 +76,7 @@ class NoteIntegrationTest extends IntegrationTestBase {
     @Test
     void deleteNote_returns204() {
         var created = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("Delete Me", null, "custom", null, false)),
+                auth(new NoteRequest("Delete Me", null, "custom", null, false, null, null)),
                 NoteDetail.class).getBody();
 
         var resp = rest.exchange("/api/notes/" + created.id(), HttpMethod.DELETE,
@@ -88,7 +88,7 @@ class NoteIntegrationTest extends IntegrationTestBase {
     @Test
     void deleteNote_secondTime_returns404() {
         var created = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("Gone Note", null, "custom", null, false)),
+                auth(new NoteRequest("Gone Note", null, "custom", null, false, null, null)),
                 NoteDetail.class).getBody();
 
         rest.exchange("/api/notes/" + created.id(), HttpMethod.DELETE, auth(null), Void.class);

@@ -41,7 +41,7 @@ class SearchIntegrationTest extends IntegrationTestBase {
     void searchFindsNoteByTitle() {
         String unique = "xyzuniq" + System.nanoTime();
         rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest(unique + " recipe", "ingredients here", "recipe", null, false)),
+                auth(new NoteRequest(unique + " recipe", "ingredients here", "recipe", null, false, null, null)),
                 NoteDetail.class);
 
         ResponseEntity<PageResponse<SearchResult>> resp = rest.exchange(
@@ -57,7 +57,7 @@ class SearchIntegrationTest extends IntegrationTestBase {
     void searchFindsNoteByBody() {
         String unique = "bodyterm" + System.nanoTime();
         rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest("Generic Title", unique, "custom", null, false)),
+                auth(new NoteRequest("Generic Title", unique, "custom", null, false, null, null)),
                 NoteDetail.class);
 
         ResponseEntity<PageResponse<SearchResult>> resp = rest.exchange(
@@ -83,7 +83,7 @@ class SearchIntegrationTest extends IntegrationTestBase {
     void searchWithTypeFilter_onlyReturnsMatchingType() {
         String unique = "typefilter" + System.nanoTime();
         rest.exchange("/api/notes", HttpMethod.POST,
-                auth(new NoteRequest(unique + " note", null, "custom", null, false)),
+                auth(new NoteRequest(unique + " note", null, "custom", null, false, null, null)),
                 NoteDetail.class);
 
         ResponseEntity<PageResponse<SearchResult>> notesOnly = rest.exchange(

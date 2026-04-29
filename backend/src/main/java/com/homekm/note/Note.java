@@ -48,6 +48,19 @@ public class Note {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(name = "is_template", nullable = false)
+    private boolean template = false;
+
+    /**
+     * Optimistic-concurrency token. Hibernate increments this on every
+     * persisted update; controllers compare the client-supplied value and
+     * surface 409 CONFLICT when the row moved underneath the editor.
+     * See {@code gaps/sync/conflict-resolution.md}.
+     */
+    @jakarta.persistence.Version
+    @Column(nullable = false)
+    private long version = 0;
+
     @PreUpdate
     void onUpdate() { this.updatedAt = Instant.now(); }
 
@@ -72,4 +85,8 @@ public class Note {
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
     public String getVisibility() { return visibility; }
     public void setVisibility(String v) { this.visibility = v; }
+    public boolean isTemplate() { return template; }
+    public void setTemplate(boolean v) { this.template = v; }
+    public long getVersion() { return version; }
+    public void setVersion(long v) { this.version = v; }
 }

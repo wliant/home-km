@@ -39,6 +39,18 @@ public class NoteController {
         return ResponseEntity.ok(noteService.list(folderId, Pagination.clampPage(page), Pagination.clampSize(size), principal));
     }
 
+    @GetMapping("/api/notes/templates")
+    public ResponseEntity<List<NoteSummary>> listTemplates(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(noteService.listTemplates(principal));
+    }
+
+    @PostMapping("/api/notes/from-template/{templateId}")
+    public ResponseEntity<NoteDetail> createFromTemplate(@PathVariable Long templateId,
+                                                          @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(noteService.createFromTemplate(templateId, principal));
+    }
+
     @GetMapping("/api/notes/{id}")
     public ResponseEntity<NoteDetail> getById(@PathVariable Long id,
                                                @AuthenticationPrincipal UserPrincipal principal) {

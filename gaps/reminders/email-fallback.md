@@ -5,6 +5,7 @@
 | Category | Functional · Reminders |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** A reminder fires via Web Push only. If the recipient has no `PushSubscription` (e.g., never enabled push, or the subscription expired), the reminder is silently dropped.
 

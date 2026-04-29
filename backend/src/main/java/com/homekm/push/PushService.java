@@ -23,6 +23,8 @@ public class PushService {
     private final PushSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final AppProperties appProperties;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.mail.javamail.JavaMailSender mailSender;
 
     public PushService(PushSubscriptionRepository subscriptionRepository,
                        UserRepository userRepository, AppProperties appProperties) {
@@ -85,9 +87,9 @@ public class PushService {
      */
     public void sendToUsers(List<Long> userIds, String title, String body, String url, Long reminderId) {
         AppProperties.Vapid vapid = appProperties.getVapid();
-        if (vapid.getPublicKey() == null || vapid.getPublicKey().isBlank()) {
+        boolean pushReady = vapid.getPublicKey() != null && !vapid.getPublicKey().isBlank();
+        if (!pushReady) {
             log.warn("VAPID keys not configured; skipping push delivery");
-            return;
         }
 
         // Reminder pushes (reminderId != null) honour user prefs; other
@@ -95,20 +97,69 @@ public class PushService {
         // gated by the caller.
         List<Long> targets = reminderId != null ? filterByReminderPref(userIds) : userIds;
         if (targets.isEmpty()) return;
-        List<PushSubscription> subs = subscriptionRepository.findByUserIdIn(targets);
-        for (PushSubscription sub : subs) {
-            try {
-                nl.martijndwars.webpush.PushService pushService = new nl.martijndwars.webpush.PushService(
-                        vapid.getPublicKey(), vapid.getPrivateKey(), vapid.getSubject());
-                String payload = buildPayload(title, body, url, reminderId);
-                Subscription subscription = new Subscription(sub.getEndpoint(),
-                        new Subscription.Keys(sub.getP256dhKey(), sub.getAuthKey()));
-                Notification notification = new Notification(subscription, payload);
-                pushService.send(notification);
-            } catch (Exception e) {
-                log.warn("Push delivery failed for endpoint {}: {}", sub.getEndpoint(), e.getMessage());
+
+        // Track whether each user got at least one successful push so we can
+        // decide on email fallback. Only relevant for reminder dispatches.
+        List<User> targetUsers = userRepository.findAllById(targets);
+        java.util.Map<Long, Boolean> pushDelivered = new java.util.HashMap<>();
+        for (Long uid : targets) pushDelivered.put(uid, false);
+
+        if (pushReady) {
+            for (User user : targetUsers) {
+                List<PushSubscription> subs = subscriptionRepository.findByUserIdIn(List.of(user.getId()));
+                for (PushSubscription sub : subs) {
+                    try {
+                        nl.martijndwars.webpush.PushService pushService = new nl.martijndwars.webpush.PushService(
+                                vapid.getPublicKey(), vapid.getPrivateKey(), vapid.getSubject());
+                        String payload = buildPayload(title, body, url, reminderId);
+                        Subscription subscription = new Subscription(sub.getEndpoint(),
+                                new Subscription.Keys(sub.getP256dhKey(), sub.getAuthKey()));
+                        Notification notification = new Notification(subscription, payload);
+                        pushService.send(notification);
+                        pushDelivered.put(user.getId(), true);
+                    } catch (Exception e) {
+                        log.warn("Push delivery failed for endpoint {}: {}", sub.getEndpoint(), e.getMessage());
+                    }
+                }
             }
         }
+
+        // Email fallback: only for reminder dispatches, only when push didn't
+        // land for that user, only when SMTP is configured, and only when the
+        // user hasn't opted out of email-reminders.
+        if (reminderId != null && mailSender != null && appProperties.getMail().isEnabled()) {
+            for (User user : targetUsers) {
+                if (pushDelivered.get(user.getId())) continue;
+                if (!emailRemindersEnabled(user)) continue;
+                try {
+                    org.springframework.mail.SimpleMailMessage msg = new org.springframework.mail.SimpleMailMessage();
+                    msg.setFrom(appProperties.getMail().getFrom());
+                    msg.setTo(user.getEmail());
+                    msg.setSubject(title);
+                    String origins = appProperties.getCors().getAllowedOrigins();
+                    String baseUrl = origins != null && !origins.isBlank()
+                            ? origins.split(",")[0].trim() : "";
+                    msg.setText(body + "\n\n" + baseUrl + url + "\n\n"
+                            + "(You're receiving this because push delivery did not reach any of your devices."
+                            + " Disable email reminders in Settings → Push notifications.)");
+                    mailSender.send(msg);
+                    log.info("Sent email fallback for reminder {} to {}", reminderId, user.getEmail());
+                } catch (Exception e) {
+                    log.warn("Email fallback failed for {}: {}", user.getEmail(), e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * {@code notification_prefs.emailReminders} defaults to true so users who
+     * never enabled push still get the fallback when push delivery fails.
+     * Setting it explicitly false in the JSON prefs opts out.
+     */
+    private boolean emailRemindersEnabled(User user) {
+        String prefs = user.getNotificationPrefs();
+        if (prefs == null || prefs.isBlank()) return true;
+        return !prefs.contains("\"emailReminders\":false");
     }
 
     private String buildPayload(String title, String body, String url, Long reminderId) {

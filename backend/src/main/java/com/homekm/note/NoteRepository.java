@@ -13,21 +13,25 @@ import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
-    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.deletedAt IS NULL " +
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.deletedAt IS NULL AND n.template = false " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listByFolder(@Param("folderId") Long folderId, Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.deletedAt IS NULL " +
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.deletedAt IS NULL AND n.template = false " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listRoot(Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.childSafe = true AND n.deletedAt IS NULL " +
+    @Query("SELECT n FROM Note n WHERE n.folder.id = :folderId AND n.childSafe = true AND n.deletedAt IS NULL AND n.template = false " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listByFolderChildSafe(@Param("folderId") Long folderId, Pageable pageable);
 
-    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.childSafe = true AND n.deletedAt IS NULL " +
+    @Query("SELECT n FROM Note n WHERE n.folder IS NULL AND n.childSafe = true AND n.deletedAt IS NULL AND n.template = false " +
             "ORDER BY n.pinnedAt DESC NULLS LAST, n.updatedAt DESC")
     Page<Note> listRootChildSafe(Pageable pageable);
+
+    @Query("SELECT n FROM Note n WHERE n.template = true AND n.deletedAt IS NULL " +
+            "ORDER BY n.updatedAt DESC")
+    List<Note> findAllTemplates();
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Note n SET n.pinnedAt = :ts WHERE n.id = :id")

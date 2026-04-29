@@ -5,6 +5,7 @@
 | Category | Functional · Multi-device sync |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** No conflict detection on writes. A `PATCH` always wins regardless of intervening edits.
 

@@ -5,6 +5,7 @@
 | Category | Functional · Notes |
 | Priority | P2 |
 | Size | S |
+| Status | Closed |
 
 **Current state:** Notes are created blank. Recurring household formats (weekly meal plan, packing list, kid-handover checklist, recipe) must be retyped each time.
 

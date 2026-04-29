@@ -54,7 +54,7 @@ class NotePinIntegrationTest extends IntegrationTestBase {
 
     private NoteDetail createNote(String token, String title, boolean childSafe) {
         return rest.exchange("/api/notes", HttpMethod.POST,
-                auth(token, new NoteRequest(title, null, "custom", null, childSafe)),
+                auth(token, new NoteRequest(title, null, "custom", null, childSafe, null, null)),
                 NoteDetail.class).getBody();
     }
 

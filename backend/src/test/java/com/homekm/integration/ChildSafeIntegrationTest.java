@@ -59,7 +59,7 @@ class ChildSafeIntegrationTest extends IntegrationTestBase {
     void childCannotSeeUnsafeNote() {
         // Admin creates an unsafe note
         NoteDetail note = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(adminToken, new NoteRequest("Secret Note", "admin only", "custom", null, false)),
+                auth(adminToken, new NoteRequest("Secret Note", "admin only", "custom", null, false, null, null)),
                 NoteDetail.class).getBody();
 
         // Child tries to fetch it → 404
@@ -73,7 +73,7 @@ class ChildSafeIntegrationTest extends IntegrationTestBase {
     void childCanSeeChildSafeNote() {
         // Admin creates a child-safe note
         NoteDetail note = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(adminToken, new NoteRequest("Safe Note", "visible to all", "custom", null, true)),
+                auth(adminToken, new NoteRequest("Safe Note", "visible to all", "custom", null, true, null, null)),
                 NoteDetail.class).getBody();
 
         // Child can fetch it
@@ -88,9 +88,9 @@ class ChildSafeIntegrationTest extends IntegrationTestBase {
     void childNoteListExcludesUnsafeNotes() {
         // Admin creates one safe and one unsafe note
         rest.exchange("/api/notes", HttpMethod.POST,
-                auth(adminToken, new NoteRequest("Visible Note", null, "custom", null, true)), NoteDetail.class);
+                auth(adminToken, new NoteRequest("Visible Note", null, "custom", null, true, null, null)), NoteDetail.class);
         rest.exchange("/api/notes", HttpMethod.POST,
-                auth(adminToken, new NoteRequest("Hidden Note", null, "custom", null, false)), NoteDetail.class);
+                auth(adminToken, new NoteRequest("Hidden Note", null, "custom", null, false, null, null)), NoteDetail.class);
 
         // Child lists notes — should only see child-safe ones
         ResponseEntity<PageResponse<NoteSummary>> resp = rest.exchange(
@@ -107,7 +107,7 @@ class ChildSafeIntegrationTest extends IntegrationTestBase {
     void childCannotDeleteNote() {
         // Admin creates a child-safe note
         NoteDetail note = rest.exchange("/api/notes", HttpMethod.POST,
-                auth(adminToken, new NoteRequest("Safe Deletable Note", null, "custom", null, true)),
+                auth(adminToken, new NoteRequest("Safe Deletable Note", null, "custom", null, true, null, null)),
                 NoteDetail.class).getBody();
 
         // Child tries to delete it → 403

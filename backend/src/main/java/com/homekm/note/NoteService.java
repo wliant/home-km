@@ -84,6 +84,10 @@ public class NoteService {
         note.setBody(req.body());
         note.setLabel(req.label() != null ? req.label() : "custom");
         note.setOwner(owner);
+        // Children cannot create templates.
+        if (req.isTemplate() != null && req.isTemplate() && !principal.isChild()) {
+            note.setTemplate(true);
+        }
 
         if (req.folderId() != null) {
             Folder folder = folderRepository.findActiveById(req.folderId())
@@ -108,10 +112,70 @@ public class NoteService {
         return NoteDetail.from(note, List.of(), List.of());
     }
 
+    public List<NoteSummary> listTemplates(UserPrincipal principal) {
+        if (principal.isChild()) return List.of();
+        return noteRepository.findAllTemplates().stream()
+                .map(n -> NoteSummary.from(n,
+                        checklistItemRepository.countByNoteId(n.getId()),
+                        checklistItemRepository.countByNoteIdAndCheckedTrue(n.getId())))
+                .toList();
+    }
+
+    /**
+     * Clone a template into a fresh non-template note owned by the caller.
+     * Body, label, child-safe flag, folder, and checklist items copy across;
+     * reminders, tags, and pin state do not (templates are blueprints, not
+     * snapshots). Adults only.
+     */
+    @Transactional
+    public NoteDetail createFromTemplate(Long templateId, UserPrincipal principal) {
+        if (principal.isChild()) throw new ChildAccountWriteException();
+        Note tpl = noteRepository.findActiveById(templateId)
+                .orElseThrow(() -> new EntityNotFoundException("Template", templateId));
+        if (!tpl.isTemplate()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "NOT_A_TEMPLATE");
+        }
+        User owner = userRepository.getReferenceById(principal.getId());
+        Note copy = new Note();
+        copy.setTitle(tpl.getTitle());
+        copy.setBody(tpl.getBody());
+        copy.setLabel(tpl.getLabel());
+        copy.setOwner(owner);
+        copy.setFolder(tpl.getFolder());
+        copy.setChildSafe(tpl.isChildSafe());
+        // copy.template remains false — this is a working copy.
+        noteRepository.save(copy);
+
+        // Clone checklist items, preserving order; reset checked state so the
+        // new copy starts fresh.
+        List<ChecklistItem> tplItems = checklistItemRepository.findByNoteIdOrderBySortOrder(templateId);
+        for (ChecklistItem src : tplItems) {
+            ChecklistItem dst = new ChecklistItem();
+            dst.setNote(copy);
+            dst.setText(src.getText());
+            dst.setSortOrder(src.getSortOrder());
+            dst.setChecked(false);
+            checklistItemRepository.save(dst);
+        }
+
+        List<ChecklistItem> items = checklistItemRepository.findByNoteIdOrderBySortOrder(copy.getId());
+        return NoteDetail.from(copy, items, List.of());
+    }
+
     @Transactional
     public NoteDetail update(Long id, NoteRequest req, UserPrincipal principal) {
         Note note = noteRepository.findActiveById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Note", id));
+
+        // Optimistic-concurrency check before any mutation. Hibernate's
+        // @Version would also catch this on flush via OptimisticLockException,
+        // but checking here lets us throw a clean 409 with the live version
+        // so the editor can re-load and surface a merge UI.
+        if (req.expectedVersion() != null && req.expectedVersion() != note.getVersion()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "STALE_VERSION");
+        }
 
         // Children can only edit their own notes
         if (principal.isChild()) {
@@ -124,6 +188,7 @@ public class NoteService {
         if (req.title() != null) note.setTitle(req.title());
         if (req.body() != null) note.setBody(req.body());
         if (req.label() != null) note.setLabel(req.label());
+        if (req.isTemplate() != null && !principal.isChild()) note.setTemplate(req.isTemplate());
 
         // Only adults can toggle child-safe
         if (!principal.isChild() && req.isChildSafe() != null) {
