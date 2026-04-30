@@ -127,6 +127,17 @@ export const searchApi = {
     apiClient.get<SearchResponse>('/search', { params }).then(r => r.data),
 }
 
+export interface DataExportResponse {
+  id: number
+  status: 'PENDING' | 'READY' | 'EXPIRED' | 'FAILED'
+  sizeBytes: number | null
+  createdAt: string
+  readyAt: string | null
+  expiresAt: string | null
+  downloadUrl: string | null
+  errorMessage: string | null
+}
+
 // Me — ambient state for the current user (badge count, etc.)
 export const meApi = {
   unread: () => apiClient.get<{ count: number }>('/me/unread').then(r => r.data),
@@ -134,6 +145,12 @@ export const meApi = {
     apiClient.get<Record<string, unknown>>('/me/notification-prefs').then(r => r.data),
   updateNotificationPrefs: (prefs: Record<string, unknown>) =>
     apiClient.put<Record<string, unknown>>('/me/notification-prefs', prefs).then(r => r.data),
+  requestExport: () =>
+    apiClient.post<DataExportResponse>('/me/export').then(r => r.data),
+  listExports: () =>
+    apiClient.get<DataExportResponse[]>('/me/export').then(r => r.data),
+  getExport: (id: number) =>
+    apiClient.get<DataExportResponse>(`/me/export/${id}`).then(r => r.data),
 }
 
 export interface BuildInfo {

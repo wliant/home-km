@@ -5,6 +5,7 @@
 | Category | Functional · Settings |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** No way to export a user's data. Even if a user wants to leave or back up their personal subset, they can only do it manually one item at a time.
 

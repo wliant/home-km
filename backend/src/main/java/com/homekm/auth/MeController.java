@@ -7,6 +7,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,14 +31,30 @@ public class MeController {
     private final ReminderRepository reminderRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final DataExportService dataExportService;
+    private final DataExportRepository dataExportRepository;
 
     public MeController(ReminderRepository reminderRepository,
                          UserRepository userRepository,
-                         ObjectMapper objectMapper) {
+                         ObjectMapper objectMapper,
+                         DataExportService dataExportService,
+                         DataExportRepository dataExportRepository) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.dataExportService = dataExportService;
+        this.dataExportRepository = dataExportRepository;
     }
+
+    public record ExportResponse(
+            Long id,
+            String status,
+            Long sizeBytes,
+            Instant createdAt,
+            Instant readyAt,
+            Instant expiresAt,
+            String downloadUrl,
+            String errorMessage) {}
 
     public record UnreadResponse(long count) {}
 
@@ -73,6 +92,52 @@ public class MeController {
         }
         userRepository.save(user);
         return ResponseEntity.ok(prefs);
+    }
+
+    /**
+     * Enqueue a GDPR-style data export. Returns the new request in PENDING
+     * state; the background job assembles the ZIP within a poll interval.
+     */
+    @PostMapping("/export")
+    public ResponseEntity<ExportResponse> requestExport(@AuthenticationPrincipal UserPrincipal principal) {
+        DataExportRequest req = dataExportService.enqueue(principal.getId());
+        return ResponseEntity.ok(toResponse(req));
+    }
+
+    /** All export requests for the calling user, newest first. */
+    @GetMapping("/export")
+    public ResponseEntity<List<ExportResponse>> listExports(@AuthenticationPrincipal UserPrincipal principal) {
+        List<ExportResponse> responses = dataExportRepository.findByUserId(principal.getId()).stream()
+                .map(this::toResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
+    /** Single export — when READY the response carries a 15-minute presigned download URL. */
+    @GetMapping("/export/{id}")
+    public ResponseEntity<ExportResponse> getExport(@PathVariable Long id,
+                                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return dataExportRepository.findByIdAndUserId(id, principal.getId())
+                .map(req -> ResponseEntity.ok(toResponse(req)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private ExportResponse toResponse(DataExportRequest req) {
+        String url = null;
+        try {
+            url = dataExportService.presignedDownloadUrl(req);
+        } catch (Exception ignored) {
+            // surfaced as null download URL
+        }
+        return new ExportResponse(
+                req.getId(),
+                req.getStatus().name(),
+                req.getSizeBytes(),
+                req.getCreatedAt(),
+                req.getReadyAt(),
+                req.getExpiresAt(),
+                url,
+                req.getErrorMessage());
     }
 
     private Map<String, Object> parsePrefs(String json) {

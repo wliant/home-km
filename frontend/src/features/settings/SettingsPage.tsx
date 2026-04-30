@@ -231,6 +231,21 @@ export default function SettingsPage() {
 function PrivacySection() {
   const clearAuth = useAuthStore(s => s.clearAuth)
   const [busy, setBusy] = useState(false)
+  const qc = useQueryClient()
+  const exports = useQuery({
+    queryKey: ['me', 'exports'],
+    queryFn: () => meApi.listExports(),
+    // Poll while at least one export is still PENDING.
+    refetchInterval: data => {
+      const list = data as unknown as { state?: { data?: Array<{ status: string }> } }
+      const items = list?.state?.data ?? []
+      return items.some(e => e.status === 'PENDING') ? 5000 : false
+    },
+  })
+  const requestExport = useMutation({
+    mutationFn: () => meApi.requestExport(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me', 'exports'] }),
+  })
 
   async function clearLocal() {
     if (!confirm('Sign out and wipe all locally-stored data on this device?')) return
@@ -275,13 +290,49 @@ function PrivacySection() {
         queued uploads + cached notes in <code>IndexedDB</code>, and the offline shell in
         the service-worker cache. See <a className="text-primary-600 dark:text-primary-400 hover:underline" href="/PRIVACY.md">PRIVACY.md</a> for the full list.
       </p>
-      <button
-        onClick={clearLocal}
-        disabled={busy}
-        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-      >
-        {busy ? 'Clearing…' : 'Clear local data and sign out'}
-      </button>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={clearLocal}
+          disabled={busy}
+          className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+        >
+          {busy ? 'Clearing…' : 'Clear local data and sign out'}
+        </button>
+        <button
+          onClick={() => requestExport.mutate()}
+          disabled={requestExport.isPending}
+          className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+        >
+          {requestExport.isPending ? 'Requesting…' : 'Export my data'}
+        </button>
+      </div>
+      {exports.data && exports.data.length > 0 && (
+        <div className="text-xs">
+          <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">Recent exports</h3>
+          <ul className="space-y-1">
+            {exports.data.slice(0, 5).map(ex => (
+              <li key={ex.id} className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <span className="font-mono">#{ex.id}</span>
+                <span>{ex.status}</span>
+                <span>{new Date(ex.createdAt).toLocaleString()}</span>
+                {ex.status === 'READY' && ex.downloadUrl && (
+                  <a
+                    href={ex.downloadUrl}
+                    className="text-primary-600 dark:text-primary-400 hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Download ({ex.sizeBytes ? `${Math.round(ex.sizeBytes / 1024)} KB` : '—'})
+                  </a>
+                )}
+                {ex.status === 'FAILED' && ex.errorMessage && (
+                  <span className="text-red-600 dark:text-red-400">{ex.errorMessage}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   )
 }

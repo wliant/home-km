@@ -5,6 +5,7 @@
 | Category | Non-functional · Compliance & data |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Self-service deletion and data export are missing entirely (see functional `settings/account-deletion.md` and `settings/gdpr-export.md`). Even though Home KM is single-tenant household-scope, several jurisdictions require these capabilities for any system holding personal data.
 

@@ -56,4 +56,20 @@ The vanilla install reaches none of these.
 - Disable reminder pushes from Settings → Push notifications.
 - Deactivate your account from Settings → Danger zone (sign-in is blocked; an admin can re-enable inside any grace window).
 - Ask an admin to hard-delete your data; the policy is documented in `RETENTION.md`.
+- Request a portable export of your own data from Settings → Privacy → "Export my data". The server assembles a ZIP (notes as markdown, side data as JSON, manifest) and serves it via a 15-minute presigned URL; the request itself stays valid for 24h before the ZIP is purged.
 - Use Settings → Privacy → "Clear local data" to wipe what the browser remembers and start fresh.
+
+## GDPR mapping
+
+Home KM is a household-scoped self-hosted app, so the GDPR concepts of "controller" and "processor" both fall on the operator. The features below provide the technical foundation if your jurisdiction requires data-subject-request handling — operators are expected to define a documented response process on top.
+
+| Article | Right | How Home KM supports it |
+|---|---|---|
+| 15 | Access | `GET /api/auth/me` + the export ZIP (Article 20) cover the structured copy. |
+| 16 | Rectification | All editable fields are exposed under Settings → Profile, Settings → Sessions, and the per-feature edit screens. |
+| 17 | Erasure ("right to be forgotten") | Self-service deactivation blocks sign-in immediately; the operator hard-deletes the row out-of-band per `RETENTION.md`. Audit-log entries are retained for the configured window because the lawful basis is "legal obligation" (record-keeping). |
+| 18 | Restriction | Deactivation freezes processing while leaving data intact for later restoration. |
+| 20 | Portability | `POST /api/me/export` enqueues an asynchronous ZIP build; the user polls `GET /api/me/export/{id}` and downloads via a presigned URL when status flips to `READY`. Output is markdown + JSON, both portable open formats. |
+| 21 | Objection | Push, email, and reminder routing are all per-user opt-in (`notification-prefs`). |
+
+Default-on operators get all of the above by virtue of running the upstream app — no extra configuration needed.
