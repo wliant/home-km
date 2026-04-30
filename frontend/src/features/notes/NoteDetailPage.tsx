@@ -9,6 +9,7 @@ import { QK } from '../../lib/queryKeys'
 import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import RemindersSection from '../../components/RemindersSection'
+import CommentsThread from '../comments/CommentsThread'
 import TagAutocomplete from '../../components/TagAutocomplete'
 import { useAuthStore } from '../../lib/authStore'
 
@@ -158,6 +159,8 @@ export default function NoteDetailPage() {
           reminders={note.reminders}
           readOnly={user?.isChild}
         />
+
+        <CommentsThread itemType="note" itemId={noteId} />
       </div>
     </AppLayout>
   )

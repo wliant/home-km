@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '../lib/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { folderApi, authApi } from '../api'
+import { folderApi, authApi, mentionApi } from '../api'
 import { QK } from '../lib/queryKeys'
 import QueueStatusBadge from './QueueStatusBadge'
 import ThemeToggle from './ThemeToggle'
@@ -12,6 +12,23 @@ import { useUnreadBadge } from '../lib/useUnreadBadge'
 import SkipLink from './SkipLink'
 import CommandPalette from './CommandPalette'
 import InstallBanner from './InstallBanner'
+
+function MentionsLink() {
+  const { data } = useQuery({
+    queryKey: ['mentions', 'unread-count'],
+    queryFn: () => mentionApi.unreadCount(),
+    refetchInterval: 60_000,
+  })
+  const count = data?.count ?? 0
+  return (
+    <Link to="/mentions" className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+      🔔 Mentions
+      {count > 0 && (
+        <span className="ml-auto text-xs bg-primary-600 text-white rounded-full px-2 py-0.5">{count}</span>
+      )}
+    </Link>
+  )
+}
 
 function FolderTreeItem({ folder, depth = 0 }: { folder: FolderResponse; depth?: number }) {
   return (
@@ -64,6 +81,7 @@ function Sidebar() {
         <Link to="/search" className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
           🔍 Search
         </Link>
+        <MentionsLink />
 
         <div className="pt-2 pb-1 px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Folders</div>
         <ul className="space-y-0.5">

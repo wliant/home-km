@@ -192,6 +192,48 @@ export interface TrashItem {
   deletedAt: string
 }
 
+// Comments + mentions
+export interface CommentResponse {
+  id: number
+  itemType: 'note' | 'file'
+  itemId: number
+  authorId: number | null
+  authorDisplayName: string | null
+  body: string
+  mentionedUserIds: number[]
+  createdAt: string
+  editedAt: string | null
+}
+
+export interface MentionInboxItem {
+  id: number
+  commentId: number
+  itemType: 'note' | 'file'
+  itemId: number
+  authorId: number | null
+  authorDisplayName: string | null
+  preview: string
+  readAt: string | null
+  createdAt: string
+}
+
+export const commentApi = {
+  list: (itemType: 'note' | 'file', itemId: number) =>
+    apiClient.get<CommentResponse[]>('/comments', { params: { itemType, itemId } }).then(r => r.data),
+  create: (itemType: 'note' | 'file', itemId: number, body: { body: string; mentionedUserIds?: number[]; mentionedGroupIds?: number[] }) =>
+    apiClient.post<CommentResponse>('/comments', body, { params: { itemType, itemId } }).then(r => r.data),
+  update: (id: number, body: { body: string; mentionedUserIds?: number[]; mentionedGroupIds?: number[] }) =>
+    apiClient.put<CommentResponse>(`/comments/${id}`, body).then(r => r.data),
+  delete: (id: number) => apiClient.delete(`/comments/${id}`),
+}
+
+export const mentionApi = {
+  list: () => apiClient.get<MentionInboxItem[]>('/me/mentions').then(r => r.data),
+  unreadCount: () => apiClient.get<{ count: number }>('/me/mentions/unread-count').then(r => r.data),
+  markRead: (id: number) => apiClient.post(`/me/mentions/${id}/read`),
+  markAllRead: () => apiClient.post('/me/mentions/read-all'),
+}
+
 // Groups
 export interface GroupResponse {
   id: number

@@ -7,6 +7,7 @@ import { formatBytes, formatDate } from '../../lib/format'
 import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import TagAutocomplete from '../../components/TagAutocomplete'
+import CommentsThread from '../comments/CommentsThread'
 import { useAuthStore } from '../../lib/authStore'
 
 export default function FileDetailPage() {
@@ -172,6 +173,8 @@ export default function FileDetailPage() {
             Download
           </a>
         )}
+
+        <CommentsThread itemType="file" itemId={file.id} />
       </div>
     </AppLayout>
   )

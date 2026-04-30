@@ -5,6 +5,7 @@
 | Category | Functional · Sharing & collaboration |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Notes are single-author artifacts. Conversation about a note happens out-of-band (verbally, in a messaging app). No way to attach a question to a specific note or file.
 

@@ -581,6 +581,45 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/FileResponse'
+  /api/comments/{id}:
+    put:
+      tags:
+      - comment-controller
+      operationId: update_6
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+    delete:
+      tags:
+      - comment-controller
+      operationId: delete_7
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
   /api/auth/me:
     get:
       tags:
@@ -1265,6 +1304,29 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/NoteDetail'
+  /api/me/mentions/{id}/read:
+    post:
+      tags:
+      - mention-controller
+      operationId: markRead
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+  /api/me/mentions/read-all:
+    post:
+      tags:
+      - mention-controller
+      operationId: markAllRead
+      responses:
+        "200":
+          description: OK
   /api/me/export:
     get:
       tags:
@@ -1312,7 +1374,7 @@ paths:
     get:
       tags:
       - group-controller
-      operationId: list_4
+      operationId: list_5
       responses:
         "200":
           description: OK
@@ -1426,7 +1488,7 @@ paths:
     get:
       tags:
       - file-controller
-      operationId: list_5
+      operationId: list_6
       parameters:
       - name: folderId
         in: query
@@ -1533,7 +1595,7 @@ paths:
     get:
       tags:
       - file-share-controller
-      operationId: list_6
+      operationId: list_7
       parameters:
       - name: fileId
         in: path
@@ -1574,6 +1636,67 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/IssuedShareLinkResponse'
+  /api/comments:
+    get:
+      tags:
+      - comment-controller
+      operationId: list_8
+      parameters:
+      - name: itemType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - note
+          - file
+      - name: itemId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommentResponse'
+    post:
+      tags:
+      - comment-controller
+      operationId: create_7
+      parameters:
+      - name: itemType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - note
+          - file
+      - name: itemId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
   /api/auth/register:
     post:
       tags:
@@ -1880,7 +2003,7 @@ paths:
     get:
       tags:
       - invitation-controller
-      operationId: list_8
+      operationId: list_10
       responses:
         "200":
           description: OK
@@ -1893,7 +2016,7 @@ paths:
     post:
       tags:
       - invitation-controller
-      operationId: create_7
+      operationId: create_8
       requestBody:
         content:
           application/json:
@@ -2158,6 +2281,32 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/UnreadResponse'
+  /api/me/mentions:
+    get:
+      tags:
+      - mention-controller
+      operationId: list_4
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MentionInboxResponse'
+  /api/me/mentions/unread-count:
+    get:
+      tags:
+      - mention-controller
+      operationId: unreadCount
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UnreadCountResponse'
   /api/me/export/{id}:
     get:
       tags:
@@ -2337,7 +2486,7 @@ paths:
     get:
       tags:
       - admin-review-controller
-      operationId: list_7
+      operationId: list_9
       responses:
         "200":
           description: OK
@@ -2351,7 +2500,7 @@ paths:
     get:
       tags:
       - audit-controller
-      operationId: list_9
+      operationId: list_11
       parameters:
       - name: actorId
         in: query
@@ -2899,6 +3048,54 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+    CommentRequest:
+      required:
+      - body
+      type: object
+      properties:
+        body:
+          maxLength: 4000
+          minLength: 0
+          type: string
+        mentionedUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        mentionedGroupIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    CommentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        itemType:
+          type: string
+        itemId:
+          type: integer
+          format: int64
+        authorId:
+          type: integer
+          format: int64
+        authorDisplayName:
+          type: string
+        body:
+          type: string
+        mentionedUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        createdAt:
+          type: string
+          format: date-time
+        editedAt:
           type: string
           format: date-time
     UpdateMeRequest:
@@ -3586,6 +3783,39 @@ components:
           type: string
           format: date-time
     UnreadResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+    MentionInboxResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        commentId:
+          type: integer
+          format: int64
+        itemType:
+          type: string
+        itemId:
+          type: integer
+          format: int64
+        authorId:
+          type: integer
+          format: int64
+        authorDisplayName:
+          type: string
+        preview:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    UnreadCountResponse:
       type: object
       properties:
         count:
