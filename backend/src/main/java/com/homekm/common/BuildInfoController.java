@@ -1,5 +1,6 @@
 package com.homekm.common;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,8 @@ public class BuildInfoController {
     private final BuildProperties build;
     private final GitProperties git;
 
-    public BuildInfoController(BuildProperties build, GitProperties git) {
+    public BuildInfoController(BuildProperties build,
+                                @Autowired(required = false) GitProperties git) {
         this.build = build;
         this.git = git;
     }
