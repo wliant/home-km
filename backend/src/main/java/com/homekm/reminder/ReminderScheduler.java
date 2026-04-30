@@ -1,6 +1,9 @@
 package com.homekm.reminder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homekm.auth.UserRepository;
+import com.homekm.common.OutboxEvent;
+import com.homekm.common.OutboxRepository;
 import com.homekm.common.ShutdownState;
 import com.homekm.push.PushService;
 import org.slf4j.Logger;
@@ -12,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class ReminderScheduler {
@@ -23,15 +28,21 @@ public class ReminderScheduler {
     private final UserRepository userRepository;
     private final PushService pushService;
     private final ShutdownState shutdownState;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     public ReminderScheduler(ReminderRepository reminderRepository,
                                UserRepository userRepository,
                                PushService pushService,
-                               @Autowired(required = false) ShutdownState shutdownState) {
+                               @Autowired(required = false) ShutdownState shutdownState,
+                               OutboxRepository outboxRepository,
+                               ObjectMapper objectMapper) {
         this.reminderRepository = reminderRepository;
         this.userRepository = userRepository;
         this.pushService = pushService;
         this.shutdownState = shutdownState;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     private boolean shuttingDown() {
@@ -49,7 +60,12 @@ public class ReminderScheduler {
         for (Reminder reminder : due) {
             if (shuttingDown()) break;
             try {
-                sendPush(reminder);
+                // Write the push intent into the outbox in the same tx as the
+                // reminder mutation. {@link com.homekm.common.OutboxPublisher}
+                // does the actual push delivery on its own polling loop, so a
+                // crash between "marked sent" and "actually pushed" no longer
+                // drops the notification.
+                enqueuePushOutbox(reminder);
                 reminder.setPushSent(true);
                 if (reminder.getRecurrence() != null) {
                     reminder.setRemindAt(advanceRemindAt(reminder.getRemindAt(), reminder.getRecurrence()));
@@ -62,7 +78,7 @@ public class ReminderScheduler {
         }
     }
 
-    private void sendPush(Reminder reminder) {
+    private void enqueuePushOutbox(Reminder reminder) throws Exception {
         List<Long> recipientIds;
         if (reminder.getRecipients().isEmpty()) {
             recipientIds = List.of(reminder.getNote().getOwner().getId());
@@ -70,10 +86,17 @@ public class ReminderScheduler {
             recipientIds = reminder.getRecipients().stream().map(r -> r.getUser().getId()).toList();
         }
 
-        String title = "Reminder: " + reminder.getNote().getTitle();
-        String body = reminder.getNote().getTitle();
-        String url = "/notes/" + reminder.getNote().getId();
-        pushService.sendToUsers(recipientIds, title, body, url, reminder.getId());
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("title", "Reminder: " + reminder.getNote().getTitle());
+        payload.put("body", reminder.getNote().getTitle());
+        payload.put("url", "/notes/" + reminder.getNote().getId());
+        payload.put("reminderId", reminder.getId());
+
+        OutboxEvent event = new OutboxEvent();
+        event.setEventType("REMINDER_PUSH");
+        event.setPayload(objectMapper.writeValueAsString(payload));
+        event.setUserIds(recipientIds.toArray(new Long[0]));
+        outboxRepository.save(event);
     }
 
     /**

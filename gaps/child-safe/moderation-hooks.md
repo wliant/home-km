@@ -5,6 +5,7 @@
 | Category | Functional · Child-safe mode |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Child accounts are restricted to items explicitly flagged `is_child_safe`. There is no scanning or automatic flagging — every item starts as adult-only and a parent must opt in.
 

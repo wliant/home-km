@@ -53,6 +53,7 @@ public class FileService {
     private final com.homekm.common.MinioGateway minioGateway;
     private final FileTransformRepository transformRepository;
     private final FileVersionRepository versionRepository;
+    private final com.homekm.common.ContentModerationService moderation;
 
     public FileService(StoredFileRepository fileRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
@@ -60,7 +61,8 @@ public class FileService {
                        AuditService auditService, MimeService mimeService, AvScanner avScanner,
                        com.homekm.common.MinioGateway minioGateway,
                        FileTransformRepository transformRepository,
-                       FileVersionRepository versionRepository) {
+                       FileVersionRepository versionRepository,
+                       com.homekm.common.ContentModerationService moderation) {
         this.fileRepository = fileRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
@@ -73,6 +75,7 @@ public class FileService {
         this.minioGateway = minioGateway;
         this.transformRepository = transformRepository;
         this.versionRepository = versionRepository;
+        this.moderation = moderation;
     }
 
     public PageResponse<FileResponse> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -129,6 +132,22 @@ public class FileService {
             if (!principal.isChild()) {
                 boolean safe = childSafeService.resolveChildSafeOnMove(false, folderId);
                 stored.setChildSafe(safe);
+            }
+        }
+
+        // Adults: ask the moderation service for a recommendation when the
+        // folder hasn't already forced the flag on. AUTO_SAFE/ADULT stamp
+        // child_safe_review_at; NEEDS_REVIEW leaves it null so the parental
+        // review queue surfaces the file.
+        if (!principal.isChild() && !stored.isChildSafe()) {
+            var verdict = moderation.classifyFile(stored.getFilename(), stored.getMimeType());
+            switch (verdict.verdict()) {
+                case AUTO_SAFE -> {
+                    stored.setChildSafe(true);
+                    stored.setChildSafeReviewAt(moderation.reviewedAt());
+                }
+                case AUTO_ADULT -> stored.setChildSafeReviewAt(moderation.reviewedAt());
+                case NEEDS_REVIEW -> { /* leave both null → review queue */ }
             }
         }
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Reliability |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** `ReminderScheduler` reads due reminders, calls `PushService.send(...)` synchronously inside the same loop, and (presumably) marks the reminder delivered. If push delivery succeeds but the DB update fails, the reminder fires again on the next tick. If the DB succeeds and push fails, the user never gets it.
 

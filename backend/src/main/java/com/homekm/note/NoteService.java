@@ -41,12 +41,14 @@ public class NoteService {
     private final AuditService auditService;
     private final EventBus eventBus;
     private final NoteRevisionRepository revisionRepository;
+    private final com.homekm.common.ContentModerationService moderation;
 
     public NoteService(NoteRepository noteRepository, ChecklistItemRepository checklistItemRepository,
                        ReminderRepository reminderRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
                        AuditService auditService, EventBus eventBus,
-                       NoteRevisionRepository revisionRepository) {
+                       NoteRevisionRepository revisionRepository,
+                       com.homekm.common.ContentModerationService moderation) {
         this.noteRepository = noteRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.reminderRepository = reminderRepository;
@@ -56,6 +58,7 @@ public class NoteService {
         this.auditService = auditService;
         this.eventBus = eventBus;
         this.revisionRepository = revisionRepository;
+        this.moderation = moderation;
     }
 
     public PageResponse<NoteSummary> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -101,11 +104,32 @@ public class NoteService {
             note.setFolder(folder);
         }
 
-        // Child: force child-safe; Adults: use provided value (default false)
+        // Child: force child-safe; Adults: use provided value, but if absent
+        // ask the moderation service for a recommendation. AUTO_SAFE/AUTO_ADULT
+        // also stamps child_safe_review_at so the parental review queue stays
+        // clear for items the heuristic was confident about; NEEDS_REVIEW
+        // leaves the timestamp null so the queue surfaces them.
         if (principal.isChild()) {
             note.setChildSafe(true);
+        } else if (req.isChildSafe() != null) {
+            note.setChildSafe(req.isChildSafe());
+            note.setChildSafeReviewAt(moderation.reviewedAt());
         } else {
-            note.setChildSafe(req.isChildSafe() != null && req.isChildSafe());
+            var verdict = moderation.classifyNote(req.title(), req.body());
+            switch (verdict.verdict()) {
+                case AUTO_SAFE -> {
+                    note.setChildSafe(true);
+                    note.setChildSafeReviewAt(moderation.reviewedAt());
+                }
+                case AUTO_ADULT -> {
+                    note.setChildSafe(false);
+                    note.setChildSafeReviewAt(moderation.reviewedAt());
+                }
+                case NEEDS_REVIEW -> {
+                    note.setChildSafe(false);
+                    // childSafeReviewAt left null -> appears in the queue.
+                }
+            }
         }
 
         noteRepository.save(note);
