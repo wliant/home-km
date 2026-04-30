@@ -117,14 +117,18 @@ public class MfaService {
     }
 
     /**
-     * Resolve a challenge token to its userId once. Pulled from cache on
-     * success so a captured token cannot be replayed.
+     * Look up the userId behind a challenge token without invalidating it.
+     * Lets the caller verify a code first and only burn the token on success
+     * — a typo on the way to a 6-digit code shouldn't restart the whole login.
      */
-    public Long consumeChallenge(String token) {
+    public Long peekChallenge(String token) {
         if (token == null) return null;
-        Long userId = loginChallenges.getIfPresent(token);
-        if (userId != null) loginChallenges.invalidate(token);
-        return userId;
+        return loginChallenges.getIfPresent(token);
+    }
+
+    /** Burn a token so it cannot be replayed. Pair with {@link #peekChallenge}. */
+    public void invalidateChallenge(String token) {
+        if (token != null) loginChallenges.invalidate(token);
     }
 
     public boolean verifyTotp(User user, String code) {

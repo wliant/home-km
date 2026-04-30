@@ -6,8 +6,14 @@ import com.homekm.auth.UserRepository;
 import com.homekm.comment.dto.CommentRequest;
 import com.homekm.comment.dto.CommentResponse;
 import com.homekm.comment.dto.MentionInboxResponse;
+import com.homekm.common.AccessControlService;
 import com.homekm.common.EntityNotFoundException;
+import com.homekm.common.Visibility;
+import com.homekm.file.StoredFile;
+import com.homekm.file.StoredFileRepository;
 import com.homekm.group.GroupService;
+import com.homekm.note.Note;
+import com.homekm.note.NoteRepository;
 import com.homekm.push.PushService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,20 +41,90 @@ public class CommentService {
     private final UserRepository userRepository;
     private final GroupService groupService;
     private final PushService pushService;
+    private final NoteRepository noteRepository;
+    private final StoredFileRepository storedFileRepository;
+    private final AccessControlService accessControlService;
 
     public CommentService(CommentRepository commentRepository,
                           MentionInboxRepository mentionInboxRepository,
                           UserRepository userRepository,
                           GroupService groupService,
-                          PushService pushService) {
+                          PushService pushService,
+                          NoteRepository noteRepository,
+                          StoredFileRepository storedFileRepository,
+                          AccessControlService accessControlService) {
         this.commentRepository = commentRepository;
         this.mentionInboxRepository = mentionInboxRepository;
         this.userRepository = userRepository;
         this.groupService = groupService;
         this.pushService = pushService;
+        this.noteRepository = noteRepository;
+        this.storedFileRepository = storedFileRepository;
+        this.accessControlService = accessControlService;
     }
 
-    public List<CommentResponse> list(Comment.ItemType itemType, Long itemId) {
+    /**
+     * Resolve the underlying note/file and check the principal can see it.
+     * Throws 404 if the item doesn't exist (avoid leaking which IDs exist),
+     * 403 if it exists but the caller lacks read access, and additionally
+     * blocks child accounts from non-child-safe items — same rule notes/files
+     * already enforce in their own controllers.
+     */
+    private void requireReadAccess(Comment.ItemType itemType, Long itemId, UserPrincipal principal) {
+        if (itemType == Comment.ItemType.note) {
+            Note n = noteRepository.findActiveById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("Note", itemId));
+            if (principal.isChild() && !n.isChildSafe()) {
+                throw new AccessDeniedException("not allowed");
+            }
+            Long ownerId = n.getOwner() != null ? n.getOwner().getId() : null;
+            if (!accessControlService.canRead("note", n.getId(), ownerId,
+                    Visibility.fromDb(n.getVisibility()), principal)) {
+                throw new AccessDeniedException("not allowed");
+            }
+        } else {
+            StoredFile f = storedFileRepository.findActiveById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("File", itemId));
+            if (principal.isChild() && !f.isChildSafe()) {
+                throw new AccessDeniedException("not allowed");
+            }
+            Long ownerId = f.getOwner() != null ? f.getOwner().getId() : null;
+            if (!accessControlService.canRead("file", f.getId(), ownerId,
+                    Visibility.fromDb(f.getVisibility()), principal)) {
+                throw new AccessDeniedException("not allowed");
+            }
+        }
+    }
+
+    /** Same as read, plus a write-permission check (so children are blocked outright). */
+    private void requireWriteAccess(Comment.ItemType itemType, Long itemId, UserPrincipal principal) {
+        if (itemType == Comment.ItemType.note) {
+            Note n = noteRepository.findActiveById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("Note", itemId));
+            if (principal.isChild() && !n.isChildSafe()) {
+                throw new AccessDeniedException("not allowed");
+            }
+            Long ownerId = n.getOwner() != null ? n.getOwner().getId() : null;
+            if (!accessControlService.canWrite("note", n.getId(), ownerId,
+                    Visibility.fromDb(n.getVisibility()), principal)) {
+                throw new AccessDeniedException("not allowed");
+            }
+        } else {
+            StoredFile f = storedFileRepository.findActiveById(itemId)
+                    .orElseThrow(() -> new EntityNotFoundException("File", itemId));
+            if (principal.isChild() && !f.isChildSafe()) {
+                throw new AccessDeniedException("not allowed");
+            }
+            Long ownerId = f.getOwner() != null ? f.getOwner().getId() : null;
+            if (!accessControlService.canWrite("file", f.getId(), ownerId,
+                    Visibility.fromDb(f.getVisibility()), principal)) {
+                throw new AccessDeniedException("not allowed");
+            }
+        }
+    }
+
+    public List<CommentResponse> list(Comment.ItemType itemType, Long itemId, UserPrincipal principal) {
+        requireReadAccess(itemType, itemId, principal);
         return commentRepository.findByItem(itemType, itemId).stream()
                 .map(CommentResponse::from).toList();
     }
@@ -56,6 +132,7 @@ public class CommentService {
     @Transactional
     public CommentResponse create(Comment.ItemType itemType, Long itemId, CommentRequest req,
                                    UserPrincipal principal) {
+        requireWriteAccess(itemType, itemId, principal);
         User author = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new EntityNotFoundException("User", principal.getId()));
 

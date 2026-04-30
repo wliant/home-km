@@ -123,7 +123,9 @@ public class AuthService {
     @Transactional
     public LoginResponse verifyMfaLogin(String challengeToken, String code, boolean rememberMe,
                                          String deviceLabel, HttpServletRequest httpReq) {
-        Long userId = mfaService.consumeChallenge(challengeToken);
+        // Peek (don't burn) so a typo lets the user retry with the same token
+        // until it expires. Only invalidate after a successful code match.
+        Long userId = mfaService.peekChallenge(challengeToken);
         if (userId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_CHALLENGE");
         }
@@ -134,12 +136,11 @@ public class AuthService {
         }
         boolean ok = mfaService.verifyTotp(user, code) || mfaService.consumeRecoveryCode(user.getId(), code);
         if (!ok) {
-            // Reissue the challenge so the user can try again without re-entering their password.
-            mfaService.openChallenge(user.getId());
             auditService.record(user.getId(), "AUTH_LOGIN_MFA_FAILED", "user",
                     String.valueOf(user.getId()), null, null, RequestContextHelper.currentRequest());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_TOTP_CODE");
         }
+        mfaService.invalidateChallenge(challengeToken);
         return issueSession(user, rememberMe, deviceLabel, httpReq);
     }
 

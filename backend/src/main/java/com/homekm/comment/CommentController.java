@@ -32,8 +32,10 @@ public class CommentController {
     @GetMapping
     public ResponseEntity<List<CommentResponse>> list(
             @RequestParam("itemType") Comment.ItemType itemType,
-            @RequestParam("itemId") Long itemId) {
-        return ResponseEntity.ok(service.list(itemType, itemId));
+            @RequestParam("itemId") Long itemId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        require(principal);
+        return ResponseEntity.ok(service.list(itemType, itemId, principal));
     }
 
     @PostMapping

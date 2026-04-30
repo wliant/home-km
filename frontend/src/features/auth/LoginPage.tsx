@@ -95,7 +95,9 @@ export default function LoginPage() {
         setMfa(null)
         setApiError('That sign-in expired. Please re-enter your password.')
       } else {
+        // Backend keeps the challenge valid, so the user can retype.
         setApiError('Wrong code. Try the next one shown by your authenticator, or use a recovery code.')
+        setMfaCode('')
       }
     } finally {
       setMfaSubmitting(false)

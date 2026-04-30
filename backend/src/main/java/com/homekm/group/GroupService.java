@@ -30,12 +30,14 @@ public class GroupService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<GroupResponse> list() {
         return repository.findAll().stream()
                 .map(g -> toResponse(g, expandToUserIds(g)))
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public GroupResponse getById(Long id) {
         UserGroup g = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Group", id));
         return toResponse(g, expandToUserIds(g));
