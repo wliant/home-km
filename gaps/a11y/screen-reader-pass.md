@@ -5,6 +5,7 @@
 | Category | Functional · Accessibility |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** No documented screen-reader testing. Spec `13-testing.md` does not list assistive-tech scenarios.
 

@@ -5,6 +5,7 @@
 | Category | Non-functional · Testing & QA |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** No load testing. Only functional/integration tests.
 

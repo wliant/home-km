@@ -332,3 +332,17 @@ pytest tests/ -v --tb=short
 ```
 
 Configure via env vars pointing to the deployed test instance.
+
+---
+
+## 8. Screen-reader testing
+
+Manual matrix lives in `SR_TESTING.md` at the repo root: top-10 user flows tested against VoiceOver (macOS/iOS) and NVDA (Windows) before every release. Regressions of the structural properties (single main landmark, labelled inputs, polite live region for route announcements, skip link first in tab order) are pinned by `e2e/tests/a11y-sr.spec.ts`.
+
+`e2e/tests/a11y.spec.ts` continues to own the WCAG-checkable defects via axe-core; the SR suite covers what axe alone cannot enforce.
+
+---
+
+## 9. Load testing
+
+k6 scenarios live under `tests/load/`. `LOAD-TESTING.md` documents how to run them, the canonical baseline numbers, and the SLO they back-stop (`docs/slo.md`). They run on-demand against a staging stack — not in main CI — and re-run before each release so regressions surface against committed baselines.
