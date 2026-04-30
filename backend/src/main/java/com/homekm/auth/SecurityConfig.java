@@ -41,7 +41,8 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh",
-                        "/api/auth/password-reset/request", "/api/auth/password-reset/confirm").permitAll()
+                        "/api/auth/password-reset/request", "/api/auth/password-reset/confirm",
+                        "/api/auth/mfa/verify-login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/push/vapid-public-key",
                         "/api/auth/invitations/*", "/api/share/*", "/api/files/share/*",
                         "/api/reminders/me.ics", "/api/info").permitAll()

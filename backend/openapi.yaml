@@ -1550,6 +1550,80 @@ paths:
       responses:
         "200":
           description: OK
+  /api/auth/mfa/verify:
+    post:
+      tags:
+      - mfa-controller
+      operationId: verifyEnrollment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEnrollRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/VerifyEnrollResponse'
+  /api/auth/mfa/verify-login:
+    post:
+      tags:
+      - auth-controller
+      operationId: verifyMfaLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyLoginRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/auth/mfa/recovery-codes:
+    post:
+      tags:
+      - mfa-controller
+      operationId: regenerateRecoveryCodes
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/VerifyEnrollResponse'
+  /api/auth/mfa/enroll:
+    post:
+      tags:
+      - mfa-controller
+      operationId: enroll
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/EnrollResponse'
+  /api/auth/mfa/disable:
+    post:
+      tags:
+      - mfa-controller
+      operationId: disable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisableRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/auth/logout:
     post:
       tags:
@@ -2129,6 +2203,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SessionResponse'
+  /api/auth/mfa/status:
+    get:
+      tags:
+      - mfa-controller
+      operationId: status
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
   /api/auth/invitations/{token}:
     get:
       tags:
@@ -2719,6 +2805,8 @@ components:
           type: boolean
         isActive:
           type: boolean
+        mfaEnabled:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -2998,6 +3086,10 @@ components:
           format: date-time
         user:
           $ref: '#/components/schemas/UserResponse'
+        mfaRequired:
+          type: boolean
+        mfaChallengeToken:
+          type: string
     RefreshRequest:
       required:
       - refreshToken
@@ -3023,6 +3115,50 @@ components:
         newPassword:
           maxLength: 2147483647
           minLength: 8
+          type: string
+    VerifyEnrollRequest:
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
+    VerifyEnrollResponse:
+      type: object
+      properties:
+        recoveryCodes:
+          type: array
+          items:
+            type: string
+    MfaVerifyLoginRequest:
+      required:
+      - challengeToken
+      - code
+      type: object
+      properties:
+        challengeToken:
+          type: string
+        code:
+          type: string
+        rememberMe:
+          type: boolean
+        deviceLabel:
+          maxLength: 120
+          minLength: 0
+          type: string
+    EnrollResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+        provisioningUri:
+          type: string
+    DisableRequest:
+      required:
+      - password
+      type: object
+      properties:
+        password:
           type: string
     LogoutRequest:
       type: object
@@ -3406,6 +3542,14 @@ components:
           type: boolean
         current:
           type: boolean
+    StatusResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        unusedRecoveryCodes:
+          type: integer
+          format: int64
     FolderUsage:
       type: object
       properties:

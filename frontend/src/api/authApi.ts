@@ -5,11 +5,24 @@ import type {
   IssuedInvitationResponse,
   LoginRequest,
   LoginResponse,
+  MfaVerifyLoginRequest,
   RegisterRequest,
   SessionResponse,
   UpdateMeRequest,
   UserResponse,
 } from '../types/auth'
+
+export interface MfaEnrollResponse {
+  secret: string
+  provisioningUri: string
+}
+export interface MfaStatusResponse {
+  enabled: boolean
+  unusedRecoveryCodes: number
+}
+export interface MfaRecoveryCodesResponse {
+  recoveryCodes: string[]
+}
 
 export const authApi = {
   register: (data: RegisterRequest) =>
@@ -51,4 +64,22 @@ export const authApi = {
 
   revokeInvitation: (id: number) =>
     apiClient.delete(`/admin/invitations/${id}`),
+
+  verifyMfaLogin: (data: MfaVerifyLoginRequest) =>
+    apiClient.post<LoginResponse>('/auth/mfa/verify-login', data).then((r) => r.data),
+
+  mfaStatus: () =>
+    apiClient.get<MfaStatusResponse>('/auth/mfa/status').then((r) => r.data),
+
+  mfaEnroll: () =>
+    apiClient.post<MfaEnrollResponse>('/auth/mfa/enroll').then((r) => r.data),
+
+  mfaVerifyEnrollment: (code: string) =>
+    apiClient.post<MfaRecoveryCodesResponse>('/auth/mfa/verify', { code }).then((r) => r.data),
+
+  mfaDisable: (password: string) =>
+    apiClient.post('/auth/mfa/disable', { password }),
+
+  mfaRegenerateRecoveryCodes: () =>
+    apiClient.post<MfaRecoveryCodesResponse>('/auth/mfa/recovery-codes').then((r) => r.data),
 }

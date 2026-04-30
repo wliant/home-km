@@ -57,7 +57,7 @@ describe('response interceptor', () => {
       token: 'old-token',
       refreshToken: null,
       isAuthenticated: true,
-      user: { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, createdAt: '' },
+      user: { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, mfaEnabled: false, createdAt: '' },
       expiresAt: new Date(Date.now() + 3600_000).toISOString(),
     })
   })

@@ -11,6 +11,7 @@ public record UserResponse(
         boolean isAdmin,
         boolean isChild,
         boolean isActive,
+        boolean mfaEnabled,
         Instant createdAt
 ) {
     public static UserResponse from(User user) {
@@ -21,6 +22,7 @@ public record UserResponse(
                 user.isAdmin(),
                 user.isChild(),
                 user.isActive(),
+                user.isMfaEnabled(),
                 user.getCreatedAt()
         );
     }

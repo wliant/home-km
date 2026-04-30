@@ -67,7 +67,7 @@ describe('LoginPage', () => {
     mockAuthApi.login.mockResolvedValue({
       token: 'tok',
       refreshToken: 'rt',
-      user: { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, createdAt: '' },
+      user: { id: 1, email: 'a@b.com', displayName: 'A', isAdmin: false, isChild: false, isActive: true, mfaEnabled: false, createdAt: '' },
       expiresAt: new Date(Date.now() + 86400_000).toISOString(),
     })
     const { container } = render(<LoginPage />, { wrapper })

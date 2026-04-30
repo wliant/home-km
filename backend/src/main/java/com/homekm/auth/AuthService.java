@@ -34,13 +34,15 @@ public class AuthService {
     private final AppProperties appProperties;
     private final AuditService auditService;
     private final InvitationService invitationService;
+    private final MfaService mfaService;
 
     private static final String DUMMY_HASH = "$2a$12$dummy.hash.for.timing.safety.xxxxxxxxxxxxxxxxxxxxxxxxxx";
 
     public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
                        JwtService jwtService, JwtDenylist jwtDenylist,
                        PasswordEncoder passwordEncoder, AppProperties appProperties,
-                       AuditService auditService, InvitationService invitationService) {
+                       AuditService auditService, InvitationService invitationService,
+                       MfaService mfaService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtService = jwtService;
@@ -49,6 +51,7 @@ public class AuthService {
         this.appProperties = appProperties;
         this.auditService = auditService;
         this.invitationService = invitationService;
+        this.mfaService = mfaService;
     }
 
     @Transactional
@@ -103,12 +106,49 @@ public class AuthService {
         if (!user.isActive()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ACCOUNT_DISABLED");
         }
+        if (user.isMfaEnabled()) {
+            String challengeToken = mfaService.openChallenge(user.getId());
+            auditService.record(user.getId(), "AUTH_LOGIN_MFA_CHALLENGE", "user",
+                    String.valueOf(user.getId()), null, null, RequestContextHelper.currentRequest());
+            return LoginResponse.mfaChallenge(challengeToken);
+        }
+        return issueSession(user, req.rememberMe() != null && req.rememberMe(), req.deviceLabel(), httpReq);
+    }
+
+    /**
+     * Second leg of the MFA login flow. Verifies the TOTP code (or a recovery
+     * code) against the userId stashed under the challenge token, then issues
+     * the JWT pair the same way a single-factor login would.
+     */
+    @Transactional
+    public LoginResponse verifyMfaLogin(String challengeToken, String code, boolean rememberMe,
+                                         String deviceLabel, HttpServletRequest httpReq) {
+        Long userId = mfaService.consumeChallenge(challengeToken);
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_CHALLENGE");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_MFA_CHALLENGE"));
+        if (!user.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "ACCOUNT_DISABLED");
+        }
+        boolean ok = mfaService.verifyTotp(user, code) || mfaService.consumeRecoveryCode(user.getId(), code);
+        if (!ok) {
+            // Reissue the challenge so the user can try again without re-entering their password.
+            mfaService.openChallenge(user.getId());
+            auditService.record(user.getId(), "AUTH_LOGIN_MFA_FAILED", "user",
+                    String.valueOf(user.getId()), null, null, RequestContextHelper.currentRequest());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "INVALID_TOTP_CODE");
+        }
+        return issueSession(user, rememberMe, deviceLabel, httpReq);
+    }
+
+    private LoginResponse issueSession(User user, boolean rememberMe, String deviceLabel, HttpServletRequest httpReq) {
         log.info("User logged in: {}", user.getEmail());
         auditService.record(user.getId(), "AUTH_LOGIN", "user", String.valueOf(user.getId()),
                 null, null, RequestContextHelper.currentRequest());
-        boolean rememberMe = req.rememberMe() != null && req.rememberMe();
         String token = jwtService.generateToken(user);
-        String refreshToken = createRefreshToken(user, rememberMe, req.deviceLabel(), httpReq);
+        String refreshToken = createRefreshToken(user, rememberMe, deviceLabel, httpReq);
         return new LoginResponse(token, refreshToken, jwtService.getExpiry(user), UserResponse.from(user));
     }
 

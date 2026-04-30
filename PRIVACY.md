@@ -13,6 +13,7 @@ Home KM is self-hosted: nothing leaves your server unless you configure it to. T
 | Reminders + recipients | Postgres `reminders`, `reminder_recipients` | Until the reminder fires (one-shot) or is deleted. |
 | Push subscription endpoints | Postgres `push_subscriptions` | Until you disable push or unsubscribe at the OS level. Removed on `410 Gone` from the push service. |
 | Refresh tokens (hashed) + device labels | Postgres `refresh_tokens` | Until you sign out, change password, or the token expires. |
+| MFA shared secret (base32) + bcrypt-hashed recovery codes | Postgres `users.mfa_secret`, `user_mfa_recovery_codes` | Until you disable two-factor in Settings. Recovery codes are single-use. |
 | Audit log events | Postgres `audit_events` | One year by default — see RETENTION.md to change. |
 | Saved searches (name + query JSON) | Postgres `saved_searches` | Until you delete them. |
 | Notification preferences | `users.notification_prefs` JSON | Until you change them. |

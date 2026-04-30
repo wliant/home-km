@@ -221,6 +221,7 @@ export default function SettingsPage() {
         </section>
 
         <AboutSection />
+        <MfaSection />
         <PrivacySection />
         <DangerZone />
       </div>
@@ -331,6 +332,174 @@ function PrivacySection() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function MfaSection() {
+  const qc = useQueryClient()
+  const status = useQuery({
+    queryKey: ['auth', 'mfa', 'status'],
+    queryFn: () => authApi.mfaStatus(),
+  })
+  const [enrollment, setEnrollment] = useState<{ secret: string; provisioningUri: string } | null>(null)
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+  const [code, setCode] = useState('')
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [disableOpen, setDisableOpen] = useState(false)
+  const [disablePassword, setDisablePassword] = useState('')
+
+  const enroll = useMutation({
+    mutationFn: () => authApi.mfaEnroll(),
+    onSuccess: async data => {
+      setEnrollment(data)
+      setError(null)
+      const QRCode = (await import('qrcode')).default
+      setQrDataUrl(await QRCode.toDataURL(data.provisioningUri))
+    },
+  })
+  const verify = useMutation({
+    mutationFn: (c: string) => authApi.mfaVerifyEnrollment(c),
+    onSuccess: data => {
+      setRecoveryCodes(data.recoveryCodes)
+      setEnrollment(null)
+      setQrDataUrl(null)
+      setCode('')
+      qc.invalidateQueries({ queryKey: ['auth', 'mfa', 'status'] })
+      qc.invalidateQueries({ queryKey: ['auth', 'me'] })
+    },
+    onError: () => setError('That code did not match. Try the next one.'),
+  })
+  const disable = useMutation({
+    mutationFn: (pw: string) => authApi.mfaDisable(pw),
+    onSuccess: () => {
+      setDisableOpen(false)
+      setDisablePassword('')
+      setRecoveryCodes(null)
+      qc.invalidateQueries({ queryKey: ['auth', 'mfa', 'status'] })
+      qc.invalidateQueries({ queryKey: ['auth', 'me'] })
+    },
+    onError: () => setError('Wrong password.'),
+  })
+  const regen = useMutation({
+    mutationFn: () => authApi.mfaRegenerateRecoveryCodes(),
+    onSuccess: data => {
+      setRecoveryCodes(data.recoveryCodes)
+      qc.invalidateQueries({ queryKey: ['auth', 'mfa', 'status'] })
+    },
+  })
+
+  const enabled = status.data?.enabled ?? false
+
+  return (
+    <section className="rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+      <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Two-factor authentication</h2>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+        Adds a 6-digit code from your authenticator app on top of your password.
+        Recovery codes let you sign in if you lose the app.
+      </p>
+      {error && <p className="text-xs text-red-600 dark:text-red-400 mb-2">{error}</p>}
+
+      {!enabled && !enrollment && (
+        <button
+          onClick={() => enroll.mutate()}
+          disabled={enroll.isPending}
+          className="px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50"
+        >
+          {enroll.isPending ? 'Generating…' : 'Enable two-factor'}
+        </button>
+      )}
+
+      {enrollment && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            Scan this QR code with your authenticator (or paste the secret manually), then enter the 6-digit code.
+          </p>
+          {qrDataUrl && <img src={qrDataUrl} alt="MFA QR code" className="w-40 h-40" />}
+          <p className="text-xs font-mono break-all text-gray-700 dark:text-gray-300">{enrollment.secret}</p>
+          <div className="flex gap-2 items-center">
+            <input
+              value={code}
+              onChange={e => setCode(e.target.value)}
+              inputMode="numeric"
+              placeholder="123456"
+              className="w-32 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+            />
+            <button
+              onClick={() => verify.mutate(code.trim())}
+              disabled={!code || verify.isPending}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50"
+            >
+              {verify.isPending ? 'Verifying…' : 'Verify and enable'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {enabled && !enrollment && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Enabled</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {status.data?.unusedRecoveryCodes ?? 0} unused recovery code{status.data?.unusedRecoveryCodes === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => regen.mutate()}
+              disabled={regen.isPending}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+            >
+              {regen.isPending ? 'Generating…' : 'Regenerate recovery codes'}
+            </button>
+            <button
+              onClick={() => setDisableOpen(true)}
+              className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Disable two-factor
+            </button>
+          </div>
+          {disableOpen && (
+            <form
+              onSubmit={e => { e.preventDefault(); disable.mutate(disablePassword) }}
+              className="flex gap-2 items-center"
+            >
+              <input
+                type="password"
+                value={disablePassword}
+                onChange={e => setDisablePassword(e.target.value)}
+                placeholder="Password"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+              />
+              <button
+                type="submit"
+                disabled={!disablePassword || disable.isPending}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50"
+              >
+                {disable.isPending ? 'Disabling…' : 'Confirm disable'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {recoveryCodes && (
+        <div className="mt-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3">
+          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2">
+            Save these recovery codes somewhere safe. You won't see them again.
+          </p>
+          <ul className="grid grid-cols-2 gap-1 text-xs font-mono text-gray-800 dark:text-gray-200">
+            {recoveryCodes.map(c => <li key={c}>{c}</li>)}
+          </ul>
+          <button
+            onClick={() => setRecoveryCodes(null)}
+            className="mt-2 text-xs text-gray-600 dark:text-gray-400 hover:underline"
+          >
+            I've saved them
+          </button>
         </div>
       )}
     </section>

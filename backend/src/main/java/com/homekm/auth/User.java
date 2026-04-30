@@ -41,6 +41,17 @@ public class User {
     @Column(name = "ics_token", length = 64, unique = true)
     private String icsToken;
 
+    @Column(name = "mfa_enabled", nullable = false)
+    private boolean mfaEnabled = false;
+
+    /**
+     * Base32-encoded TOTP shared secret. Null until the user starts enrollment;
+     * stays populated after disabling so re-enabling reuses the same secret unless
+     * they explicitly re-enroll.
+     */
+    @Column(name = "mfa_secret", length = 64)
+    private String mfaSecret;
+
     /**
      * Per-user notification routing. Open-ended JSON so future event types
      * (mentions, share invites) can be added without a schema change.
@@ -92,6 +103,10 @@ public class User {
     public void setLocale(String v) { this.locale = v; }
     public String getIcsToken() { return icsToken; }
     public void setIcsToken(String v) { this.icsToken = v; }
+    public boolean isMfaEnabled() { return mfaEnabled; }
+    public void setMfaEnabled(boolean v) { this.mfaEnabled = v; }
+    public String getMfaSecret() { return mfaSecret; }
+    public void setMfaSecret(String v) { this.mfaSecret = v; }
     public String getNotificationPrefs() { return notificationPrefs; }
     public void setNotificationPrefs(String v) { this.notificationPrefs = v; }
     public java.time.LocalTime getQuietHoursStart() { return quietHoursStart; }

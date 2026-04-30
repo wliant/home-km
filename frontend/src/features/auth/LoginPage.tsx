@@ -25,10 +25,18 @@ function defaultDeviceLabel(): string {
   return 'Browser'
 }
 
+interface MfaState {
+  challengeToken: string
+  rememberMe: boolean
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [apiError, setApiError] = useState<string | null>(null)
+  const [mfa, setMfa] = useState<MfaState | null>(null)
+  const [mfaCode, setMfaCode] = useState('')
+  const [mfaSubmitting, setMfaSubmitting] = useState(false)
 
   const {
     register,
@@ -45,8 +53,14 @@ export default function LoginPage() {
         rememberMe: data.rememberMe ?? false,
         deviceLabel: defaultDeviceLabel(),
       })
-      setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
-      navigate('/', { replace: true })
+      if (res.mfaRequired && res.mfaChallengeToken) {
+        setMfa({ challengeToken: res.mfaChallengeToken, rememberMe: data.rememberMe ?? false })
+        return
+      }
+      if (res.token && res.refreshToken && res.user && res.expiresAt) {
+        setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
+        navigate('/', { replace: true })
+      }
     } catch (err: unknown) {
       const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code
       setApiError(
@@ -56,6 +70,35 @@ export default function LoginPage() {
           ? 'This account has been disabled.'
           : 'Login failed. Please try again.',
       )
+    }
+  }
+
+  async function submitMfa(e: React.FormEvent) {
+    e.preventDefault()
+    if (!mfa || !mfaCode) return
+    setApiError(null)
+    setMfaSubmitting(true)
+    try {
+      const res = await authApi.verifyMfaLogin({
+        challengeToken: mfa.challengeToken,
+        code: mfaCode.trim(),
+        rememberMe: mfa.rememberMe,
+        deviceLabel: defaultDeviceLabel(),
+      })
+      if (res.token && res.refreshToken && res.user && res.expiresAt) {
+        setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
+        navigate('/', { replace: true })
+      }
+    } catch (err: unknown) {
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code
+      if (code === 'INVALID_MFA_CHALLENGE') {
+        setMfa(null)
+        setApiError('That sign-in expired. Please re-enter your password.')
+      } else {
+        setApiError('Wrong code. Try the next one shown by your authenticator, or use a recovery code.')
+      }
+    } finally {
+      setMfaSubmitting(false)
     }
   }
 
@@ -73,6 +116,39 @@ export default function LoginPage() {
           </div>
         )}
 
+        {mfa ? (
+          <form onSubmit={submitMfa} className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Enter the 6-digit code from your authenticator app, or one of your recovery codes.
+            </p>
+            <div>
+              <label htmlFor="login-mfa" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Verification code</label>
+              <input
+                id="login-mfa"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value)}
+                inputMode="numeric"
+                autoFocus
+                autoComplete="one-time-code"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={mfaSubmitting || !mfaCode}
+              className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
+            >
+              {mfaSubmitting ? 'Verifying…' : 'Verify and sign in'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMfa(null); setMfaCode('') }}
+              className="w-full text-xs text-gray-500 dark:text-gray-400 hover:underline"
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
@@ -119,6 +195,7 @@ export default function LoginPage() {
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+        )}
 
         <div className="mt-4 text-center">
           <Link to="/forgot-password" className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">

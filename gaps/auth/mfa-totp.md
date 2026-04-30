@@ -5,6 +5,7 @@
 | Category | Functional · Auth & account |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** Single-factor email/password. Login is rate-limited (20/min/IP) but no second factor.
 

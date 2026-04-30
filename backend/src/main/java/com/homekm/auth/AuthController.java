@@ -45,6 +45,17 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(req, servletRequest));
     }
 
+    @PostMapping("/mfa/verify-login")
+    public ResponseEntity<LoginResponse> verifyMfaLogin(@Valid @RequestBody MfaVerifyLoginRequest req,
+                                                         HttpServletRequest servletRequest) {
+        if (!loginRateLimiter.isAllowed(servletRequest.getRemoteAddr())) {
+            throw new RateLimitException();
+        }
+        boolean rememberMe = req.rememberMe() != null && req.rememberMe();
+        return ResponseEntity.ok(authService.verifyMfaLogin(
+                req.challengeToken(), req.code(), rememberMe, req.deviceLabel(), servletRequest));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(authService.getMe(principal));

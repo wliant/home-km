@@ -5,14 +5,24 @@ export interface UserResponse {
   isAdmin: boolean
   isChild: boolean
   isActive: boolean
+  mfaEnabled: boolean
   createdAt: string
 }
 
 export interface LoginResponse {
-  token: string
-  refreshToken: string
-  expiresAt: string
-  user: UserResponse
+  token: string | null
+  refreshToken: string | null
+  expiresAt: string | null
+  user: UserResponse | null
+  mfaRequired?: boolean
+  mfaChallengeToken?: string | null
+}
+
+export interface MfaVerifyLoginRequest {
+  challengeToken: string
+  code: string
+  rememberMe?: boolean
+  deviceLabel?: string
 }
 
 export interface RegisterRequest {

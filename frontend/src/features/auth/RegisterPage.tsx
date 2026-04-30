@@ -69,8 +69,10 @@ export default function RegisterPage() {
         displayName: data.displayName,
         inviteToken: data.inviteToken || undefined,
       })
-      setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
-      navigate('/', { replace: true })
+      if (res.token && res.refreshToken && res.user && res.expiresAt) {
+        setAuth(res.token, res.refreshToken, res.user, res.expiresAt)
+        navigate('/', { replace: true })
+      }
     } catch (err: unknown) {
       const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code
       setApiError(
