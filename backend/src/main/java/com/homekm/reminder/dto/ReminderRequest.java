@@ -21,5 +21,14 @@ public record ReminderRequest(
                  message = "invalid recurrence; use an iCalendar RRULE")
         @Size(max = 255)
         String recurrence,
-        List<Long> recipientUserIds
-) {}
+        List<Long> recipientUserIds,
+        /**
+         * Group IDs whose members should also receive the reminder. Expanded
+         * to user IDs at create/update time and merged with {@code recipientUserIds}.
+         */
+        List<Long> recipientGroupIds
+) {
+    public ReminderRequest(Instant remindAt, String recurrence, List<Long> recipientUserIds) {
+        this(remindAt, recurrence, recipientUserIds, null);
+    }
+}

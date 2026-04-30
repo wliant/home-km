@@ -20,6 +20,7 @@ const AdminUsersPage = lazy(() => import('./features/admin/AdminUsersPage'))
 const AdminTagsPage = lazy(() => import('./features/admin/AdminTagsPage'))
 const AuditLogPage = lazy(() => import('./features/admin/AuditLogPage'))
 const AdminInvitationsPage = lazy(() => import('./features/admin/AdminInvitationsPage'))
+const AdminGroupsPage = lazy(() => import('./features/admin/AdminGroupsPage'))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage'))
 const TrashPage = lazy(() => import('./features/trash/TrashPage'))
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'))
@@ -107,6 +108,7 @@ export default function App() {
         <Route path="/admin/tags" element={<AdminRoute><AdminTagsPage /></AdminRoute>} />
         <Route path="/admin/audit" element={<AdminRoute><AuditLogPage /></AdminRoute>} />
         <Route path="/admin/invitations" element={<AdminRoute><AdminInvitationsPage /></AdminRoute>} />
+        <Route path="/admin/groups" element={<AdminRoute><AdminGroupsPage /></AdminRoute>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/trash" element={<Protected><TrashPage /></Protected>} />
         <Route path="/share" element={<Protected><SharePage /></Protected>} />

@@ -192,6 +192,26 @@ export interface TrashItem {
   deletedAt: string
 }
 
+// Groups
+export interface GroupResponse {
+  id: number
+  name: string
+  kind: 'CUSTOM' | 'SYSTEM_EVERYONE' | 'SYSTEM_ADULTS' | 'SYSTEM_KIDS'
+  isSystem: boolean
+  memberUserIds: number[]
+  createdAt: string
+}
+
+export const groupApi = {
+  list: () => apiClient.get<GroupResponse[]>('/groups').then(r => r.data),
+  getById: (id: number) => apiClient.get<GroupResponse>(`/groups/${id}`).then(r => r.data),
+  create: (data: { name: string; memberUserIds: number[] }) =>
+    apiClient.post<GroupResponse>('/groups', data).then(r => r.data),
+  update: (id: number, data: { name: string; memberUserIds: number[] }) =>
+    apiClient.put<GroupResponse>(`/groups/${id}`, data).then(r => r.data),
+  delete: (id: number) => apiClient.delete(`/groups/${id}`),
+}
+
 // Admin
 export const adminApi = {
   listUsers: () => apiClient.get('/admin/users').then(r => r.data),

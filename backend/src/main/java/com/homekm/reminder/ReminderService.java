@@ -4,6 +4,7 @@ import com.homekm.auth.User;
 import com.homekm.auth.UserPrincipal;
 import com.homekm.auth.UserRepository;
 import com.homekm.common.EntityNotFoundException;
+import com.homekm.group.GroupService;
 import com.homekm.note.Note;
 import com.homekm.note.NoteRepository;
 import com.homekm.note.dto.NoteDetail;
@@ -15,7 +16,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ReminderService {
@@ -23,12 +27,24 @@ public class ReminderService {
     private final ReminderRepository reminderRepository;
     private final NoteRepository noteRepository;
     private final UserRepository userRepository;
+    private final GroupService groupService;
 
     public ReminderService(ReminderRepository reminderRepository, NoteRepository noteRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository, GroupService groupService) {
         this.reminderRepository = reminderRepository;
         this.noteRepository = noteRepository;
         this.userRepository = userRepository;
+        this.groupService = groupService;
+    }
+
+    /** Merge recipient user IDs with users expanded from any addressed groups. */
+    private List<Long> resolveRecipients(ReminderRequest req) {
+        Set<Long> ids = new HashSet<>();
+        if (req.recipientUserIds() != null) ids.addAll(req.recipientUserIds());
+        if (req.recipientGroupIds() != null && !req.recipientGroupIds().isEmpty()) {
+            ids.addAll(groupService.expandGroupsToUserIds(req.recipientGroupIds()));
+        }
+        return new ArrayList<>(ids);
     }
 
     public List<NoteDetail.ReminderResponse> list(Long noteId) {
@@ -55,8 +71,9 @@ public class ReminderService {
         reminder.setRecurrence(req.recurrence());
         reminderRepository.save(reminder);
 
-        if (req.recipientUserIds() != null && !req.recipientUserIds().isEmpty()) {
-            for (Long uid : req.recipientUserIds()) {
+        List<Long> resolved = resolveRecipients(req);
+        if (!resolved.isEmpty()) {
+            for (Long uid : resolved) {
                 User user = userRepository.findById(uid)
                         .orElseThrow(() -> new EntityNotFoundException("User", uid));
                 reminder.getRecipients().add(new ReminderRecipient(reminder, user));
@@ -78,12 +95,10 @@ public class ReminderService {
         reminder.setPushSent(false);
         reminder.getRecipients().clear();
 
-        if (req.recipientUserIds() != null) {
-            for (Long uid : req.recipientUserIds()) {
-                User user = userRepository.findById(uid)
-                        .orElseThrow(() -> new EntityNotFoundException("User", uid));
-                reminder.getRecipients().add(new ReminderRecipient(reminder, user));
-            }
+        for (Long uid : resolveRecipients(req)) {
+            User user = userRepository.findById(uid)
+                    .orElseThrow(() -> new EntityNotFoundException("User", uid));
+            reminder.getRecipients().add(new ReminderRecipient(reminder, user));
         }
 
         reminderRepository.save(reminder);

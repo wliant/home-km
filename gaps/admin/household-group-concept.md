@@ -5,6 +5,7 @@
 | Category | Functional · Admin |
 | Priority | P2 |
 | Size | M |
+| Status | Closed |
 
 **Current state:** All users implicitly belong to one household — there is no `household` entity. This works because the deployment is single-tenant by design (`specs/00-overview.md`).
 

@@ -323,6 +323,63 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/VisibilityResponse'
+  /api/groups/{id}:
+    get:
+      tags:
+      - group-controller
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+    put:
+      tags:
+      - group-controller
+      operationId: update_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
+    delete:
+      tags:
+      - group-controller
+      operationId: delete_4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
   /api/folders/{id}:
     get:
       tags:
@@ -345,7 +402,7 @@ paths:
     put:
       tags:
       - folder-controller
-      operationId: update_3
+      operationId: update_4
       parameters:
       - name: id
         in: path
@@ -369,7 +426,7 @@ paths:
     delete:
       tags:
       - folder-controller
-      operationId: delete_4
+      operationId: delete_5
       parameters:
       - name: id
         in: path
@@ -435,7 +492,7 @@ paths:
     put:
       tags:
       - file-controller
-      operationId: update_4
+      operationId: update_5
       parameters:
       - name: id
         in: path
@@ -459,7 +516,7 @@ paths:
     delete:
       tags:
       - file-controller
-      operationId: delete_5
+      operationId: delete_6
       parameters:
       - name: id
         in: path
@@ -1251,6 +1308,37 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/BulkMoveResponse'
+  /api/groups:
+    get:
+      tags:
+      - group-controller
+      operationId: list_4
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupResponse'
+    post:
+      tags:
+      - group-controller
+      operationId: create_4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/GroupResponse'
   /api/folders:
     get:
       tags:
@@ -1268,7 +1356,7 @@ paths:
     post:
       tags:
       - folder-controller
-      operationId: create_4
+      operationId: create_5
       requestBody:
         content:
           application/json:
@@ -1338,7 +1426,7 @@ paths:
     get:
       tags:
       - file-controller
-      operationId: list_4
+      operationId: list_5
       parameters:
       - name: folderId
         in: query
@@ -1445,7 +1533,7 @@ paths:
     get:
       tags:
       - file-share-controller
-      operationId: list_5
+      operationId: list_6
       parameters:
       - name: fileId
         in: path
@@ -1465,7 +1553,7 @@ paths:
     post:
       tags:
       - file-share-controller
-      operationId: create_5
+      operationId: create_6
       parameters:
       - name: fileId
         in: path
@@ -1792,7 +1880,7 @@ paths:
     get:
       tags:
       - invitation-controller
-      operationId: list_7
+      operationId: list_8
       responses:
         "200":
           description: OK
@@ -1805,7 +1893,7 @@ paths:
     post:
       tags:
       - invitation-controller
-      operationId: create_6
+      operationId: create_7
       requestBody:
         content:
           application/json:
@@ -2249,7 +2337,7 @@ paths:
     get:
       tags:
       - admin-review-controller
-      operationId: list_6
+      operationId: list_7
       responses:
         "200":
           description: OK
@@ -2263,7 +2351,7 @@ paths:
     get:
       tags:
       - audit-controller
-      operationId: list_8
+      operationId: list_9
       parameters:
       - name: actorId
         in: query
@@ -2477,6 +2565,11 @@ components:
           items:
             type: integer
             format: int64
+        recipientGroupIds:
+          type: array
+          items:
+            type: integer
+            format: int64
     ReminderResponse:
       type: object
       properties:
@@ -2650,6 +2743,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AclEntry'
+    GroupRequest:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 80
+          minLength: 0
+          type: string
+        memberUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    GroupResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        kind:
+          type: string
+        isSystem:
+          type: boolean
+        memberUserIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        createdAt:
+          type: string
+          format: date-time
     FolderRequest:
       required:
       - name
