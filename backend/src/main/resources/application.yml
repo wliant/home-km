@@ -19,6 +19,14 @@ spring:
     properties:
       hibernate:
         generate_statistics: ${HIBERNATE_STATS:false}
+        # Hibernate emits a WARN on org.hibernate.SQL_SLOW for any query that
+        # takes longer than this threshold. Tune via SQL_SLOW_THRESHOLD_MS;
+        # 0 disables. The Loki dashboard already filters on this logger so
+        # turning it on here is enough to populate the slow-query panel.
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: ${SQL_SLOW_THRESHOLD_MS:500}
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -80,6 +88,16 @@ management:
           include: db, minio, ping
         liveness:
           include: livenessState
+  tracing:
+    # 0 = no spans recorded (zero overhead). Set to e.g. 0.1 in prod via
+    # MGMT_TRACING_SAMPLING when an OTLP collector is wired up. Spring Boot's
+    # observation system already produces metrics; tracing is purely the
+    # export-to-Tempo path.
+    sampling:
+      probability: ${MGMT_TRACING_SAMPLING:0.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:}
 
 resilience4j:
   retry:

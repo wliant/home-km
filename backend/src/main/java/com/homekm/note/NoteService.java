@@ -42,13 +42,15 @@ public class NoteService {
     private final EventBus eventBus;
     private final NoteRevisionRepository revisionRepository;
     private final com.homekm.common.ContentModerationService moderation;
+    private final com.homekm.search.EmbeddingIndexer embeddingIndexer;
 
     public NoteService(NoteRepository noteRepository, ChecklistItemRepository checklistItemRepository,
                        ReminderRepository reminderRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
                        AuditService auditService, EventBus eventBus,
                        NoteRevisionRepository revisionRepository,
-                       com.homekm.common.ContentModerationService moderation) {
+                       com.homekm.common.ContentModerationService moderation,
+                       com.homekm.search.EmbeddingIndexer embeddingIndexer) {
         this.noteRepository = noteRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.reminderRepository = reminderRepository;
@@ -59,6 +61,7 @@ public class NoteService {
         this.eventBus = eventBus;
         this.revisionRepository = revisionRepository;
         this.moderation = moderation;
+        this.embeddingIndexer = embeddingIndexer;
     }
 
     public PageResponse<NoteSummary> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -139,6 +142,7 @@ public class NoteService {
             childSafeService.demoteFolderIfNeeded(req.folderId(), false);
         }
 
+        embeddingIndexer.indexNote(note.getId(), note.getTitle(), note.getBody());
         return NoteDetail.from(note, List.of(), List.of());
     }
 
@@ -312,6 +316,9 @@ public class NoteService {
         }
 
         noteRepository.save(note);
+        if (contentChanged) {
+            embeddingIndexer.indexNote(note.getId(), note.getTitle(), note.getBody());
+        }
         List<ChecklistItem> items = checklistItemRepository.findByNoteIdOrderBySortOrder(id);
         List<com.homekm.reminder.Reminder> reminders = reminderRepository.findByNoteId(id);
         eventBus.publish(EventBus.Event.broadcast("ItemUpdated",

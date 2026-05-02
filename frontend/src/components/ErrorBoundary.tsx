@@ -1,4 +1,5 @@
-import { Component, ReactNode } from 'react'
+import { Component, ErrorInfo, ReactNode } from 'react'
+import { captureException } from '../lib/errorTracking'
 
 interface Props {
   children: ReactNode
@@ -15,6 +16,10 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    captureException(error, info.componentStack ?? undefined)
   }
 
   render() {

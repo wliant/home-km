@@ -40,16 +40,19 @@ public class FolderService {
     private final UserRepository userRepository;
     private final ChildSafeService childSafeService;
     private final AuditService auditService;
+    private final com.homekm.search.EmbeddingIndexer embeddingIndexer;
 
     public FolderService(FolderRepository folderRepository, NoteRepository noteRepository,
                          StoredFileRepository fileRepository, UserRepository userRepository,
-                         ChildSafeService childSafeService, AuditService auditService) {
+                         ChildSafeService childSafeService, AuditService auditService,
+                         com.homekm.search.EmbeddingIndexer embeddingIndexer) {
         this.folderRepository = folderRepository;
         this.noteRepository = noteRepository;
         this.fileRepository = fileRepository;
         this.userRepository = userRepository;
         this.childSafeService = childSafeService;
         this.auditService = auditService;
+        this.embeddingIndexer = embeddingIndexer;
     }
 
     @Cacheable(value = "folderTree", key = "#principal.isChild() ? 'child' : 'full'")
@@ -117,6 +120,7 @@ public class FolderService {
         if (req.icon() != null && !req.icon().isBlank()) folder.setIcon(req.icon());
 
         folderRepository.save(folder);
+        embeddingIndexer.indexFolder(folder.getId(), folder.getName(), folder.getDescription());
         return FolderResponse.from(folder);
     }
 
@@ -164,6 +168,7 @@ public class FolderService {
         }
 
         folderRepository.save(folder);
+        embeddingIndexer.indexFolder(folder.getId(), folder.getName(), folder.getDescription());
         return FolderResponse.from(folder);
     }
 

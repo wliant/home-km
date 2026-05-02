@@ -45,9 +45,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
-    // Observability — Prometheus exposition + JSON-structured logs
+    // Observability — Prometheus exposition + JSON-structured logs + OTLP traces
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+    // OTel tracing: Micrometer's OTel bridge plus the OTLP exporter so spans
+    // can be shipped to Tempo / Jaeger / Honeycomb / Grafana Cloud. Disabled
+    // when management.tracing.sampling.probability=0 (the default).
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 
     // Database
     implementation("org.flywaydb:flyway-core")

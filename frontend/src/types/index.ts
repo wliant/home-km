@@ -62,6 +62,8 @@ export interface NoteDetail {
   pinnedAt: string | null
   checklistItems: ChecklistItemResponse[]
   reminders: ReminderResponse[]
+  /** Optimistic-concurrency token. Send back on PUT to detect concurrent edits. */
+  version?: number
 }
 
 export interface FileResponse {
@@ -95,6 +97,8 @@ export interface SearchResult {
   folderId: number | null
   isChildSafe: boolean
   updatedAt: string
+  /** 0..1 cosine-similarity score; only meaningful when smart=true. */
+  score?: number
 }
 
 export interface SearchResponse extends PageResponse<SearchResult> {

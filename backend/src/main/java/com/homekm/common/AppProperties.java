@@ -185,7 +185,7 @@ public class AppProperties {
         private boolean enabled = false;
         private String ollamaUrl = "";
         private String model = "nomic-embed-text";
-        private int dim = 1536;
+        private int dim = 768;
 
         public boolean isEnabled() { return enabled; }
         public void setEnabled(boolean enabled) { this.enabled = enabled; }

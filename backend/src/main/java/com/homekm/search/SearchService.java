@@ -30,13 +30,31 @@ public class SearchService {
         boolean includeFile = o.types() == null || o.types().isEmpty() || o.types().contains("file");
         boolean includeFolder = o.types() == null || o.types().isEmpty() || o.types().contains("folder");
 
+        // Smart mode pivots from FTS to pgvector cosine ranking. Falls back to
+        // FTS silently when the embedding service is disabled or the query
+        // can't be embedded — callers can detect this via the result count.
+        String queryVec = null;
+        if (o.smart() && embeddings.isEnabled()) {
+            float[] vec = embeddings.embed(q);
+            if (vec != null && vec.length > 0) queryVec = toVectorLiteral(vec);
+        }
+
         List<SearchResult> results = new ArrayList<>();
-
-        if (includeNote) results.addAll(searchNotes(q, o, childOnly));
-        if (includeFile) results.addAll(searchFiles(q, o, childOnly));
-        if (includeFolder) results.addAll(searchFolders(q, o, childOnly));
-
-        results.sort((a, b) -> b.updatedAt().compareTo(a.updatedAt()));
+        if (queryVec != null) {
+            int k = Math.max(50, (page + 1) * size);
+            if (includeNote) results.addAll(semanticSearchNotes(queryVec, o, childOnly, k));
+            if (includeFile) results.addAll(semanticSearchFiles(queryVec, o, childOnly, k));
+            if (includeFolder) results.addAll(semanticSearchFolders(queryVec, childOnly, k));
+            // Vector results already arrive ordered by ascending cosine
+            // distance per type; merge by their natural order — most-similar
+            // first across types.
+            results.sort((a, b) -> Double.compare(b.score(), a.score()));
+        } else {
+            if (includeNote) results.addAll(searchNotes(q, o, childOnly));
+            if (includeFile) results.addAll(searchFiles(q, o, childOnly));
+            if (includeFolder) results.addAll(searchFolders(q, o, childOnly));
+            results.sort((a, b) -> b.updatedAt().compareTo(a.updatedAt()));
+        }
 
         int from = page * size, to = Math.min(from + size, results.size());
         List<SearchResult> pageContent = from >= results.size() ? List.of() : results.subList(from, to);
@@ -202,8 +220,147 @@ public class SearchService {
                 (String) row[3],
                 row[4] != null ? ((Number) row[4]).longValue() : null,
                 Boolean.TRUE.equals(row[5]),
-                row[6] instanceof java.sql.Timestamp ts ? ts.toInstant() : Instant.now()
+                row[6] instanceof java.sql.Timestamp ts ? ts.toInstant() : Instant.now(),
+                0.0
         )).toList();
+    }
+
+    /**
+     * pgvector accepts the literal {@code '[0.1,0.2,...]'} via an explicit
+     * cast in SQL; serializing here keeps the SearchService self-contained
+     * and avoids a Hibernate UserType for what is otherwise a one-shot bind.
+     */
+    private static String toVectorLiteral(float[] vec) {
+        StringBuilder sb = new StringBuilder(vec.length * 8 + 2);
+        sb.append('[');
+        for (int i = 0; i < vec.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(vec[i]);
+        }
+        sb.append(']');
+        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<SearchResult> semanticSearchNotes(String vec, SearchOpts o, boolean childOnly, int k) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT n.id, 'note' as type, n.title,
+                   COALESCE(left(n.body, 200), '') as excerpt,
+                   n.folder_id, n.is_child_safe, n.updated_at,
+                   (n.embedding <=> CAST(:vec AS vector)) as distance
+            FROM notes n
+            WHERE n.embedding IS NOT NULL
+            AND n.deleted_at IS NULL
+            """);
+        if (childOnly) sql.append(" AND n.is_child_safe = true");
+        if (o.childSafe() != null) sql.append(" AND n.is_child_safe = ").append(o.childSafe());
+        if (o.ownerId() != null) sql.append(" AND n.owner_id = :ownerId");
+        if (o.from() != null) sql.append(" AND n.updated_at >= :fromTs");
+        if (o.to() != null) sql.append(" AND n.updated_at <= :toTs");
+        if (o.hasReminder() != null) {
+            sql.append(o.hasReminder()
+                    ? " AND EXISTS (SELECT 1 FROM reminders r WHERE r.note_id = n.id)"
+                    : " AND NOT EXISTS (SELECT 1 FROM reminders r WHERE r.note_id = n.id)");
+        }
+        if (o.folderId() != null) {
+            if (o.includeSubfolders()) sql.append(" AND n.folder_id IN (").append(folderSubtreeSQL()).append(")");
+            else sql.append(" AND n.folder_id = :folderId");
+        }
+        if (o.tagIds() != null && !o.tagIds().isEmpty()) {
+            sql.append(" AND (SELECT COUNT(DISTINCT t.tag_id) FROM taggings t WHERE t.entity_type='note' AND t.entity_id=n.id AND t.tag_id IN (")
+               .append(joinLongs(o.tagIds())).append(")) = ").append(o.tagIds().size());
+        }
+        sql.append(" ORDER BY distance ASC LIMIT ").append(k);
+
+        Query query = em.createNativeQuery(sql.toString());
+        query.setParameter("vec", vec);
+        if (o.folderId() != null) query.setParameter("folderId", o.folderId());
+        if (o.ownerId() != null) query.setParameter("ownerId", o.ownerId());
+        if (o.from() != null) query.setParameter("fromTs", java.sql.Timestamp.from(o.from()));
+        if (o.to() != null) query.setParameter("toTs", java.sql.Timestamp.from(o.to()));
+        return mapVectorRows((List<Object[]>) query.getResultList(), "note");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<SearchResult> semanticSearchFiles(String vec, SearchOpts o, boolean childOnly, int k) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT f.id, 'file' as type, f.filename,
+                   COALESCE(left(f.description, 200), '') as excerpt,
+                   f.folder_id, f.is_child_safe, f.updated_at,
+                   (f.embedding <=> CAST(:vec AS vector)) as distance
+            FROM files f
+            WHERE f.embedding IS NOT NULL
+            AND f.deleted_at IS NULL
+            """);
+        if (childOnly) sql.append(" AND f.is_child_safe = true");
+        if (o.childSafe() != null) sql.append(" AND f.is_child_safe = ").append(o.childSafe());
+        if (o.ownerId() != null) sql.append(" AND f.owner_id = :ownerId");
+        if (o.from() != null) sql.append(" AND f.updated_at >= :fromTs");
+        if (o.to() != null) sql.append(" AND f.updated_at <= :toTs");
+        if (o.mimePrefix() != null && !o.mimePrefix().isBlank()) {
+            sql.append(" AND f.mime_type LIKE :mimePrefix");
+        }
+        if (o.folderId() != null) {
+            if (o.includeSubfolders()) sql.append(" AND f.folder_id IN (").append(folderSubtreeSQL()).append(")");
+            else sql.append(" AND f.folder_id = :folderId");
+        }
+        if (o.tagIds() != null && !o.tagIds().isEmpty()) {
+            sql.append(" AND (SELECT COUNT(DISTINCT t.tag_id) FROM taggings t WHERE t.entity_type='file' AND t.entity_id=f.id AND t.tag_id IN (")
+               .append(joinLongs(o.tagIds())).append(")) = ").append(o.tagIds().size());
+        }
+        sql.append(" ORDER BY distance ASC LIMIT ").append(k);
+
+        Query query = em.createNativeQuery(sql.toString());
+        query.setParameter("vec", vec);
+        if (o.folderId() != null) query.setParameter("folderId", o.folderId());
+        if (o.ownerId() != null) query.setParameter("ownerId", o.ownerId());
+        if (o.from() != null) query.setParameter("fromTs", java.sql.Timestamp.from(o.from()));
+        if (o.to() != null) query.setParameter("toTs", java.sql.Timestamp.from(o.to()));
+        if (o.mimePrefix() != null && !o.mimePrefix().isBlank()) {
+            query.setParameter("mimePrefix", o.mimePrefix() + "%");
+        }
+        return mapVectorRows((List<Object[]>) query.getResultList(), "file");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<SearchResult> semanticSearchFolders(String vec, boolean childOnly, int k) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT f.id, 'folder' as type, f.name,
+                   COALESCE(left(f.description, 200), '') as excerpt,
+                   f.parent_id as folder_id, f.is_child_safe, f.updated_at,
+                   (f.embedding <=> CAST(:vec AS vector)) as distance
+            FROM folders f
+            WHERE f.embedding IS NOT NULL
+            AND f.deleted_at IS NULL
+            """);
+        if (childOnly) sql.append(" AND f.is_child_safe = true");
+        sql.append(" ORDER BY distance ASC LIMIT ").append(k);
+
+        Query query = em.createNativeQuery(sql.toString());
+        query.setParameter("vec", vec);
+        return mapVectorRows((List<Object[]>) query.getResultList(), "folder");
+    }
+
+    /**
+     * Maps semantic-search rows. Score is {@code 1 - cosine_distance}, which
+     * lives in [0, 2] (pgvector cosine distance can exceed 1 for opposing
+     * vectors). Clamping isn't necessary for ordering, just for the score
+     * field that the UI may show.
+     */
+    private List<SearchResult> mapVectorRows(List<Object[]> rows, String type) {
+        return rows.stream().map(row -> {
+            double dist = row[7] != null ? ((Number) row[7]).doubleValue() : 1.0;
+            double score = Math.max(0.0, Math.min(1.0, 1.0 - dist));
+            return new SearchResult(
+                    ((Number) row[0]).longValue(),
+                    type,
+                    (String) row[2],
+                    (String) row[3],
+                    row[4] != null ? ((Number) row[4]).longValue() : null,
+                    Boolean.TRUE.equals(row[5]),
+                    row[6] instanceof java.sql.Timestamp ts ? ts.toInstant() : Instant.now(),
+                    score);
+        }).toList();
     }
 
     public record SearchOpts(

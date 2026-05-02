@@ -122,9 +122,43 @@ export const tagApi = {
 }
 
 // Search
+export interface SearchParams {
+  q: string
+  types?: string[]
+  folderId?: number
+  includeSubfolders?: boolean
+  tagIds?: number[]
+  ownerId?: number
+  mimePrefix?: string
+  hasReminder?: boolean
+  childSafe?: boolean
+  /** ISO-8601 timestamps for the updated-at window. */
+  from?: string
+  to?: string
+  /** Vector-rank pivot — falls back to FTS server-side when embeddings are off. */
+  smart?: boolean
+  page?: number
+  size?: number
+}
+
 export const searchApi = {
-  search: (params: { q: string; types?: string[]; folderId?: number; tagIds?: number[]; page?: number; size?: number }) =>
+  search: (params: SearchParams) =>
     apiClient.get<SearchResponse>('/search', { params }).then(r => r.data),
+}
+
+export interface AdminUsageSummary {
+  users: number
+  activeUsers: number
+  notes: number
+  files: number
+  folders: number
+  tags: number
+  reminders: number
+  savedSearches: number
+  storageBytes: number
+  topStorageUsers: Array<{ userId: number; displayName: string; bytes: number; fileCount: number }>
+  topTags: Array<{ tagId: number; name: string; usageCount: number }>
+  topFolders: Array<{ folderId: number; name: string; itemCount: number }>
 }
 
 export interface DataExportResponse {

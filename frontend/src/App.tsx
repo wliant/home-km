@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import RouteAnnouncer from './components/RouteAnnouncer'
 import { useAuthStore } from './lib/authStore'
+import { useLiveUpdates } from './lib/useLiveUpdates'
 import { useThemeStore } from './lib/themeStore'
 import AppLayout from './components/AppLayout'
 
@@ -85,8 +86,18 @@ function useApplyTheme() {
   }, [accent])
 }
 
+function useNoteEditFlush() {
+  // Drains the offline note-edit queue when the browser comes back online.
+  // No-op when the user isn't authenticated yet — first 401 reconciles itself.
+  useEffect(() => {
+    void import('./lib/noteEditQueue').then(m => m.installNoteEditFlush())
+  }, [])
+}
+
 export default function App() {
   useApplyTheme()
+  useNoteEditFlush()
+  useLiveUpdates()
   return (
     <Suspense fallback={<Loading />}>
       <RouteAnnouncer />

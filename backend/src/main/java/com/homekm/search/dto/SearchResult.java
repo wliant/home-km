@@ -9,5 +9,6 @@ public record SearchResult(
         String excerpt,
         Long folderId,
         boolean isChildSafe,
-        Instant updatedAt
+        Instant updatedAt,
+        double score
 ) {}

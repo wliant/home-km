@@ -54,6 +54,7 @@ public class FileService {
     private final FileTransformRepository transformRepository;
     private final FileVersionRepository versionRepository;
     private final com.homekm.common.ContentModerationService moderation;
+    private final com.homekm.search.EmbeddingIndexer embeddingIndexer;
 
     public FileService(StoredFileRepository fileRepository, FolderRepository folderRepository,
                        UserRepository userRepository, ChildSafeService childSafeService,
@@ -62,7 +63,8 @@ public class FileService {
                        com.homekm.common.MinioGateway minioGateway,
                        FileTransformRepository transformRepository,
                        FileVersionRepository versionRepository,
-                       com.homekm.common.ContentModerationService moderation) {
+                       com.homekm.common.ContentModerationService moderation,
+                       com.homekm.search.EmbeddingIndexer embeddingIndexer) {
         this.fileRepository = fileRepository;
         this.folderRepository = folderRepository;
         this.userRepository = userRepository;
@@ -76,6 +78,7 @@ public class FileService {
         this.transformRepository = transformRepository;
         this.versionRepository = versionRepository;
         this.moderation = moderation;
+        this.embeddingIndexer = embeddingIndexer;
     }
 
     public PageResponse<FileResponse> list(Long folderId, int page, int size, UserPrincipal principal) {
@@ -183,6 +186,7 @@ public class FileService {
 
         generateThumbnailAsync(stored.getId(), minioKey, stored.getMimeType(), bucket);
         generateImageVariantsAsync(stored.getId(), bucket);
+        embeddingIndexer.indexFile(stored.getId(), stored.getFilename(), stored.getDescription());
 
         return toResponse(stored);
     }
@@ -264,8 +268,15 @@ public class FileService {
         if (principal.isChild() && f.getOwner().getId() != principal.getId()) {
             throw new ChildAccountWriteException();
         }
-        if (req.filename() != null) f.setFilename(sanitizeFilename(req.filename()));
-        if (req.description() != null) f.setDescription(req.description());
+        boolean textChanged = false;
+        if (req.filename() != null) {
+            f.setFilename(sanitizeFilename(req.filename()));
+            textChanged = true;
+        }
+        if (req.description() != null) {
+            f.setDescription(req.description());
+            textChanged = true;
+        }
         if (!principal.isChild() && req.isChildSafe() != null) f.setChildSafe(req.isChildSafe());
         if (req.folderId() != null) {
             Folder dest = folderRepository.findActiveById(req.folderId())
@@ -275,6 +286,9 @@ public class FileService {
             f.setChildSafe(safe);
         }
         fileRepository.save(f);
+        if (textChanged) {
+            embeddingIndexer.indexFile(f.getId(), f.getFilename(), f.getDescription());
+        }
         return toResponse(f);
     }
 

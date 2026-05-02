@@ -32,11 +32,15 @@ services:
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
       IDEMPOTENCY_ENABLED: ${IDEMPOTENCY_ENABLED:-true}
       EMBEDDING_ENABLED: ${EMBEDDING_ENABLED:-false}
-      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-768}
       FILES_REQUIRE_SCAN: ${FILES_REQUIRE_SCAN:-false}
       CLAMD_HOST: ${CLAMD_HOST:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-homekm-api}
+      MGMT_TRACING_SAMPLING: ${MGMT_TRACING_SAMPLING:-0.0}
+      SQL_SLOW_THRESHOLD_MS: ${SQL_SLOW_THRESHOLD_MS:-500}
     ports:
       - "${API_PORT:-8080}:8080"
     networks:
@@ -57,6 +61,30 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
+
+  # Optional Ollama sidecar for semantic search. Only starts when the
+  # `semantic` profile is selected, so households that don't want the CPU
+  # cost (~1 core busy during backfill) keep `docker compose up` lean.
+  #
+  #   docker compose --profile semantic -f docker-compose.app.yml up -d
+  #
+  # Then set EMBEDDING_ENABLED=true in .env (default OLLAMA_URL points at
+  # this service) and pull the model into the running container:
+  #   docker exec -it homekm-ollama ollama pull nomic-embed-text
+  ollama:
+    image: ollama/ollama:0.3.12
+    container_name: homekm-ollama
+    profiles: ["semantic"]
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - infra-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
     build:
@@ -81,3 +109,6 @@ services:
       options:
         max-size: "20m"
         max-file: "3"
+
+volumes:
+  ollama-data:
