@@ -76,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -173,7 +173,7 @@ jobs:
           gradle bootRun &
           echo $! > /tmp/api.pid
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
@@ -335,7 +335,7 @@ jobs:
           sarif_file: backend/build/reports/dependency-check-report.sarif
           category: owasp-dc
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: npm
