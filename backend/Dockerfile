@@ -1,4 +1,4 @@
-FROM gradle:8-jdk21-alpine AS build
+FROM gradle:9-jdk21-alpine AS build
 WORKDIR /app
 COPY . .
 RUN gradle bootJar --no-daemon
