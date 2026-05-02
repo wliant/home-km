@@ -1,0 +1,58 @@
+# Changelog
+
+## 1.0.0 (2026-05-02)
+
+
+### Features
+
+* **a11y,i18n:** skip link, command palette, axe CI, react-i18next (P1) ([7ed97bd](https://github.com/wliant/home-km/commit/7ed97bdae4cffd14832e96a845056b54cc83a462))
+* **a11y:** label associations, dark-mode contrast, route focus (P2) ([a5f5c05](https://github.com/wliant/home-km/commit/a5f5c056cd0eefaa9936358e53b0269b92cc5554))
+* **admin,child-safe,auth:** bulk import, usage, recovery, review, quiet hours (P2) ([e748a16](https://github.com/wliant/home-km/commit/e748a16308e4ee620f2d93603cd9aac1281ef784))
+* **admin:** audit log viewer with filterable event history (gaps/admin/audit-log-viewer.md) ([2165e31](https://github.com/wliant/home-km/commit/2165e3198d7f41b97e8dfb58493d1c581a7deea0))
+* **admin:** invite-only registration with email tokens (P1) ([188d2e5](https://github.com/wliant/home-km/commit/188d2e5e9fb33ef9344de1dc771a3cb8e3de3b40))
+* **auth:** password reset via email (gaps/auth/password-reset-email.md) ([3b9b21f](https://github.com/wliant/home-km/commit/3b9b21fd740aa41a840fbcc8bab7a90933f613b5))
+* **auth:** remember-me with device sessions (P1) ([4061a9b](https://github.com/wliant/home-km/commit/4061a9bb81894dd71b61ec567949525f3349fd4b))
+* **auth:** token refresh + logout/session revocation (gaps/auth/token-refresh.md, gaps/auth/logout-revocation.md) ([5a9e1c6](https://github.com/wliant/home-km/commit/5a9e1c65e79c0b50fe278581114ea20c6d67f63a))
+* **auth:** TOTP multi-factor authentication (P2) ([a78e7c3](https://github.com/wliant/home-km/commit/a78e7c39624530dd2afb0b0dfca6fc5a13ff45f7))
+* **comments:** threads + @-mentions on notes and files (P2) ([f78aa9e](https://github.com/wliant/home-km/commit/f78aa9efee8b1752210365125d3d5b52287ae44e))
+* **files,tags:** file versioning + suggested tags (P2) ([b52f607](https://github.com/wliant/home-km/commit/b52f607475c632843b88107a8efc7ad82320c31a))
+* **files:** inline rename on FileDetailPage + tighten DTO validation ([5af1b78](https://github.com/wliant/home-km/commit/5af1b78dff2b2cca31b72b97fa0908aa7faaa509))
+* **files:** inline rename on FileDetailPage + tighten DTO validation ([c24f127](https://github.com/wliant/home-km/commit/c24f127b2b4885c1264fdaeb3b9086ed89cd59a9))
+* **files:** rename, MIME allowlist, share links, transforms, AV scan (P1) ([f8dd3c9](https://github.com/wliant/home-km/commit/f8dd3c97f30074157a61dcae7fdac02023c1fae2))
+* **folders,tags:** breadcrumbs, archive, color/icon, merge, bulk (P2) ([8c8288c](https://github.com/wliant/home-km/commit/8c8288c52571b7cf6256243b3b3635158129053e))
+* **groups:** household groups + reminder recipient expansion (P2) ([c3febe6](https://github.com/wliant/home-km/commit/c3febe69d222ae8c09a7db698de778a6883f95aa))
+* **i18n:** de locale, ICU plurals, format helpers, backend messages (P2) ([3f776f0](https://github.com/wliant/home-km/commit/3f776f0cfd31533d7c5a241c1224dbec153c1e27))
+* **notes,files,folders,sharing,reminders,settings,admin,security:** UX polish + ACLs + quiet hours + usage analytics + per-endpoint rate limits (P3) ([3191c28](https://github.com/wliant/home-km/commit/3191c2810c7d16fb9fd3daeef0d2627fedb0faf3))
+* **notes,folders:** inline attachments, export, bulk-move, sort order (P1) ([042f9c7](https://github.com/wliant/home-km/commit/042f9c7bf3227591c370972ac64fce88bcaa643a))
+* **notes,reminders,sync:** templates, email fallback, optimistic locking (P2) ([2d2af37](https://github.com/wliant/home-km/commit/2d2af371ac0fbf8dc89de4d305f03e28141417a6))
+* **notes,reminders:** note revisions + RRULE recurrence (P2) ([adb8d20](https://github.com/wliant/home-km/commit/adb8d206a8e13c1b5f785ee8077fe2024ec7c239))
+* **notes:** markdown rendering with sanitization and edit/preview toggle (gaps/notes/markdown-rendering.md) ([f9a4587](https://github.com/wliant/home-km/commit/f9a4587d90d856daa0e08299e79bd6bbbe2d08e7))
+* **notes:** pin/favorite notes (gaps/notes/pin-favorite.md) ([2835ccf](https://github.com/wliant/home-km/commit/2835ccf4a0850b455a893bae04c48988342a0800))
+* **notes:** soft delete + trash with 30-day retention (gaps/notes/soft-delete-trash.md) ([2ebd621](https://github.com/wliant/home-km/commit/2ebd6213ccbbb4511cdfdcce3d9cd9e2609ac68f))
+* **ops:** build info, log rotation, SLO + RTO/RPO docs (P2) ([d767e3a](https://github.com/wliant/home-km/commit/d767e3a906e2a94ace1027266c86076f2b1a324a))
+* **ops:** observability stack, runbook, release-please, restore drill (P1) ([b18d198](https://github.com/wliant/home-km/commit/b18d1989c2d1b0f2a49f409007445aae3a7523b8))
+* **p0:** security headers, scanning, JSON logs, prometheus, file preview (P0) ([bd5cf38](https://github.com/wliant/home-km/commit/bd5cf389190cbd88bb5ce48ad91f04437e204255))
+* **performance:** bundle budget, hikari tuning, pagination clamp, gzip (P2) ([b53b271](https://github.com/wliant/home-km/commit/b53b271205c9fc34168883ba765917e626ec5da7))
+* **platform:** rate-limit, idempotency, retry/breaker, cache, probes (P1) ([0428ac4](https://github.com/wliant/home-km/commit/0428ac4040bae188e9df21370abf1e9f4a8c5a35))
+* **privacy:** GDPR-style data export + Article 17/20 mapping (P2) ([d0a2c3a](https://github.com/wliant/home-km/commit/d0a2c3a805a5c0375b8bc9ea4362a67aa67367af))
+* **pwa,observability:** offline notes + frontend error tracking (P1) ([2428075](https://github.com/wliant/home-km/commit/2428075eb6b15442a33c8fa3cd11f21bd7715d9d))
+* **pwa:** badge count, install banner, share-target, push actions (P2) ([59042fd](https://github.com/wliant/home-km/commit/59042fd01f8a4670da5185d62c5236201dab7dc0))
+* **reliability,child-safe:** outbox + moderation hooks (P2) ([7bdd1f5](https://github.com/wliant/home-km/commit/7bdd1f5cf0de72ed4c44e3467a4a97a52fcb7058))
+* **reminders:** timezone, snooze, ICS export (P1) ([24117e3](https://github.com/wliant/home-km/commit/24117e3f1815677f6b33f75b22a7e7063be6ef66))
+* **search,obs,realtime,pwa:** semantic search + OTel/Sentry + SSE live updates + offline notes (P3) ([427a318](https://github.com/wliant/home-km/commit/427a3183ce4cfa204bfdc10418e15a147f0319c7))
+* **search:** advanced filters, within-folder, semantic embeddings (P1) ([7d6f82d](https://github.com/wliant/home-km/commit/7d6f82d5bccccdf633c729bfd7d0dbd713df0c66))
+* **search:** saved searches, did-you-mean, result tabs (P2) ([1519e2f](https://github.com/wliant/home-km/commit/1519e2f45f3694d8c1fe255ed7df1a29bbb565d8))
+* **settings,compliance:** theme, notif prefs, deletion, privacy (P2) ([7dceb64](https://github.com/wliant/home-km/commit/7dceb641521aa379d74f4bf9b00df501dca1c591))
+* **settings:** dark mode with theme toggle and full component audit (gaps/settings/dark-mode.md) ([28f86c7](https://github.com/wliant/home-km/commit/28f86c796032821325c61df2c9f2aa6f9635e32f))
+* **supply-chain:** cosign, SBOM, lefthook, gradle locks, CSRF docs (P2) ([14399cf](https://github.com/wliant/home-km/commit/14399cfe71f59d03ec04e40d29f07a1a89f1e890))
+* **sync,sharing:** SSE realtime events + per-item ACLs (P1) ([81efcec](https://github.com/wliant/home-km/commit/81efcecb5be5aa2f203f2938850305cdc6c3b420))
+* **testing:** pitest, openapi drift, lighthouse, visual, chaos (P2) ([0dad0d9](https://github.com/wliant/home-km/commit/0dad0d9e1a5922ed3ee9c89373fb97abd93ab6ce))
+
+
+### Bug Fixes
+
+* **files:** drop no-op @Transactional in test, surface server errors ([9c44980](https://github.com/wliant/home-km/commit/9c449801db343e4de400ea077c736ae28971e6c8))
+* **infra:** boot in docker without git.properties; install axe-core for e2e ([b6a5c27](https://github.com/wliant/home-km/commit/b6a5c27d349ef161b0601a36f201924d13edae8a))
+* **p2-followup:** comment ACLs, MFA retry, export coverage, group lazy-init ([42d732a](https://github.com/wliant/home-km/commit/42d732a273e356dcbccb09d55dcc024d970a38f4))
+* **test:** adjust pre-existing TS strictness and login test for new fields ([4a05d52](https://github.com/wliant/home-km/commit/4a05d528b56e787dc4a6a85d424f94bf4b43040e))
+* **testing:** tighten lhci config based on review ([3240a2b](https://github.com/wliant/home-km/commit/3240a2b5a426c9220890790ad467d8a879b082fc))
