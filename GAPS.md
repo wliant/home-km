@@ -65,8 +65,8 @@ Confirmed absences were spot-checked with `grep` (e.g., `grep -ri "Content-Secur
 - [Note templates](gaps/notes/templates.md) — P2/S
 - [Export (PDF / Markdown)](gaps/notes/export-pdf-md.md) — P1/S
 - [Pin / favorite](gaps/notes/pin-favorite.md) — P1/S
-- [Richer sort / filter UX](gaps/notes/sort-filter-ux.md) — P1/S
-- [Inline image attachments](gaps/notes/inline-image-attachments.md) — P1/M
+- ✓ [Richer sort / filter UX](gaps/notes/sort-filter-ux.md) — pinned-first split + Mine/Shared/All segmented filter on the notes & files lists; advanced filters (date/owner/MIME/has-reminder) on SearchPage.
+- ✓ [Inline image attachments](gaps/notes/inline-image-attachments.md) — paste/drop/file-picker uploads via `fileApi.upload`, inserts `![alt](url)` markdown at cursor.
 
 #### Files ([`gaps/files/`](gaps/files/))
 - [Chunked / resumable upload](gaps/files/chunked-resumable-upload.md) — P1/M
@@ -83,7 +83,8 @@ Confirmed absences were spot-checked with `grep` (e.g., `grep -ri "Content-Secur
 - [Drag-and-drop reorganization](gaps/folders/drag-and-drop.md) — P1/M
 - [Breadcrumbs UX review](gaps/folders/breadcrumbs-ux.md) — P2/S
 - [Archive / restore folders](gaps/folders/archive-restore.md) — P2/S
-- [Folder color and icon](gaps/folders/color-icon.md) — P2/S
+- ✓ [Folder color and icon](gaps/folders/color-icon.md) — palette + emoji picker in FolderPage edit modal.
+- ✓ [Archive / restore folders](gaps/folders/archive-restore.md) — Archive button on FolderPage, dedicated `/folders/archived` listing with one-click Restore. — P2/S
 
 #### Tags ([`gaps/tags/`](gaps/tags/))
 - [Bulk tag operations](gaps/tags/bulk-operations.md) — P2/S
@@ -290,21 +291,21 @@ These are P0 or P1 items sized **S** that unlock outsized improvements:
 
 ### Next (P1, 1–2 quarters)
 
-Depth and polish:
+Depth and polish. ✓-marked items are landed in the current phase (semantic search activation, OTel + Sentry scaffolds, offline-read for notes).
 
-- [Semantic search](gaps/search/semantic-vector.md), [advanced filters](gaps/search/advanced-filters.md), [search-within-folder](gaps/search/search-within-folder.md)
-- [Per-item ACLs](gaps/sharing/per-item-acls.md), [shared shopping lists](gaps/sharing/shared-shopping-lists.md), [real-time updates](gaps/sync/realtime-updates.md)
-- [i18n framework](gaps/i18n/framework.md), [language selection](gaps/settings/language-selection.md)
+- ✓ [Semantic search](gaps/search/semantic-vector.md) — Ollama-backed embeddings + pgvector cosine ranking, opt-in via `EMBEDDING_ENABLED`. ✓ [Advanced filters](gaps/search/advanced-filters.md) — date range, file MIME, has-reminder + smart toggle exposed in SearchPage. [Search-within-folder](gaps/search/search-within-folder.md) backend is wired (folderId param) but UI surfacing pending.
+- ✓ [Per-item ACLs](gaps/sharing/per-item-acls.md) — backend V010 + ItemAccessController, frontend `<VisibilityControl>` on note + file detail with private/household/custom and per-user role picker. [Shared shopping lists](gaps/sharing/shared-shopping-lists.md) still open. ✓ [Real-time updates](gaps/sync/realtime-updates.md) — `useLiveUpdates` hook subscribes to `/api/events` SSE via fetch+stream (auth header), invalidates TanStack queries on `ItemUpdated` / `ChecklistItemToggled`.
+- ✓ [i18n framework](gaps/i18n/framework.md) — i18next + react-i18next + LanguageDetector + ICU plural support, en/es/de bundles. ✓ [Language selection](gaps/settings/language-selection.md) — picker in Settings → Appearance.
 - [Reminder snooze](gaps/reminders/snooze.md), [.ics export](gaps/reminders/ics-export.md), [timezone handling](gaps/reminders/timezone-handling.md)
 - [Image transforms](gaps/files/image-transforms.md), [chunked upload](gaps/files/chunked-resumable-upload.md), [virus scan](gaps/files/virus-scan.md), [share links](gaps/files/share-link-expiry.md)
-- [Bulk move](gaps/folders/bulk-move.md), [drag-and-drop](gaps/folders/drag-and-drop.md), [pin/favorite](gaps/notes/pin-favorite.md), [export](gaps/notes/export-pdf-md.md)
-- [Offline read for notes](gaps/pwa/offline-read-notes.md), [background sync edits](gaps/pwa/background-sync-edits.md)
+- ✓ [Bulk move](gaps/folders/bulk-move.md) (POST /api/items/move + frontend itemMoveApi), ✓ [drag-and-drop](gaps/folders/drag-and-drop.md) — @dnd-kit pointer sensor on FolderPage; drop notes/files/subfolders onto subfolder cards or breadcrumb to move. ✓ [Pin/favorite](gaps/notes/pin-favorite.md) — toggle button on note detail header. ✓ [Export](gaps/notes/export-pdf-md.md) — Markdown / PDF download menu on note detail.
+- ✓ [Offline read for notes](gaps/pwa/offline-read-notes.md) — IndexedDB cache layer + cache-first hook on note detail. ✓ [Background sync edits](gaps/pwa/background-sync-edits.md) — IndexedDB edit queue + auto-flush on `online` event with optimistic-lock conflict handling.
 - [Accessibility pass](gaps/a11y/keyboard-nav.md), [`aria-labels-landmarks.md`](gaps/a11y/aria-labels-landmarks.md), [`axe-ci.md`](gaps/a11y/axe-ci.md)
-- [OpenTelemetry tracing](gaps/observability/opentelemetry-tracing.md), [Grafana dashboards](gaps/observability/grafana-dashboards.md), [Loki](gaps/observability/log-aggregation.md), [Sentry](gaps/observability/frontend-error-tracking.md)
+- ✓ [OpenTelemetry tracing](gaps/observability/opentelemetry-tracing.md) — Micrometer OTel bridge + OTLP exporter, sampling default 0.0. ✓ [Sentry](gaps/observability/frontend-error-tracking.md) — opt-in dynamic import + web-vitals. ✓ [Grafana dashboards](gaps/observability/grafana-dashboards.md) + ✓ [Loki](gaps/observability/log-aggregation.md) — opt-in via `docker-compose.observability.yml` (Prometheus + Grafana + Loki/Promtail + Tempo with provisioned datasources & dashboards).
 - [Circuit breaker](gaps/reliability/circuit-breaker.md), [retry/backoff](gaps/reliability/retry-backoff.md), [graceful shutdown](gaps/reliability/graceful-shutdown.md), [idempotency keys](gaps/reliability/idempotency-keys.md)
-- [Caffeine cache](gaps/performance/caffeine-cache.md), [slow-query logging](gaps/performance/slow-query-logging.md)
+- ✓ [Caffeine cache](gaps/performance/caffeine-cache.md), ✓ [slow-query logging](gaps/performance/slow-query-logging.md) — Hibernate `LOG_QUERIES_SLOWER_THAN_MS` env-tunable via `SQL_SLOW_THRESHOLD_MS` (default 500).
 - [Operator runbook](gaps/operability/runbook.md), [release tagging](gaps/cicd/release-tagging.md), [API reference](gaps/documentation/api-reference.md)
-- [Per-endpoint rate limits](gaps/security/per-endpoint-rate-limits.md), [secret management](gaps/security/secret-management.md), [encryption at rest](gaps/security/encryption-at-rest.md)
+- ✓ [Per-endpoint rate limits](gaps/security/per-endpoint-rate-limits.md) — login, register, password-reset, writes, comments, share-resolve, file-uploads. [Secret management](gaps/security/secret-management.md) still open. ✓ [Encryption at rest](gaps/security/encryption-at-rest.md) — ADR-0006 documents disk-level (LUKS) as the v1 posture, defers `pgcrypto`/SSE/client-side until a household need + KMS choice.
 - [Invite-only registration](gaps/admin/invite-flow.md)
 
 ### Later (P2)
@@ -312,11 +313,11 @@ Depth and polish:
 Strategic / nice-to-have:
 
 - [MFA (TOTP)](gaps/auth/mfa-totp.md), [OIDC](gaps/auth/oidc-sso.md)
-- [Comments + @mentions](gaps/sharing/comments-mentions.md), [real-time co-edit (CRDT)](gaps/sharing/co-edit.md)
-- [Note version history](gaps/notes/version-history.md), [templates](gaps/notes/templates.md)
+- ✓ [Comments + @mentions](gaps/sharing/comments-mentions.md) — comment thread + checkbox picker shipped earlier; this round added inline `@`-autocomplete dropdown over the user roster + groups. [Real-time co-edit (CRDT)](gaps/sharing/co-edit.md) still open.
+- ✓ [Note version history](gaps/notes/version-history.md) — `<RevisionsPanel>` lists captured edits with restore (auto-snapshots current head). ✓ [Templates](gaps/notes/templates.md) — picker chips on the New Note page + "Save as template" toggle in the editor.
 - [File versioning](gaps/files/versioning.md)
-- [Household / group concept](gaps/admin/household-group-concept.md), [usage analytics](gaps/admin/usage-analytics.md), [bulk user import](gaps/admin/bulk-user-import.md)
-- [Child-safe content moderation](gaps/child-safe/moderation-hooks.md), [parental review queue](gaps/child-safe/parental-review-queue.md), [time limits](gaps/child-safe/time-limits.md)
+- [Household / group concept](gaps/admin/household-group-concept.md), ✓ [usage analytics](gaps/admin/usage-analytics.md) — `/admin/usage` page renders totals, top storage users, top tags, top folders. [Bulk user import](gaps/admin/bulk-user-import.md) still open.
+- [Child-safe content moderation](gaps/child-safe/moderation-hooks.md), [parental review queue](gaps/child-safe/parental-review-queue.md), ✓ [time limits / quiet hours](gaps/child-safe/time-limits.md) — `users.quiet_hours_start/_end` enforced in `PushService`, settings UI added.
 - [GDPR data export](gaps/settings/gdpr-export.md), [self-service account deletion](gaps/settings/account-deletion.md)
 - [Threat model](gaps/documentation/threat-model.md), [ADRs](gaps/documentation/adrs.md), [on-call playbook](gaps/documentation/on-call-playbook.md)
 - [SBOM](gaps/security/sbom.md), [cosign signing](gaps/cicd/cosign-image-signing.md)
