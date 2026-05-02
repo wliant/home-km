@@ -1,8 +1,8 @@
 plugins {
     java
     jacoco
-    id("org.springframework.boot") version "3.2.4"
-    id("io.spring.dependency-management") version "1.1.4"
+    id("org.springframework.boot") version "4.0.6"
+    id("io.spring.dependency-management") version "1.1.7"
     id("org.owasp.dependencycheck") version "9.0.10"
     id("info.solidsoft.pitest") version "1.15.0"
     id("org.cyclonedx.bom") version "1.10.0"
