@@ -67,7 +67,7 @@ dependencies {
     implementation("io.minio:minio:8.5.7")
 
     // Web Push (VAPID)
-    implementation("nl.martijndwars:web-push:5.1.1")
+    implementation("nl.martijndwars:web-push:5.1.2")
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
 
     // Caching
