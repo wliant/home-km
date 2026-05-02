@@ -263,7 +263,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Trivy scan — backend image
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: homekm-api:${{ github.sha }}
           format: sarif
@@ -281,7 +281,7 @@ jobs:
 
       - name: Trivy scan — frontend image
         if: always()
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: homekm-frontend:${{ github.sha }}
           format: sarif
