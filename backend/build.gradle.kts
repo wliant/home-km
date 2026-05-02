@@ -47,7 +47,7 @@ dependencies {
 
     // Observability — Prometheus exposition + JSON-structured logs + OTLP traces
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
-    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+    implementation("net.logstash.logback:logstash-logback-encoder:9.0")
     // OTel tracing: Micrometer's OTel bridge plus the OTLP exporter so spans
     // can be shipped to Tempo / Jaeger / Honeycomb / Grafana Cloud. Disabled
     // when management.tracing.sampling.probability=0 (the default).
