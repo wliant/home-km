@@ -22,6 +22,7 @@ const AdminTagsPage = lazy(() => import('./features/admin/AdminTagsPage'))
 const AuditLogPage = lazy(() => import('./features/admin/AuditLogPage'))
 const AdminInvitationsPage = lazy(() => import('./features/admin/AdminInvitationsPage'))
 const AdminGroupsPage = lazy(() => import('./features/admin/AdminGroupsPage'))
+const AdminUsagePage = lazy(() => import('./features/admin/AdminUsagePage'))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage'))
 const TrashPage = lazy(() => import('./features/trash/TrashPage'))
 const ForgotPasswordPage = lazy(() => import('./features/auth/ForgotPasswordPage'))
@@ -29,6 +30,8 @@ const ResetPasswordPage = lazy(() => import('./features/auth/ResetPasswordPage')
 const SharePage = lazy(() => import('./features/share/SharePage'))
 const NotificationActionPage = lazy(() => import('./features/notifications/NotificationActionPage'))
 const MentionsPage = lazy(() => import('./features/mentions/MentionsPage'))
+const RemindersInboxPage = lazy(() => import('./features/reminders/RemindersInboxPage'))
+const ArchivedFoldersPage = lazy(() => import('./features/folders/ArchivedFoldersPage'))
 
 function HomePage() {
   const user = useAuthStore(s => s.user)
@@ -43,6 +46,7 @@ function HomePage() {
           {[
             { to: '/notes', label: 'Notes' },
             { to: '/files', label: 'Files' },
+            { to: '/reminders', label: 'Reminders' },
             { to: '/search', label: 'Search' },
             { to: '/settings', label: 'Settings' },
           ].map(item => (
@@ -121,9 +125,12 @@ export default function App() {
         <Route path="/admin/audit" element={<AdminRoute><AuditLogPage /></AdminRoute>} />
         <Route path="/admin/invitations" element={<AdminRoute><AdminInvitationsPage /></AdminRoute>} />
         <Route path="/admin/groups" element={<AdminRoute><AdminGroupsPage /></AdminRoute>} />
+        <Route path="/admin/usage" element={<AdminRoute><AdminUsagePage /></AdminRoute>} />
         <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
         <Route path="/trash" element={<Protected><TrashPage /></Protected>} />
         <Route path="/mentions" element={<Protected><MentionsPage /></Protected>} />
+        <Route path="/reminders" element={<Protected><RemindersInboxPage /></Protected>} />
+        <Route path="/folders/archived" element={<Protected><ArchivedFoldersPage /></Protected>} />
         <Route path="/share" element={<Protected><SharePage /></Protected>} />
         <Route path="/notifications/action" element={<Protected><NotificationActionPage /></Protected>} />
 

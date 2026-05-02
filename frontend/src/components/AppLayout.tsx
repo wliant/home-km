@@ -109,6 +109,9 @@ function Sidebar() {
             <Link to="/admin/groups" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
               👥 Groups
             </Link>
+            <Link to="/admin/usage" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              📊 Usage
+            </Link>
           </>
         )}
         <Link to="/trash" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">

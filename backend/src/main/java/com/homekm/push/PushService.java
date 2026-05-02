@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -23,14 +24,17 @@ public class PushService {
     private final PushSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final AppProperties appProperties;
+    private final com.homekm.auth.QuietHoursService quietHours;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private org.springframework.mail.javamail.JavaMailSender mailSender;
 
     public PushService(PushSubscriptionRepository subscriptionRepository,
-                       UserRepository userRepository, AppProperties appProperties) {
+                       UserRepository userRepository, AppProperties appProperties,
+                       com.homekm.auth.QuietHoursService quietHours) {
         this.subscriptionRepository = subscriptionRepository;
         this.userRepository = userRepository;
         this.appProperties = appProperties;
+        this.quietHours = quietHours;
     }
 
     public String getVapidPublicKey() {
@@ -80,6 +84,24 @@ public class PushService {
     }
 
     /**
+     * Drop users currently inside their configured quiet-hours window.
+     * v1 semantics: skipped notifications are not deferred — the user
+     * accepted "don't bother me from X to Y" by setting the window. Same
+     * filter applies to email fallback so the whole notification surface
+     * goes silent during the window.
+     */
+    private List<Long> filterByQuietHours(List<Long> userIds) {
+        if (userIds.isEmpty()) return userIds;
+        Instant now = Instant.now();
+        List<User> users = userRepository.findAllById(userIds);
+        java.util.List<Long> kept = new java.util.ArrayList<>(users.size());
+        for (User u : users) {
+            if (!quietHours.isQuiet(u, now)) kept.add(u.getId());
+        }
+        return kept;
+    }
+
+    /**
      * Send a push to every device subscribed by any user in {@code userIds}.
      * When {@code reminderId} is non-null it is embedded in the payload so the
      * service worker can render Done / Snooze action buttons that POST back to
@@ -96,6 +118,7 @@ public class PushService {
         // call paths bypass — they're either critical (security) or already
         // gated by the caller.
         List<Long> targets = reminderId != null ? filterByReminderPref(userIds) : userIds;
+        if (reminderId != null) targets = filterByQuietHours(targets);
         if (targets.isEmpty()) return;
 
         // Track whether each user got at least one successful push so we can

@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { adminApi, commentApi, groupApi, type CommentResponse, type GroupResponse } from '../../api'
+import { commentApi, groupApi, userRosterApi, type CommentResponse, type GroupResponse, type RosterUser } from '../../api'
 import { useAuthStore } from '../../lib/authStore'
-import type { UserResponse } from '../../types/auth'
 
 interface Props {
   itemType: 'note' | 'file'
@@ -27,15 +26,21 @@ export default function CommentsThread({ itemType, itemId }: Props) {
     queryKey: ['comments', itemType, itemId],
     queryFn: () => commentApi.list(itemType, itemId),
   })
-  const { data: users = [] } = useQuery<UserResponse[]>({
-    queryKey: ['admin', 'users'],
-    queryFn: () => adminApi.listUsers() as unknown as Promise<UserResponse[]>,
-    enabled: pickerOpen,
+  // Roster + groups load on first keystroke or picker open so the @-autocomplete
+  // can show matches without an extra round-trip per character.
+  const [rosterPrefetch, setRosterPrefetch] = useState(false)
+  const rosterEnabled = pickerOpen || rosterPrefetch
+  const { data: users = [] } = useQuery<RosterUser[]>({
+    queryKey: ['user-roster'],
+    queryFn: () => userRosterApi.list(),
+    enabled: rosterEnabled,
+    staleTime: 60_000,
   })
   const { data: groups = [] } = useQuery<GroupResponse[]>({
     queryKey: ['groups'],
     queryFn: () => groupApi.list(),
-    enabled: pickerOpen,
+    enabled: rosterEnabled,
+    staleTime: 60_000,
   })
 
   function reset() {
@@ -75,6 +80,85 @@ export default function CommentsThread({ itemType, itemId }: Props) {
     setSet(next)
   }
 
+  // -- @-mention autocomplete -------------------------------------------------
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  // The active query is the substring after the most recent `@` up to the
+  // cursor, with no whitespace inside. Null means the cursor isn't inside a
+  // mention token right now → no popover.
+  const [mentionQuery, setMentionQuery] = useState<{ start: number; text: string } | null>(null)
+  const [mentionHighlight, setMentionHighlight] = useState(0)
+
+  type MentionCandidate =
+    | { kind: 'user'; id: number; label: string }
+    | { kind: 'group'; id: number; label: string }
+
+  const candidates: MentionCandidate[] = useMemo(() => {
+    if (!mentionQuery) return []
+    const q = mentionQuery.text.toLowerCase()
+    const matchedGroups = groups
+      .filter(g => g.name.toLowerCase().includes(q))
+      .map(g => ({ kind: 'group' as const, id: g.id, label: g.name }))
+    const matchedUsers = users
+      .filter(u => u.displayName.toLowerCase().includes(q))
+      .map(u => ({ kind: 'user' as const, id: u.id, label: u.displayName }))
+    return [...matchedGroups, ...matchedUsers].slice(0, 8)
+  }, [groups, users, mentionQuery])
+
+  function detectMention(value: string, caret: number) {
+    setRosterPrefetch(true)
+    // Walk left from the caret looking for an `@`, stopping at whitespace.
+    let i = caret - 1
+    while (i >= 0) {
+      const ch = value[i]
+      if (ch === '@') {
+        const before = i === 0 ? '' : value[i - 1]
+        // Mention only triggers at start of input or after whitespace, so
+        // emails like "ada@example.com" don't fire the picker.
+        if (before === '' || /\s/.test(before)) {
+          setMentionQuery({ start: i, text: value.slice(i + 1, caret) })
+          setMentionHighlight(0)
+          return
+        }
+        break
+      }
+      if (/\s/.test(ch)) break
+      i -= 1
+    }
+    setMentionQuery(null)
+  }
+
+  function applyMention(c: MentionCandidate) {
+    if (!mentionQuery) return
+    const before = body.slice(0, mentionQuery.start)
+    const after = body.slice(mentionQuery.start + 1 + mentionQuery.text.length)
+    const tag = `@${c.label.replace(/\s+/g, '_')} `
+    const next = before + tag + after
+    setBody(next)
+    if (c.kind === 'user') toggleSet(mentionedUserIds, setMentionedUserIds, c.id)
+    else toggleSet(mentionedGroupIds, setMentionedGroupIds, c.id)
+    setMentionQuery(null)
+    requestAnimationFrame(() => {
+      const ta = textareaRef.current
+      if (!ta) return
+      const pos = before.length + tag.length
+      ta.focus()
+      ta.setSelectionRange(pos, pos)
+    })
+  }
+
+  function handleBodyChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setBody(e.target.value)
+    detectMention(e.target.value, e.target.selectionStart ?? e.target.value.length)
+  }
+
+  function handleBodyKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!mentionQuery || candidates.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setMentionHighlight(h => (h + 1) % candidates.length) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setMentionHighlight(h => (h - 1 + candidates.length) % candidates.length) }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); applyMention(candidates[mentionHighlight]) }
+    else if (e.key === 'Escape') { e.preventDefault(); setMentionQuery(null) }
+  }
+
   return (
     <section className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -111,13 +195,44 @@ export default function CommentsThread({ itemType, itemId }: Props) {
       </ul>
 
       <div className="space-y-2">
-        <textarea
-          value={body}
-          onChange={e => setBody(e.target.value)}
-          placeholder={editingId ? 'Edit comment…' : 'Add a comment…'}
-          rows={3}
-          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-        />
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={body}
+            onChange={handleBodyChange}
+            onKeyDown={handleBodyKeyDown}
+            onBlur={() => { /* defer so click on popover registers first */ setTimeout(() => setMentionQuery(null), 150) }}
+            placeholder={editingId ? 'Edit comment…' : 'Add a comment… type @ to mention'}
+            rows={3}
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+          />
+          {mentionQuery && candidates.length > 0 && (
+            <ul
+              role="listbox"
+              aria-label="Mention candidates"
+              className="absolute z-10 left-2 top-full mt-1 w-64 max-h-56 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg text-sm"
+            >
+              {candidates.map((c, idx) => (
+                <li
+                  key={`${c.kind}-${c.id}`}
+                  role="option"
+                  aria-selected={idx === mentionHighlight}
+                  // mousedown rather than click — fires before the textarea's
+                  // onBlur cancels the popover via setTimeout above.
+                  onMouseDown={e => { e.preventDefault(); applyMention(c) }}
+                  className={`px-3 py-1.5 cursor-pointer ${
+                    idx === mentionHighlight
+                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="text-gray-400 mr-1">{c.kind === 'group' ? 'Group' : 'User'}</span>
+                  @{c.label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         {!editingId && (
           <div>
             <button

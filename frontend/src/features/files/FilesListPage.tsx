@@ -1,25 +1,35 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fileApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
+import { useAuthStore } from '../../lib/authStore'
 import AppLayout from '../../components/AppLayout'
+import OwnerFilterTabs, { type OwnerFilter } from '../../components/OwnerFilterTabs'
 import { enqueueUpload } from '../../lib/offlineDb'
 
 export default function FilesListPage() {
   const [searchParams] = useSearchParams()
   const folderId = searchParams.get('folderId') ? Number(searchParams.get('folderId')) : undefined
   const qc = useQueryClient()
+  const me = useAuthStore(s => s.user)
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<{ name: string; pct: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(0)
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all')
 
   const { data, isLoading } = useQuery({
     queryKey: QK.files({ folderId }),
     queryFn: () => fileApi.list({ folderId, page: 0, size: 40 }),
   })
+
+  const filtered = useMemo(() => {
+    const all = data?.content ?? []
+    if (!me || ownerFilter === 'all') return all
+    return all.filter(f => ownerFilter === 'mine' ? f.ownerId === me.id : f.ownerId !== me.id)
+  }, [data?.content, ownerFilter, me])
 
   const deleteFile = useMutation({
     mutationFn: (id: number) => fileApi.delete(id),
@@ -108,14 +118,20 @@ export default function FilesListPage() {
             You are offline. {queued} file{queued !== 1 ? 's' : ''} queued for upload when connection is restored.
           </p>
         )}
+        <OwnerFilterTabs value={ownerFilter} onChange={setOwnerFilter} />
+
         {isLoading && <p className="text-gray-500 dark:text-gray-400 text-sm">Loading…</p>}
 
         {data?.content.length === 0 && !isLoading && (
           <p className="text-gray-500 dark:text-gray-400 text-sm">No files yet.</p>
         )}
 
+        {!isLoading && data && data.content.length > 0 && filtered.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No files match this filter.</p>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {data?.content.map(file => (
+          {filtered.map(file => (
             <div
               key={file.id}
               className="group relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer"

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/authApi'
 import { buildInfoApi, meApi } from '../../api'
 import { useAuthStore } from '../../lib/authStore'
@@ -162,6 +163,7 @@ export default function SettingsPage() {
               )}
             </div>
             <NotificationPrefs />
+            <QuietHoursControl />
           </section>
         )}
 
@@ -180,6 +182,7 @@ export default function SettingsPage() {
               <option value="dark">Dark</option>
             </select>
           </div>
+          <LanguagePicker />
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-500 dark:text-gray-400">Accent</span>
             <div role="radiogroup" aria-label="Accent colour" className="flex flex-wrap gap-1.5">
@@ -616,6 +619,95 @@ function NotificationPrefs() {
       <p className="text-xs text-gray-400 dark:text-gray-500">
         Disabling stops the server from sending push notifications for reminders, but the
         scheduler still records when each reminder fires (visible in the unread badge).
+      </p>
+    </div>
+  )
+}
+
+function LanguagePicker() {
+  const { i18n } = useTranslation()
+  const supported = (i18n.options.supportedLngs || ['en']) as readonly string[]
+  const visible = supported.filter(l => l !== 'cimode')
+  const labels: Record<string, string> = { en: 'English', es: 'Español', de: 'Deutsch' }
+  // i18next-browser-languagedetector caches to localStorage automatically per
+  // the i18n config, so we don't need to persist by hand here.
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <label htmlFor="settings-language" className="text-xs text-gray-500 dark:text-gray-400">Language</label>
+      <select
+        id="settings-language"
+        value={i18n.language}
+        onChange={e => { void i18n.changeLanguage(e.target.value) }}
+        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm"
+      >
+        {visible.map(lng => (
+          <option key={lng} value={lng}>{labels[lng] ?? lng}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function QuietHoursControl() {
+  const qc = useQueryClient()
+  const { data: qh } = useQuery({
+    queryKey: ['me', 'quiet-hours'],
+    queryFn: () => meApi.getQuietHours(),
+  })
+  const update = useMutation({
+    mutationFn: (next: { start: string | null; end: string | null; timezone: string }) =>
+      meApi.updateQuietHours(next),
+    onSuccess: data => qc.setQueryData(['me', 'quiet-hours'], data),
+  })
+
+  if (!qh) return null
+  const enabled = !!(qh.start && qh.end)
+  const detectedZone = (() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone } catch { return 'UTC' }
+  })()
+
+  return (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 space-y-2">
+      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        Quiet hours
+      </h3>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={e => update.mutate(e.target.checked
+            ? { start: '21:00', end: '07:00', timezone: qh.timezone || detectedZone }
+            : { start: null, end: null, timezone: qh.timezone || detectedZone })}
+          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        <span className="text-gray-700 dark:text-gray-300">Mute reminders during a daily window</span>
+      </label>
+      {enabled && (
+        <div className="flex flex-wrap items-center gap-3 pt-2 pl-6">
+          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+            From
+            <input
+              type="time"
+              value={qh.start ?? ''}
+              onChange={e => update.mutate({ start: e.target.value, end: qh.end, timezone: qh.timezone })}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+            To
+            <input
+              type="time"
+              value={qh.end ?? ''}
+              onChange={e => update.mutate({ start: qh.start, end: e.target.value, timezone: qh.timezone })}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 text-sm"
+            />
+          </label>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{qh.timezone}</span>
+        </div>
+      )}
+      <p className="text-xs text-gray-400 dark:text-gray-500">
+        Reminder pushes (and email fallback) are silenced inside the window. Other notifications
+        (security alerts) ignore quiet hours.
       </p>
     </div>
   )

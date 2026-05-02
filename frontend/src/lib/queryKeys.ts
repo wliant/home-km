@@ -1,6 +1,7 @@
 export const QK = {
   folders: () => ['folders'] as const,
   folder: (id: number) => ['folders', id] as const,
+  archivedFolders: () => ['folders', 'archived'] as const,
   notes: (params?: object) => ['notes', params] as const,
   note: (id: number) => ['notes', id] as const,
   checklist: (noteId: number) => ['checklist', noteId] as const,

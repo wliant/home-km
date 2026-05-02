@@ -7,6 +7,8 @@ import { formatBytes, formatDate } from '../../lib/format'
 import { toast } from '../../lib/toastStore'
 import AppLayout from '../../components/AppLayout'
 import TagAutocomplete from '../../components/TagAutocomplete'
+import VisibilityControl from '../../components/VisibilityControl'
+import ItemBreadcrumb from '../../components/ItemBreadcrumb'
 import CommentsThread from '../comments/CommentsThread'
 import { useAuthStore } from '../../lib/authStore'
 
@@ -70,6 +72,7 @@ export default function FileDetailPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        <ItemBreadcrumb folderId={file.folderId} itemTitle={file.filename} />
         <div className="flex items-start justify-between gap-4">
           {editingName ? (
             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
@@ -161,6 +164,8 @@ export default function FileDetailPage() {
             readOnly={user?.isChild}
           />
         </section>
+
+        <VisibilityControl itemType="file" itemId={fileId} ownerId={file.ownerId} />
 
         {/* Download */}
         {file.downloadUrl && (

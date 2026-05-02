@@ -12,6 +12,18 @@ import RemindersSection from '../../components/RemindersSection'
 import CommentsThread from '../comments/CommentsThread'
 import TagAutocomplete from '../../components/TagAutocomplete'
 import { useAuthStore } from '../../lib/authStore'
+import { useOfflineNote } from '../../lib/useOfflineNote'
+import VisibilityControl from '../../components/VisibilityControl'
+import ItemBreadcrumb from '../../components/ItemBreadcrumb'
+import RevisionsPanel from './RevisionsPanel'
+
+function formatRelative(ts: number): string {
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  if (s < 60) return 'just now'
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`
+  return `${Math.floor(s / 86400)} d ago`
+}
 
 export default function NoteDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,10 +33,7 @@ export default function NoteDetailPage() {
   const user = useAuthStore(s => s.user)
   const [newItemText, setNewItemText] = useState('')
 
-  const { data: note, isLoading } = useQuery({
-    queryKey: QK.note(noteId),
-    queryFn: () => noteApi.getById(noteId),
-  })
+  const { note, isLoading, isOffline, cachedAt } = useOfflineNote(noteId)
 
   const { data: noteTags = [] } = useQuery({
     queryKey: QK.noteTags(noteId),
@@ -36,6 +45,28 @@ export default function NoteDetailPage() {
     onSuccess: () => navigate(note?.folderId ? `/folders/${note.folderId}` : '/'),
     onError: () => toast.error('Failed to delete note'),
   })
+
+  const togglePin = useMutation({
+    mutationFn: () => note?.pinnedAt ? noteApi.unpin(noteId) : noteApi.pin(noteId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QK.note(noteId) }),
+    onError: () => toast.error('Failed to update pin'),
+  })
+
+  async function downloadExport(format: 'md' | 'pdf') {
+    try {
+      const blob = await noteApi.export(noteId, format)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${(note?.title ?? 'note').replace(/[^\w.-]+/g, '_')}.${format}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Export failed')
+    }
+  }
 
   const addItem = useMutation({
     mutationFn: (text: string) => checklistApi.add(noteId, { text }),
@@ -64,6 +95,14 @@ export default function NoteDetailPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        {isOffline && cachedAt != null && (
+          <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+            Offline — showing cached copy from {formatRelative(cachedAt)}.
+          </div>
+        )}
+
+        <ItemBreadcrumb folderId={note.folderId} itemTitle={note.title} />
+
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -80,7 +119,21 @@ export default function NoteDetailPage() {
             </h1>
           </div>
           {!user?.isChild && (
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2 shrink-0 items-center">
+              <button
+                onClick={() => togglePin.mutate()}
+                disabled={togglePin.isPending}
+                aria-pressed={!!note.pinnedAt}
+                title={note.pinnedAt ? 'Unpin' : 'Pin to top'}
+                className={`px-2 py-1.5 text-sm rounded-lg border transition-colors ${
+                  note.pinnedAt
+                    ? 'bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
+                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-amber-600'
+                }`}
+              >
+                {note.pinnedAt ? '📌 Pinned' : '📌 Pin'}
+              </button>
+              <ExportMenu onPick={downloadExport} />
               <Link to={`/notes/${noteId}/edit`}
                 className="px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
                 Edit
@@ -102,6 +155,8 @@ export default function NoteDetailPage() {
           onTagsChange={() => qc.invalidateQueries({ queryKey: QK.noteTags(noteId) })}
           readOnly={user?.isChild}
         />
+
+        <VisibilityControl itemType="note" itemId={noteId} ownerId={note.ownerId} />
 
         {/* Body */}
         {note.body && (
@@ -161,7 +216,38 @@ export default function NoteDetailPage() {
         />
 
         <CommentsThread itemType="note" itemId={noteId} />
+
+        {!user?.isChild && <RevisionsPanel noteId={noteId} />}
       </div>
     </AppLayout>
+  )
+}
+
+/**
+ * Two-button popover for download formats. Implemented as a tiny details/summary
+ * native disclosure so we don't drag in a popover library; click-outside is
+ * handled by the browser closing the open <details> when focus leaves.
+ */
+function ExportMenu({ onPick }: { onPick: (fmt: 'md' | 'pdf') => void }) {
+  return (
+    <details className="relative">
+      <summary className="list-none cursor-pointer px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+        Export ▾
+      </summary>
+      <div className="absolute right-0 mt-1 w-32 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-10 py-1">
+        <button
+          onClick={() => onPick('md')}
+          className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          Markdown
+        </button>
+        <button
+          onClick={() => onPick('pdf')}
+          className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          PDF
+        </button>
+      </div>
+    </details>
   )
 }

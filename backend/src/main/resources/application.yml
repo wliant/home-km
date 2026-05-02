@@ -183,6 +183,29 @@ app:
         scope: user
         limit: 60
         window-seconds: 60
+      # Comment spam — even a single user shouldn't flood threads.
+      - id: comments
+        path-pattern: /api/comments/**
+        method: POST
+        scope: user
+        limit: 30
+        window-seconds: 60
+      # Anonymous share-link redemption: per-IP cap on the resolver, since the
+      # caller hasn't authenticated yet (no user-scoped budget available).
+      - id: share-resolve
+        path-pattern: /api/share/**
+        method: POST
+        scope: ip
+        limit: 60
+        window-seconds: 60
+      # File uploads — chunked uploaders can chew through the global writes
+      # budget; cap per-user separately so other writes still go through.
+      - id: file-uploads
+        path-pattern: /api/files
+        method: POST
+        scope: user
+        limit: 30
+        window-seconds: 60
   idempotency:
     enabled: ${IDEMPOTENCY_ENABLED:true}
     ttl-hours: 24

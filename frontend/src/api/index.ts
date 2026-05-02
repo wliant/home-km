@@ -11,14 +11,20 @@ import type {
 export const folderApi = {
   getTree: () => apiClient.get<FolderResponse[]>('/folders').then(r => r.data),
   getById: (id: number) => apiClient.get<FolderResponse>(`/folders/${id}`).then(r => r.data),
-  create: (data: { name: string; description?: string; parentId?: number }) =>
+  create: (data: { name: string; description?: string; parentId?: number; color?: string; icon?: string }) =>
     apiClient.post<FolderResponse>('/folders', data).then(r => r.data),
-  update: (id: number, data: { name?: string; description?: string; parentId?: number | null }) =>
+  update: (id: number, data: { name?: string; description?: string; parentId?: number | null; color?: string | null; icon?: string | null }) =>
     apiClient.put<FolderResponse>(`/folders/${id}`, data).then(r => r.data),
   delete: (id: number, force = false) =>
     apiClient.delete(`/folders/${id}?force=${force}`),
   setChildSafe: (id: number, isChildSafe: boolean) =>
     apiClient.put<FolderResponse>(`/folders/${id}/child-safe`, { isChildSafe }).then(r => r.data),
+  archive: (id: number) =>
+    apiClient.post<FolderResponse>(`/folders/${id}/archive`).then(r => r.data),
+  unarchive: (id: number) =>
+    apiClient.delete<FolderResponse>(`/folders/${id}/archive`).then(r => r.data),
+  listArchived: () =>
+    apiClient.get<FolderResponse[]>('/folders/archived').then(r => r.data),
 }
 
 // Notes
@@ -26,13 +32,33 @@ export const noteApi = {
   list: (params?: { folderId?: number; page?: number; size?: number }) =>
     apiClient.get<PageResponse<NoteSummary>>('/notes', { params }).then(r => r.data),
   getById: (id: number) => apiClient.get<NoteDetail>(`/notes/${id}`).then(r => r.data),
-  create: (data: { title: string; body?: string; label?: string; folderId?: number; isChildSafe?: boolean }) =>
+  create: (data: { title: string; body?: string; label?: string; folderId?: number; isChildSafe?: boolean; isTemplate?: boolean }) =>
     apiClient.post<NoteDetail>('/notes', data).then(r => r.data),
-  update: (id: number, data: Partial<{ title: string; body: string; label: string; folderId: number | null; isChildSafe: boolean }>) =>
+  update: (id: number, data: Partial<{ title: string; body: string; label: string; folderId: number | null; isChildSafe: boolean; isTemplate: boolean }>) =>
     apiClient.put<NoteDetail>(`/notes/${id}`, data).then(r => r.data),
   delete: (id: number) => apiClient.delete(`/notes/${id}`),
   pin: (id: number) => apiClient.post<NoteDetail>(`/notes/${id}/pin`).then(r => r.data),
   unpin: (id: number) => apiClient.delete<NoteDetail>(`/notes/${id}/pin`).then(r => r.data),
+  export: (id: number, format: 'md' | 'pdf') =>
+    apiClient.get<Blob>(`/notes/${id}/export`, { params: { format }, responseType: 'blob' }).then(r => r.data),
+  listRevisions: (id: number) =>
+    apiClient.get<NoteRevision[]>(`/notes/${id}/revisions`).then(r => r.data),
+  restoreRevision: (id: number, revisionId: number) =>
+    apiClient.post<NoteDetail>(`/notes/${id}/revisions/${revisionId}/restore`).then(r => r.data),
+  listTemplates: () =>
+    apiClient.get<NoteSummary[]>('/notes/templates').then(r => r.data),
+  createFromTemplate: (templateId: number) =>
+    apiClient.post<NoteDetail>(`/notes/from-template/${templateId}`).then(r => r.data),
+}
+
+export interface NoteRevision {
+  id: number
+  noteId: number
+  title: string
+  body: string | null
+  label: string
+  editedBy: number
+  editedAt: string
 }
 
 // Checklist items
@@ -173,12 +199,72 @@ export interface DataExportResponse {
 }
 
 // Me — ambient state for the current user (badge count, etc.)
+export interface QuietHoursPayload {
+  start: string | null
+  end: string | null
+  timezone: string
+}
+
+export type Visibility = 'private' | 'household' | 'custom'
+export type AclRole = 'viewer' | 'editor'
+
+export interface AclEntry {
+  userId: number
+  role: AclRole
+}
+
+export interface VisibilityResponse {
+  visibility: Visibility
+  acls: AclEntry[]
+}
+
+export interface RosterUser {
+  id: number
+  displayName: string
+  isChild: boolean
+  isActive: boolean
+}
+
+export const itemAccessApi = {
+  get: (type: 'note' | 'file' | 'folder', id: number) =>
+    apiClient.get<VisibilityResponse>(`/items/${type}/${id}/visibility`).then(r => r.data),
+  set: (type: 'note' | 'file' | 'folder', id: number, payload: { visibility: Visibility; acls?: AclEntry[] }) =>
+    apiClient.put<VisibilityResponse>(`/items/${type}/${id}/visibility`, payload).then(r => r.data),
+}
+
+export interface BulkMoveItem {
+  type: 'note' | 'file' | 'folder'
+  id: number
+}
+
+export const itemMoveApi = {
+  move: (items: BulkMoveItem[], targetFolderId: number | null) =>
+    apiClient.post<{ moved: number }>('/items/move', { items, targetFolderId }).then(r => r.data),
+}
+
+export const userRosterApi = {
+  list: () => apiClient.get<RosterUser[]>('/users').then(r => r.data),
+}
+
+export interface InboxReminder {
+  id: number
+  noteId: number
+  noteTitle: string
+  remindAt: string
+  recurrence: string | null
+  fired: boolean
+}
+
 export const meApi = {
   unread: () => apiClient.get<{ count: number }>('/me/unread').then(r => r.data),
+  myReminders: () => apiClient.get<InboxReminder[]>('/me/reminders').then(r => r.data),
   getNotificationPrefs: () =>
     apiClient.get<Record<string, unknown>>('/me/notification-prefs').then(r => r.data),
   updateNotificationPrefs: (prefs: Record<string, unknown>) =>
     apiClient.put<Record<string, unknown>>('/me/notification-prefs', prefs).then(r => r.data),
+  getQuietHours: () => apiClient.get<QuietHoursPayload>('/me/quiet-hours').then(r => r.data),
+  updateQuietHours: (payload: QuietHoursPayload) =>
+    apiClient.put<QuietHoursPayload>('/me/quiet-hours', payload).then(r => r.data),
   requestExport: () =>
     apiClient.post<DataExportResponse>('/me/export').then(r => r.data),
   listExports: () =>
@@ -291,6 +377,7 @@ export const groupApi = {
 // Admin
 export const adminApi = {
   listUsers: () => apiClient.get('/admin/users').then(r => r.data),
+  usage: () => apiClient.get<AdminUsageSummary>('/admin/usage').then(r => r.data),
   createUser: (data: unknown) => apiClient.post('/admin/users', data).then(r => r.data),
   updateUser: (id: number, data: unknown) => apiClient.put(`/admin/users/${id}`, data).then(r => r.data),
   deleteUser: (id: number) => apiClient.delete(`/admin/users/${id}`),

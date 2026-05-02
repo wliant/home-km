@@ -25,4 +25,16 @@ public interface ReminderRepository extends JpaRepository<Reminder, Long> {
             WHERE rr.user.id = :userId AND r.remindAt <= :now
             """)
     long countUnreadForUser(Long userId, Instant now);
+
+    /**
+     * Reminders the user is a recipient on, ordered by remindAt ascending.
+     * Includes recurring rows (still useful — remindAt has been advanced past
+     * the last fire so it surfaces as the next occurrence).
+     */
+    @Query("""
+            SELECT DISTINCT r FROM Reminder r LEFT JOIN r.recipients rr
+            WHERE (rr.user.id = :userId OR r.note.owner.id = :userId)
+            ORDER BY r.remindAt ASC
+            """)
+    List<Reminder> findAllForUser(Long userId);
 }

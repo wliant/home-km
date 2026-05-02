@@ -13,9 +13,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +71,29 @@ public class MeController {
     public ResponseEntity<UnreadResponse> unread(@AuthenticationPrincipal UserPrincipal principal) {
         long count = reminderRepository.countUnreadForUser(principal.getId(), Instant.now());
         return ResponseEntity.ok(new UnreadResponse(count));
+    }
+
+    public record InboxReminder(
+            long id, long noteId, String noteTitle, Instant remindAt, String recurrence, boolean fired) {}
+
+    /**
+     * Reminders the user is a recipient on or owns. Drives the inbox view —
+     * one screen for all upcoming + recently-fired reminders so users don't
+     * have to walk every note to find what's pending.
+     */
+    @GetMapping("/reminders")
+    public ResponseEntity<List<InboxReminder>> myReminders(@AuthenticationPrincipal UserPrincipal principal) {
+        Instant now = Instant.now();
+        List<InboxReminder> rows = reminderRepository.findAllForUser(principal.getId()).stream()
+                .map(r -> new InboxReminder(
+                        r.getId(),
+                        r.getNote().getId(),
+                        r.getNote().getTitle(),
+                        r.getRemindAt(),
+                        r.getRecurrence(),
+                        r.getRemindAt().isBefore(now)))
+                .toList();
+        return ResponseEntity.ok(rows);
     }
 
     /**
@@ -138,6 +166,61 @@ public class MeController {
                 req.getExpiresAt(),
                 url,
                 req.getErrorMessage());
+    }
+
+    public record QuietHoursResponse(String start, String end, String timezone) {}
+    public record QuietHoursRequest(String start, String end, String timezone) {}
+
+    /**
+     * Per-user quiet-hours window. Times serialize as "HH:mm" wall-clock in
+     * the user's timezone. Both null = quiet hours off; setting both to the
+     * same value is treated as off too. Wrapping windows (start &gt; end)
+     * are valid and cross midnight.
+     */
+    @GetMapping("/quiet-hours")
+    public ResponseEntity<QuietHoursResponse> getQuietHours(@AuthenticationPrincipal UserPrincipal principal) {
+        User user = userRepository.findById(principal.getId()).orElseThrow();
+        return ResponseEntity.ok(new QuietHoursResponse(
+                user.getQuietHoursStart() != null ? user.getQuietHoursStart().toString() : null,
+                user.getQuietHoursEnd() != null ? user.getQuietHoursEnd().toString() : null,
+                user.getTimezone()));
+    }
+
+    @PutMapping("/quiet-hours")
+    @Transactional
+    public ResponseEntity<QuietHoursResponse> setQuietHours(
+            @RequestBody QuietHoursRequest req,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        User user = userRepository.findById(principal.getId()).orElseThrow();
+        // Both null = clear the window. Otherwise both must be present.
+        boolean clearing = (req.start() == null || req.start().isBlank())
+                && (req.end() == null || req.end().isBlank());
+        if (clearing) {
+            user.setQuietHoursStart(null);
+            user.setQuietHoursEnd(null);
+        } else {
+            try {
+                user.setQuietHoursStart(LocalTime.parse(req.start()));
+                user.setQuietHoursEnd(LocalTime.parse(req.end()));
+            } catch (DateTimeParseException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "INVALID_TIME: expected HH:mm");
+            }
+        }
+        if (req.timezone() != null && !req.timezone().isBlank()) {
+            try {
+                ZoneId.of(req.timezone());
+                user.setTimezone(req.timezone());
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "INVALID_TIMEZONE: " + req.timezone());
+            }
+        }
+        userRepository.save(user);
+        return ResponseEntity.ok(new QuietHoursResponse(
+                user.getQuietHoursStart() != null ? user.getQuietHoursStart().toString() : null,
+                user.getQuietHoursEnd() != null ? user.getQuietHoursEnd().toString() : null,
+                user.getTimezone()));
     }
 
     private Map<String, Object> parsePrefs(String json) {

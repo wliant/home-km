@@ -1,13 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { noteApi } from '../../api'
 import { QK } from '../../lib/queryKeys'
+import { useAuthStore } from '../../lib/authStore'
 import AppLayout from '../../components/AppLayout'
+import OwnerFilterTabs, { type OwnerFilter } from '../../components/OwnerFilterTabs'
 import type { NoteSummary } from '../../types'
 
 export default function NotesListPage() {
   const qc = useQueryClient()
+  const me = useAuthStore(s => s.user)
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all')
   const { data, isLoading } = useQuery({
     queryKey: QK.notes(),
     queryFn: () => noteApi.list({ page: 0, size: 50 }),
@@ -22,12 +26,18 @@ export default function NotesListPage() {
     },
   })
 
+  const filtered = useMemo(() => {
+    const all = data?.content ?? []
+    if (!me || ownerFilter === 'all') return all
+    return all.filter(n => ownerFilter === 'mine' ? n.ownerId === me.id : n.ownerId !== me.id)
+  }, [data?.content, ownerFilter, me])
+
   const [pinned, rest] = useMemo(() => {
     const p: NoteSummary[] = []
     const r: NoteSummary[] = []
-    for (const n of data?.content ?? []) (n.pinnedAt ? p : r).push(n)
+    for (const n of filtered) (n.pinnedAt ? p : r).push(n)
     return [p, r]
-  }, [data?.content])
+  }, [filtered])
 
   const renderRow = (note: NoteSummary) => {
     const isPinned = !!note.pinnedAt
@@ -83,10 +93,18 @@ export default function NotesListPage() {
           </Link>
         </div>
 
+        <OwnerFilterTabs value={ownerFilter} onChange={setOwnerFilter} />
+
         {isLoading && <p className="text-gray-500 dark:text-gray-400 text-sm">Loading…</p>}
 
         {data?.content.length === 0 && (
           <p className="text-gray-500 dark:text-gray-400 text-sm">No notes yet.</p>
+        )}
+
+        {!isLoading && data && data.content.length > 0 && filtered.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            No notes match this filter.
+          </p>
         )}
 
         {pinned.length > 0 && (
